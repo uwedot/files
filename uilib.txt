@@ -413,7 +413,7 @@ function UILibrary:AddSlider(tab, config)
 	local currentValue = snap(default)
 
 	local container = Instance.new("Frame")
-	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight + 12) -- Slightly taller for breathing room
+	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight + 12)
 	container.BackgroundColor3 = UILibrary.Theme.ElementBackground
 	container.BorderSizePixel = 0
 	container.Parent = tab.Container
@@ -421,7 +421,7 @@ function UILibrary:AddSlider(tab, config)
 
 	local labelFrame = Instance.new("Frame")
 	labelFrame.Size = UDim2.new(1, -24, 0, 18)
-	labelFrame.Position = UDim2.fromOffset(12, 6) -- Better vertical spacing
+	labelFrame.Position = UDim2.fromOffset(12, 6)
 	labelFrame.BackgroundTransparency = 1
 	labelFrame.Parent = container
 
@@ -446,8 +446,8 @@ function UILibrary:AddSlider(tab, config)
 	valueLabel.Parent = labelFrame
 
 	local barBack = Instance.new("Frame")
-	barBack.Size = UDim2.new(1, -24, 0, 8) -- Comfortable height
-	barBack.Position = UDim2.new(0, 12, 1, -14) -- Better positioned from bottom
+	barBack.Size = UDim2.new(1, -24, 0, 8)
+	barBack.Position = UDim2.new(0, 12, 1, -14)
 	barBack.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
 	barBack.BorderSizePixel = 0
 	barBack.Parent = container
@@ -461,18 +461,18 @@ function UILibrary:AddSlider(tab, config)
 	createCorner(fill, 4)
 
 	local handle = Instance.new("Frame")
-	handle.Size = UDim2.new(0, 16, 0, 16) -- Larger handle for easier interaction
+	handle.Size = UDim2.new(0, 18, 0, 18)
 	handle.BackgroundColor3 = UILibrary.Theme.PrimaryText
 	handle.BorderSizePixel = 0
 	handle.Parent = barBack
-	createCorner(handle, 8)
-	createStroke(handle, UILibrary.Theme.StrokeColor, 1) -- Added stroke for better visibility
+	createCorner(handle, 9)
+	createStroke(handle, UILibrary.Theme.StrokeColor, 1)
 
 	local function updateDisplay()
 		valueLabel.Text = format(currentValue)
 		local p = (currentValue - min) / (max - min)
 		fill.Size = UDim2.new(p, 0, 1, 0)
-		handle.Position = UDim2.new(p, -8, 0.5, -8) -- Centered handle
+		handle.Position = UDim2.new(p, -9, 0.5, -9)
 	end
 
 	local dragging = false
@@ -510,16 +510,13 @@ function UILibrary:AddSlider(tab, config)
 		end
 	end)
 
-	-- Add hover effect for the entire container
 	container.MouseEnter:Connect(function()
 		tween(container, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
-		tween(handle, { BackgroundColor3 = UILibrary.Theme.AccentColor }, 0.15)
 	end)
 
 	container.MouseLeave:Connect(function()
 		if not dragging then
 			tween(container, { BackgroundColor3 = UILibrary.Theme.ElementBackground }, 0.15)
-			tween(handle, { BackgroundColor3 = UILibrary.Theme.PrimaryText }, 0.15)
 		end
 	end)
 
@@ -625,7 +622,6 @@ function UILibrary:AddTextBox(tab, config)
 	textBox.ClearTextOnFocus = clearOnFocus
 	textBox.Parent = textBoxFrame
 
-	-- Focus effects
 	textBox.Focused:Connect(function()
 		tween(textBoxFrame, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
 		createStroke(textBoxFrame, UILibrary.Theme.AccentColor, 1)
@@ -633,7 +629,6 @@ function UILibrary:AddTextBox(tab, config)
 
 	textBox.FocusLost:Connect(function(enterPressed)
 		tween(textBoxFrame, { BackgroundColor3 = UILibrary.Theme.TertiaryBackground }, 0.15)
-		-- Remove stroke
 		for _, child in ipairs(textBoxFrame:GetChildren()) do
 			if child:IsA("UIStroke") then
 				child:Destroy()
@@ -645,7 +640,6 @@ function UILibrary:AddTextBox(tab, config)
 		end
 	end)
 
-	-- Hover effects for the entire container
 	container.MouseEnter:Connect(function()
 		tween(container, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
 	end)
