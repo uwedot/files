@@ -3,17 +3,11 @@ UILibrary.__index = UILibrary
 
 local cloneref = cloneref or function(x) return x end
 local gethui = gethui or function() return nil end
-local protect_gui = protect_gui or function(x) return x end
 
 local UIS = cloneref(game:GetService("UserInputService"))
 local CoreGui = cloneref(game:GetService("CoreGui"))
 local TweenService = cloneref(game:GetService("TweenService"))
 local RunService = cloneref(game:GetService("RunService"))
-
-local function safeCall(fn, ...)
-	local s, r = pcall(fn, ...)
-	return s, r
-end
 
 local function createCorner(parent, radius)
 	local c = Instance.new("UICorner")
@@ -84,7 +78,6 @@ function UILibrary:CreateWindow(config)
 	w.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	w.ScreenGui.IgnoreGuiInset = true
 	w.ScreenGui.DisplayOrder = 100
-	safeCall(function() protect_gui(w.ScreenGui) end)
 	w.ScreenGui.Parent = parent
 
 	local cam = workspace.CurrentCamera
@@ -158,10 +151,20 @@ function UILibrary:CreateTabBar()
 	self.TabBar.ClipsDescendants = true
 	self.TabBar.Parent = self.MainFrame
 
+	self.TabScrollingFrame = Instance.new("ScrollingFrame")
+	self.TabScrollingFrame.Size = UDim2.new(1, 0, 1, 0)
+	self.TabScrollingFrame.BackgroundTransparency = 1
+	self.TabScrollingFrame.ScrollBarThickness = 4
+	self.TabScrollingFrame.ScrollBarImageColor3 = UILibrary.Theme.ScrollBarColor
+	self.TabScrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
+	self.TabScrollingFrame.ScrollingDirection = Enum.ScrollingDirection.X
+	self.TabScrollingFrame.VerticalScrollBarInset = Enum.ScrollBarInset.None
+	self.TabScrollingFrame.Parent = self.TabBar
+
 	self.TabContainer = Instance.new("Frame")
-	self.TabContainer.Size = UDim2.new(1, 0, 1, 0)
+	self.TabContainer.Size = UDim2.new(0, 0, 1, 0)
 	self.TabContainer.BackgroundTransparency = 1
-	self.TabContainer.Parent = self.TabBar
+	self.TabContainer.Parent = self.TabScrollingFrame
 
 	self.TabListLayout = Instance.new("UIListLayout")
 	self.TabListLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -170,29 +173,8 @@ function UILibrary:CreateTabBar()
 	self.TabListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 	self.TabListLayout.Parent = self.TabContainer
 
-	self.TabScrollingFrame = Instance.new("ScrollingFrame")
-	self.TabScrollingFrame.Size = UDim2.new(1, 0, 1, 0)
-	self.TabScrollingFrame.BackgroundTransparency = 1
-	self.TabScrollingFrame.ScrollBarThickness = 0
-	self.TabScrollingFrame.AutomaticSize = Enum.AutomaticSize.X
-	self.TabScrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
-	self.TabScrollingFrame.ScrollingDirection = Enum.ScrollingDirection.X
-	self.TabScrollingFrame.Parent = self.TabBar
-
-	self.TabScrollingFrame:ClearAllChildren()
-	self.TabContainer.Parent = self.TabScrollingFrame
-
 	self.TabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		local contentWidth = self.TabListLayout.AbsoluteContentSize.X
-		local frameWidth = self.TabScrollingFrame.AbsoluteSize.X
-		
-		if contentWidth > frameWidth then
-			self.TabScrollingFrame.CanvasSize = UDim2.new(0, contentWidth, 0, 0)
-			self.TabScrollingFrame.ScrollBarThickness = 4
-		else
-			self.TabScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-			self.TabScrollingFrame.ScrollBarThickness = 0
-		end
+		self.TabContainer.Size = UDim2.new(0, self.TabListLayout.AbsoluteContentSize.X, 1, 0)
 	end)
 end
 
