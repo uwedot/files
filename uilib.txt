@@ -625,7 +625,7 @@ function UILibrary:AddTextBox(tab, config)
 	return container
 end
 
--- NEW: Dropdown Element (FIXED POSITION VERSION)
+-- NEW: Dropdown Element (PROPERLY POSITIONED VERSION)
 function UILibrary:AddDropdown(tab, config)
 	config = config or {}
 	local label = config.Label or "Dropdown"
@@ -688,15 +688,15 @@ function UILibrary:AddDropdown(tab, config)
 	dropdownButton.Text = ""
 	dropdownButton.Parent = dropdownFrame
 
-	-- Dropdown list (moved to ScreenGui level to appear above other elements)
+	-- Dropdown list
 	local listFrame = Instance.new("Frame")
-	listFrame.Size = UDim2.new(0, dropdownFrame.AbsoluteSize.X, 0, 0)
+	listFrame.Size = UDim2.new(1, 0, 0, 0) -- Will be updated when opened
 	listFrame.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
 	listFrame.BorderSizePixel = 0
 	listFrame.Visible = false
 	listFrame.ClipsDescendants = true
-	listFrame.ZIndex = 101  -- Higher z-index to appear above other elements
-	listFrame.Parent = self.ScreenGui  -- Parent to ScreenGui instead of dropdownFrame
+	listFrame.ZIndex = 101
+	listFrame.Parent = self.ScreenGui
 	createCorner(listFrame, UILibrary.Theme.ButtonCornerRadius)
 	createStroke(listFrame, UILibrary.Theme.StrokeColor, 1)
 
@@ -710,22 +710,27 @@ function UILibrary:AddDropdown(tab, config)
 
 	local function updateListSize()
 		local count = #options
-		local maxHeight = math.min(count * 26, 130) -- Max 5 items visible
+		local maxHeight = math.min(count * 26, 130)
 		listFrame.Size = UDim2.new(0, dropdownFrame.AbsoluteSize.X, 0, maxHeight)
 	end
 
 	local function updateListPosition()
-		if not dropdownFrame then return end
+		if not dropdownFrame or not dropdownFrame:IsDescendantOf(game) then return end
 		
-		-- Get the absolute position of the dropdown button
+		-- Wait for the absolute position to be available
+		repeat task.wait() until dropdownFrame.AbsolutePosition ~= Vector3.zero
+		
 		local dropdownAbsPos = dropdownFrame.AbsolutePosition
 		local dropdownAbsSize = dropdownFrame.AbsoluteSize
 		
-		-- Position the list frame directly below the dropdown button
+		-- Position directly below the dropdown button
 		listFrame.Position = UDim2.new(
 			0, dropdownAbsPos.X,
 			0, dropdownAbsPos.Y + dropdownAbsSize.Y + 2
 		)
+		
+		-- Set the width to match the dropdown button
+		listFrame.Size = UDim2.new(0, dropdownAbsSize.X, 0, listFrame.Size.Y.Offset)
 	end
 
 	local function closeDropdown()
@@ -770,7 +775,7 @@ function UILibrary:AddDropdown(tab, config)
 		optionButton.TextSize = 13
 		optionButton.AutoButtonColor = false
 		optionButton.BorderSizePixel = 0
-		optionButton.ZIndex = 102  -- Higher z-index
+		optionButton.ZIndex = 102
 		optionButton.Parent = listFrame
 
 		optionButton.MouseEnter:Connect(function()
@@ -780,7 +785,6 @@ function UILibrary:AddDropdown(tab, config)
 			tween(optionButton, { BackgroundColor3 = UILibrary.Theme.TertiaryBackground }, 0.15)
 		end)
 		
-		-- Support for both mouse and touch
 		optionButton.MouseButton1Click:Connect(function()
 			selectOption(option)
 		end)
@@ -790,7 +794,7 @@ function UILibrary:AddDropdown(tab, config)
 		end)
 	end
 
-	-- Dropdown button functionality (both mouse and touch)
+	-- Dropdown button functionality
 	dropdownButton.MouseButton1Click:Connect(function()
 		if isOpen then
 			closeDropdown()
@@ -807,16 +811,14 @@ function UILibrary:AddDropdown(tab, config)
 		end
 	end)
 
-	-- Close dropdown when clicking outside (improved for mobile)
+	-- Close dropdown when clicking outside
 	local closeConnection
 	closeConnection = UIS.InputBegan:Connect(function(input)
 		if isOpen then
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				-- Check if click is outside dropdown
 				local clickedOnDropdown = false
 				local target = input.Parent
 				
-				-- Check if click was on dropdown or its children
 				while target do
 					if target == dropdownFrame or target == listFrame then
 						clickedOnDropdown = true
@@ -832,18 +834,16 @@ function UILibrary:AddDropdown(tab, config)
 		end
 	end)
 
-	-- Update dropdown position when window moves (for draggable window)
+	-- Update dropdown position when window moves
 	local function updateDropdownPosition()
 		if isOpen then
 			updateListPosition()
 		end
 	end
 
-	-- Listen for window movement and size changes
+	-- Listen for changes that affect position
 	self.MainFrame:GetPropertyChangedSignal("Position"):Connect(updateDropdownPosition)
 	self.MainFrame:GetPropertyChangedSignal("Size"):Connect(updateDropdownPosition)
-	
-	-- Also update when the tab container changes (in case of scrolling)
 	tab.Container:GetPropertyChangedSignal("CanvasPosition"):Connect(updateDropdownPosition)
 
 	-- Hover effects
@@ -854,7 +854,7 @@ function UILibrary:AddDropdown(tab, config)
 		tween(container, { BackgroundColor3 = UILibrary.Theme.ElementBackground }, 0.15)
 	end)
 
-	-- Clean up connections when container is destroyed
+	-- Clean up
 	container.Destroying:Connect(function()
 		if closeConnection then
 			closeConnection:Disconnect()
