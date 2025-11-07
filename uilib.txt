@@ -1,14 +1,16 @@
 local UILibrary = {}
 UILibrary.__index = UILibrary
 
+-- Compatibility layer
 local cloneref = cloneref or function(x) return x end
 local gethui = gethui or function() return nil end
 
+-- Services
 local UIS = cloneref(game:GetService("UserInputService"))
 local CoreGui = cloneref(game:GetService("CoreGui"))
 local TweenService = cloneref(game:GetService("TweenService"))
-local RunService = cloneref(game:GetService("RunService"))
 
+-- Helper functions
 local function createCorner(parent, radius)
 	local c = Instance.new("UICorner")
 	c.CornerRadius = UDim.new(0, radius or 6)
@@ -33,6 +35,7 @@ local function tween(obj, props, duration, style, direction)
 	return t
 end
 
+-- 🎨 Theme configuration
 UILibrary.Theme = {
 	MainBackground = Color3.fromRGB(18, 18, 22),
 	SecondaryBackground = Color3.fromRGB(28, 28, 35),
@@ -57,6 +60,7 @@ UILibrary.Theme = {
 	ContainerPadding = 10
 }
 
+-- 🪟 Create main window
 function UILibrary:CreateWindow(config)
 	local w = setmetatable({}, UILibrary)
 	config = config or {}
@@ -69,6 +73,7 @@ function UILibrary:CreateWindow(config)
 
 	local parent = gethui() or CoreGui
 
+	-- Remove any previous instance
 	local existing = parent:FindFirstChild(config.Name or "UILibrary")
 	if existing then existing:Destroy() end
 
@@ -91,15 +96,19 @@ function UILibrary:CreateWindow(config)
 	w.MainFrame.BorderSizePixel = 0
 	w.MainFrame.ClipsDescendants = true
 	w.MainFrame.Parent = w.ScreenGui
+	-- flat frame + stroke
 	createStroke(w.MainFrame, UILibrary.Theme.StrokeColor, 1)
 
 	w:CreateTitleBar()
 	w:CreateTabBar()
-	w:SetupDragging()
+	w:SetupDragging()          -- will support touch in the later part
 	if w.MinimizeKey then w:SetupMinimizeKeybind() end
 	return w
 end
 
+-- =============================
+-- 🧭 FLAT TITLE BAR
+-- =============================
 function UILibrary:CreateTitleBar()
 	self.TitleBar = Instance.new("Frame")
 	self.TitleBar.Size = UDim2.new(1, 0, 0, UILibrary.Theme.TitleBarHeight)
@@ -119,6 +128,7 @@ function UILibrary:CreateTitleBar()
 	self.TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	self.TitleLabel.Parent = self.TitleBar
 
+	-- ➖ Transparent minimize button
 	self.MinimizeButton = Instance.new("TextButton")
 	self.MinimizeButton.Size = UDim2.fromOffset(28, 28)
 	self.MinimizeButton.Position = UDim2.new(1, -36, 0.5, -14)
@@ -142,47 +152,37 @@ function UILibrary:CreateTitleBar()
 	end))
 end
 
+-- =============================
+-- 🧱 FLAT TAB BAR (no gap, mobile-friendly)
+-- =============================
 function UILibrary:CreateTabBar()
 	self.TabBar = Instance.new("Frame")
 	self.TabBar.Size = UDim2.new(1, 0, 0, UILibrary.Theme.TabBarHeight)
+	-- ↓↓↓ gap removed here
 	self.TabBar.Position = UDim2.new(0, 0, 0, UILibrary.Theme.TitleBarHeight)
+	-- match title bar so it looks like one strip
 	self.TabBar.BackgroundColor3 = UILibrary.Theme.SecondaryBackground
 	self.TabBar.BorderSizePixel = 0
 	self.TabBar.ClipsDescendants = true
 	self.TabBar.Parent = self.MainFrame
 
-	self.TabScrollingFrame = Instance.new("ScrollingFrame")
-	self.TabScrollingFrame.Size = UDim2.new(1, 0, 1, 0)
-	self.TabScrollingFrame.BackgroundTransparency = 1
-	self.TabScrollingFrame.ScrollBarThickness = 4
-	self.TabScrollingFrame.ScrollBarImageColor3 = UILibrary.Theme.ScrollBarColor
-	self.TabScrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
-	self.TabScrollingFrame.ScrollingDirection = Enum.ScrollingDirection.X
-	self.TabScrollingFrame.VerticalScrollBarInset = Enum.ScrollBarInset.None
-	self.TabScrollingFrame.Parent = self.TabBar
-
-	self.TabContainer = Instance.new("Frame")
-	self.TabContainer.Size = UDim2.new(0, 0, 1, 0)
-	self.TabContainer.BackgroundTransparency = 1
-	self.TabContainer.Parent = self.TabScrollingFrame
-
-	self.TabListLayout = Instance.new("UIListLayout")
-	self.TabListLayout.FillDirection = Enum.FillDirection.Horizontal
-	self.TabListLayout.Padding = UDim.new(0, 8)
-	self.TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	self.TabListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-	self.TabListLayout.Parent = self.TabContainer
-
-	self.TabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		self.TabContainer.Size = UDim2.new(0, self.TabListLayout.AbsoluteContentSize.X, 1, 0)
-	end)
+	local layout = Instance.new("UIListLayout")
+	layout.FillDirection = Enum.FillDirection.Horizontal
+	layout.Padding = UDim.new(0, 8)
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+	layout.Parent = self.TabBar
 end
 
+-- =============================
+-- 📂 TAB CREATION
+-- =============================
 function UILibrary:AddTab(name)
 	local tab = {}
 	tab.Name = name or "Tab"
 	tab.Elements = {}
 
+	-- 🔘 Tab button
 	tab.Button = Instance.new("TextButton")
 	tab.Button.Size = UDim2.new(0, 110, 0, UILibrary.Theme.TabBarHeight - 10)
 	tab.Button.BackgroundColor3 = UILibrary.Theme.ElementBackground
@@ -192,9 +192,10 @@ function UILibrary:AddTab(name)
 	tab.Button.TextSize = 13
 	tab.Button.AutoButtonColor = false
 	tab.Button.BorderSizePixel = 0
-	tab.Button.Parent = self.TabContainer
+	tab.Button.Parent = self.TabBar
 	createCorner(tab.Button, UILibrary.Theme.ButtonCornerRadius)
 
+	-- 🔹 Active indicator
 	tab.Indicator = Instance.new("Frame")
 	tab.Indicator.Size = UDim2.new(0.8, 0, 0, 2)
 	tab.Indicator.Position = UDim2.new(0.1, 0, 1, -3)
@@ -204,6 +205,7 @@ function UILibrary:AddTab(name)
 	tab.Indicator.Parent = tab.Button
 	createCorner(tab.Indicator, 2)
 
+	-- 📜 Content container
 	tab.Container = Instance.new("ScrollingFrame")
 	tab.Container.Size = UDim2.new(1, 0, 1, -(UILibrary.Theme.TitleBarHeight + UILibrary.Theme.TabBarHeight))
 	tab.Container.Position = UDim2.fromOffset(0, UILibrary.Theme.TitleBarHeight + UILibrary.Theme.TabBarHeight)
@@ -230,6 +232,7 @@ function UILibrary:AddTab(name)
 	padding.PaddingBottom = UDim.new(0, UILibrary.Theme.ContainerPadding)
 	padding.Parent = tab.Container
 
+	-- Hover and click
 	tab.Button.MouseEnter:Connect(function()
 		if self.ActiveTab ~= tab then
 			tween(tab.Button, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
@@ -253,6 +256,9 @@ function UILibrary:AddTab(name)
 	return tab
 end
 
+-- =============================
+-- 🔄 TAB SWITCHING
+-- =============================
 function UILibrary:SwitchTab(tab)
 	if self.ActiveTab == tab then return end
 
@@ -275,6 +281,9 @@ function UILibrary:SwitchTab(tab)
 	}, 0.15)
 end
 
+-- =============================
+-- 🔘 TOGGLE ELEMENT
+-- =============================
 function UILibrary:AddToggle(tab, config)
 	config = config or {}
 	local label = config.Label or "Toggle"
@@ -346,6 +355,9 @@ function UILibrary:AddToggle(tab, config)
 	return container
 end
 
+-- =============================
+-- 🎚️ SLIDER ELEMENT (mobile-compatible)
+-- =============================
 function UILibrary:AddSlider(tab, config)
 	config = config or {}
 	local label = config.Label or "Slider"
@@ -403,8 +415,7 @@ function UILibrary:AddSlider(tab, config)
 	valueLabel.TextSize = 13
 	valueLabel.TextXAlignment = Enum.TextXAlignment.Right
 	valueLabel.Parent = labelFrame
-
-	local barBack = Instance.new("Frame")
+local barBack = Instance.new("Frame")
 	barBack.Size = UDim2.new(1, -24, 0, 8)
 	barBack.Position = UDim2.new(0, 12, 1, -16)
 	barBack.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
@@ -472,6 +483,9 @@ function UILibrary:AddSlider(tab, config)
 	return container
 end
 
+-- =============================
+-- 🖱️ BUTTON ELEMENT
+-- =============================
 function UILibrary:AddButton(tab, config)
 	config = config or {}
 	local label = config.Label or "Button"
@@ -504,6 +518,9 @@ function UILibrary:AddButton(tab, config)
 	return b
 end
 
+-- =============================
+-- 🏷️ LABEL ELEMENT
+-- =============================
 function UILibrary:AddLabel(tab, text)
 	local l = Instance.new("TextLabel")
 	l.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight)
@@ -522,6 +539,9 @@ function UILibrary:AddLabel(tab, text)
 	return l
 end
 
+-- =============================
+-- 🎛️ DRAGGING / MINIMIZE / CLEANUP (mobile compatible)
+-- =============================
 function UILibrary:SetupDragging()
 	local dragging = false
 	local dragStart, startPos
