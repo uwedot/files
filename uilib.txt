@@ -461,18 +461,18 @@ function UILibrary:AddSlider(tab, config)
 	createCorner(fill, 4)
 
 	local handle = Instance.new("Frame")
-	handle.Size = UDim2.new(0, 18, 0, 18)
+	handle.Size = UDim2.new(0, 16, 0, 16) -- Changed from 18x18 to 16x16
 	handle.BackgroundColor3 = UILibrary.Theme.PrimaryText
 	handle.BorderSizePixel = 0
 	handle.Parent = barBack
-	createCorner(handle, 9)
+	createCorner(handle, 8) -- Changed from 9 to 8 to maintain circular shape
 	createStroke(handle, UILibrary.Theme.StrokeColor, 1)
 
 	local function updateDisplay()
 		valueLabel.Text = format(currentValue)
 		local p = (currentValue - min) / (max - min)
 		fill.Size = UDim2.new(p, 0, 1, 0)
-		handle.Position = UDim2.new(p, -9, 0.5, -9)
+		handle.Position = UDim2.new(p, -8, 0.5, -8) -- Changed from -9 to -8
 	end
 
 	local dragging = false
