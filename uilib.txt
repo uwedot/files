@@ -407,15 +407,15 @@ function UILibrary:AddSlider(tab, config)
 	local currentValue = snap(default)
 
 	local container = Instance.new("Frame")
-	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight + 22)
+	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight) -- Changed to match button height
 	container.BackgroundColor3 = UILibrary.Theme.ElementBackground
 	container.BorderSizePixel = 0
 	container.Parent = tab.Container
 	createCorner(container, UILibrary.Theme.CornerRadius)
 
 	local labelFrame = Instance.new("Frame")
-	labelFrame.Size = UDim2.new(1, -16, 0, 20)
-	labelFrame.Position = UDim2.fromOffset(12, 6)
+	labelFrame.Size = UDim2.new(1, -16, 1, 0) -- Updated to full height
+	labelFrame.Position = UDim2.fromOffset(12, 0) -- Updated position
 	labelFrame.BackgroundTransparency = 1
 	labelFrame.Parent = container
 
@@ -440,32 +440,32 @@ function UILibrary:AddSlider(tab, config)
 	valueLabel.Parent = labelFrame
 
 	local barBack = Instance.new("Frame")
-	barBack.Size = UDim2.new(1, -24, 0, 8)
-	barBack.Position = UDim2.new(0, 12, 1, -16)
+	barBack.Size = UDim2.new(1, -24, 0, 6) -- Made slightly thinner
+	barBack.Position = UDim2.new(0, 12, 1, -10) -- Adjusted position for new height
 	barBack.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
 	barBack.BorderSizePixel = 0
 	barBack.Parent = container
-	createCorner(barBack, 4)
+	createCorner(barBack, 3)
 
 	local fill = Instance.new("Frame")
 	fill.Size = UDim2.new(0, 0, 1, 0)
 	fill.BackgroundColor3 = UILibrary.Theme.AccentColor
 	fill.BorderSizePixel = 0
 	fill.Parent = barBack
-	createCorner(fill, 4)
+	createCorner(fill, 3)
 
 	local handle = Instance.new("Frame")
-	handle.Size = UDim2.new(0, 14, 0, 14)
+	handle.Size = UDim2.new(0, 12, 0, 12) -- Slightly smaller handle
 	handle.BackgroundColor3 = UILibrary.Theme.PrimaryText
 	handle.BorderSizePixel = 0
 	handle.Parent = barBack
-	createCorner(handle, 7)
+	createCorner(handle, 6)
 
 	local function updateDisplay()
 		valueLabel.Text = format(currentValue)
 		local p = (currentValue - min) / (max - min)
 		fill.Size = UDim2.new(p, 0, 1, 0)
-		handle.Position = UDim2.new(p, -7, 0.5, -7)
+		handle.Position = UDim2.new(p, -6, 0.5, -6) -- Adjusted for smaller handle
 	end
 
 	local dragging = false
