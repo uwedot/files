@@ -625,7 +625,7 @@ function UILibrary:AddTextBox(tab, config)
 	return container
 end
 
--- NEW: Dropdown Element (PROPERLY POSITIONED VERSION)
+-- FIXED: Dropdown Element with proper positioning
 function UILibrary:AddDropdown(tab, config)
 	config = config or {}
 	local label = config.Label or "Dropdown"
@@ -637,7 +637,7 @@ function UILibrary:AddDropdown(tab, config)
 	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight)
 	container.BackgroundColor3 = UILibrary.Theme.ElementBackground
 	container.BorderSizePixel = 0
-	container.ClipsDescendants = true
+	container.ClipsDescendants = false -- Changed to false to allow dropdown to show outside
 	container.Parent = tab.Container
 	createCorner(container, UILibrary.Theme.CornerRadius)
 
@@ -657,7 +657,7 @@ function UILibrary:AddDropdown(tab, config)
 	dropdownFrame.Position = UDim2.new(0.6, 8, 0.5, -13)
 	dropdownFrame.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
 	dropdownFrame.BorderSizePixel = 0
-	dropdownFrame.ClipsDescendants = true
+	dropdownFrame.ClipsDescendants = false -- Changed to false
 	dropdownFrame.Parent = container
 	createCorner(dropdownFrame, UILibrary.Theme.ButtonCornerRadius)
 
@@ -688,15 +688,16 @@ function UILibrary:AddDropdown(tab, config)
 	dropdownButton.Text = ""
 	dropdownButton.Parent = dropdownFrame
 
-	-- Dropdown list
+	-- Dropdown list - FIXED: Position relative to container instead of dropdownFrame
 	local listFrame = Instance.new("Frame")
-	listFrame.Size = UDim2.new(1, 0, 0, 0) -- Will be updated when opened
+	listFrame.Size = UDim2.new(1, 0, 0, 0)
+	listFrame.Position = UDim2.new(0, 0, 1, 2) -- FIXED: Position below the dropdown
 	listFrame.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
 	listFrame.BorderSizePixel = 0
 	listFrame.Visible = false
 	listFrame.ClipsDescendants = true
-	listFrame.ZIndex = 101
-	listFrame.Parent = self.ScreenGui
+	listFrame.ZIndex = 5 -- Ensure it appears above other elements
+	listFrame.Parent = dropdownFrame -- Keep parent as dropdownFrame but position below
 	createCorner(listFrame, UILibrary.Theme.ButtonCornerRadius)
 	createStroke(listFrame, UILibrary.Theme.StrokeColor, 1)
 
@@ -710,33 +711,12 @@ function UILibrary:AddDropdown(tab, config)
 
 	local function updateListSize()
 		local count = #options
-		local maxHeight = math.min(count * 26, 130)
-		listFrame.Size = UDim2.new(0, dropdownFrame.AbsoluteSize.X, 0, maxHeight)
-	end
-
-	local function updateListPosition()
-		if not dropdownFrame or not dropdownFrame:IsDescendantOf(game) then return end
-		
-		-- Wait for the absolute position to be available
-		repeat task.wait() until dropdownFrame.AbsolutePosition ~= Vector3.zero
-		
-		local dropdownAbsPos = dropdownFrame.AbsolutePosition
-		local dropdownAbsSize = dropdownFrame.AbsoluteSize
-		
-		-- Position directly below the dropdown button
-		listFrame.Position = UDim2.new(
-			0, dropdownAbsPos.X,
-			0, dropdownAbsPos.Y + dropdownAbsSize.Y + 2
-		)
-		
-		-- Set the width to match the dropdown button
-		listFrame.Size = UDim2.new(0, dropdownAbsSize.X, 0, listFrame.Size.Y.Offset)
+		listFrame.Size = UDim2.new(1, 0, 0, math.min(count * 26, 130)) -- Max 5 items visible
 	end
 
 	local function closeDropdown()
-		if not isOpen then return end
 		isOpen = false
-		tween(listFrame, { Size = UDim2.new(0, dropdownFrame.AbsoluteSize.X, 0, 0) }, 0.2)
+		tween(listFrame, { Size = UDim2.new(1, 0, 0, 0) }, 0.2)
 		tween(arrow, { Rotation = 0 }, 0.2)
 		task.wait(0.2)
 		listFrame.Visible = false
@@ -745,15 +725,9 @@ function UILibrary:AddDropdown(tab, config)
 	local function openDropdown()
 		if isOpen then return end
 		isOpen = true
-		
-		-- Update position and size before showing
-		updateListPosition()
-		updateListSize()
-		
 		listFrame.Visible = true
-		tween(listFrame, { 
-			Size = UDim2.new(0, dropdownFrame.AbsoluteSize.X, 0, math.min(#options * 26, 130)) 
-		}, 0.2)
+		updateListSize()
+		tween(listFrame, { Size = UDim2.new(1, 0, 0, math.min(#options * 26, 130)) }, 0.2)
 		tween(arrow, { Rotation = 180 }, 0.2)
 	end
 
@@ -775,7 +749,7 @@ function UILibrary:AddDropdown(tab, config)
 		optionButton.TextSize = 13
 		optionButton.AutoButtonColor = false
 		optionButton.BorderSizePixel = 0
-		optionButton.ZIndex = 102
+		optionButton.ZIndex = 6 -- Higher zindex to appear above
 		optionButton.Parent = listFrame
 
 		optionButton.MouseEnter:Connect(function()
@@ -784,12 +758,7 @@ function UILibrary:AddDropdown(tab, config)
 		optionButton.MouseLeave:Connect(function()
 			tween(optionButton, { BackgroundColor3 = UILibrary.Theme.TertiaryBackground }, 0.15)
 		end)
-		
 		optionButton.MouseButton1Click:Connect(function()
-			selectOption(option)
-		end)
-		
-		optionButton.TouchTap:Connect(function()
 			selectOption(option)
 		end)
 	end
@@ -802,49 +771,17 @@ function UILibrary:AddDropdown(tab, config)
 			openDropdown()
 		end
 	end)
-	
-	dropdownButton.TouchTap:Connect(function()
-		if isOpen then
-			closeDropdown()
-		else
-			openDropdown()
-		end
-	end)
 
 	-- Close dropdown when clicking outside
 	local closeConnection
 	closeConnection = UIS.InputBegan:Connect(function(input)
-		if isOpen then
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				local clickedOnDropdown = false
-				local target = input.Parent
-				
-				while target do
-					if target == dropdownFrame or target == listFrame then
-						clickedOnDropdown = true
-						break
-					end
-					target = target.Parent
-				end
-				
-				if not clickedOnDropdown then
-					closeDropdown()
-				end
+		if isOpen and input.UserInputType == Enum.UserInputType.MouseButton1 then
+			local target = input.Parent
+			if target and not dropdownFrame:IsAncestorOf(target) then
+				closeDropdown()
 			end
 		end
 	end)
-
-	-- Update dropdown position when window moves
-	local function updateDropdownPosition()
-		if isOpen then
-			updateListPosition()
-		end
-	end
-
-	-- Listen for changes that affect position
-	self.MainFrame:GetPropertyChangedSignal("Position"):Connect(updateDropdownPosition)
-	self.MainFrame:GetPropertyChangedSignal("Size"):Connect(updateDropdownPosition)
-	tab.Container:GetPropertyChangedSignal("CanvasPosition"):Connect(updateDropdownPosition)
 
 	-- Hover effects
 	container.MouseEnter:Connect(function()
@@ -854,13 +791,10 @@ function UILibrary:AddDropdown(tab, config)
 		tween(container, { BackgroundColor3 = UILibrary.Theme.ElementBackground }, 0.15)
 	end)
 
-	-- Clean up
+	-- Clean up connection when container is destroyed
 	container.Destroying:Connect(function()
 		if closeConnection then
 			closeConnection:Disconnect()
-		end
-		if listFrame then
-			listFrame:Destroy()
 		end
 	end)
 
