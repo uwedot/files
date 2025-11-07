@@ -557,6 +557,246 @@ function UILibrary:AddLabel(tab, text)
 	return l
 end
 
+-- NEW: TextBox Element
+function UILibrary:AddTextBox(tab, config)
+	config = config or {}
+	local label = config.Label or "Text Box"
+	local placeholder = config.Placeholder or "Enter text..."
+	local default = config.Default or ""
+	local callback = config.Callback or function() end
+
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight)
+	container.BackgroundColor3 = UILibrary.Theme.ElementBackground
+	container.BorderSizePixel = 0
+	container.Parent = tab.Container
+	createCorner(container, UILibrary.Theme.CornerRadius)
+
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Size = UDim2.new(0.4, -8, 1, 0)
+	textLabel.Position = UDim2.fromOffset(12, 0)
+	textLabel.BackgroundTransparency = 1
+	textLabel.Font = Enum.Font.GothamSemibold
+	textLabel.Text = label
+	textLabel.TextColor3 = UILibrary.Theme.SecondaryText
+	textLabel.TextSize = 13
+	textLabel.TextXAlignment = Enum.TextXAlignment.Left
+	textLabel.Parent = container
+
+	local textBoxFrame = Instance.new("Frame")
+	textBoxFrame.Size = UDim2.new(0.6, -12, 0, 26)
+	textBoxFrame.Position = UDim2.new(0.4, 8, 0.5, -13)
+	textBoxFrame.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
+	textBoxFrame.BorderSizePixel = 0
+	textBoxFrame.Parent = container
+	createCorner(textBoxFrame, UILibrary.Theme.ButtonCornerRadius)
+
+	local textBox = Instance.new("TextBox")
+	textBox.Size = UDim2.new(1, -12, 1, 0)
+	textBox.Position = UDim2.fromOffset(6, 0)
+	textBox.BackgroundTransparency = 1
+	textBox.Font = Enum.Font.Gotham
+	textBox.Text = default
+	textBox.PlaceholderText = placeholder
+	textBox.TextColor3 = UILibrary.Theme.PrimaryText
+	textBox.PlaceholderColor3 = UILibrary.Theme.MutedText
+	textBox.TextSize = 13
+	textBox.ClearTextOnFocus = false
+	textBox.Parent = textBoxFrame
+
+	-- Focus effects
+	textBox.Focused:Connect(function()
+		tween(textBoxFrame, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
+	end)
+
+	textBox.FocusLost:Connect(function(enterPressed)
+		tween(textBoxFrame, { BackgroundColor3 = UILibrary.Theme.TertiaryBackground }, 0.15)
+		callback(textBox.Text, enterPressed)
+	end)
+
+	-- Hover effects for the entire container
+	container.MouseEnter:Connect(function()
+		tween(container, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
+	end)
+	container.MouseLeave:Connect(function()
+		tween(container, { BackgroundColor3 = UILibrary.Theme.ElementBackground }, 0.15)
+	end)
+
+	return container
+end
+
+-- NEW: Dropdown Element
+function UILibrary:AddDropdown(tab, config)
+	config = config or {}
+	local label = config.Label or "Dropdown"
+	local options = config.Options or {}
+	local default = config.Default or (options[1] or "")
+	local callback = config.Callback or function() end
+
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight)
+	container.BackgroundColor3 = UILibrary.Theme.ElementBackground
+	container.BorderSizePixel = 0
+	container.ClipsDescendants = true
+	container.Parent = tab.Container
+	createCorner(container, UILibrary.Theme.CornerRadius)
+
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Size = UDim2.new(0.6, -8, 1, 0)
+	textLabel.Position = UDim2.fromOffset(12, 0)
+	textLabel.BackgroundTransparency = 1
+	textLabel.Font = Enum.Font.GothamSemibold
+	textLabel.Text = label
+	textLabel.TextColor3 = UILibrary.Theme.SecondaryText
+	textLabel.TextSize = 13
+	textLabel.TextXAlignment = Enum.TextXAlignment.Left
+	textLabel.Parent = container
+
+	local dropdownFrame = Instance.new("Frame")
+	dropdownFrame.Size = UDim2.new(0.4, -12, 0, 26)
+	dropdownFrame.Position = UDim2.new(0.6, 8, 0.5, -13)
+	dropdownFrame.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
+	dropdownFrame.BorderSizePixel = 0
+	dropdownFrame.Parent = container
+	createCorner(dropdownFrame, UILibrary.Theme.ButtonCornerRadius)
+
+	local selectedLabel = Instance.new("TextLabel")
+	selectedLabel.Size = UDim2.new(1, -30, 1, 0)
+	selectedLabel.Position = UDim2.fromOffset(8, 0)
+	selectedLabel.BackgroundTransparency = 1
+	selectedLabel.Font = Enum.Font.Gotham
+	selectedLabel.Text = default
+	selectedLabel.TextColor3 = UILibrary.Theme.PrimaryText
+	selectedLabel.TextSize = 13
+	selectedLabel.TextXAlignment = Enum.TextXAlignment.Left
+	selectedLabel.Parent = dropdownFrame
+
+	local arrow = Instance.new("TextLabel")
+	arrow.Size = UDim2.new(0, 20, 1, 0)
+	arrow.Position = UDim2.new(1, -20, 0, 0)
+	arrow.BackgroundTransparency = 1
+	arrow.Font = Enum.Font.GothamBold
+	arrow.Text = "▼"
+	arrow.TextColor3 = UILibrary.Theme.MutedText
+	arrow.TextSize = 10
+	arrow.Parent = dropdownFrame
+
+	local dropdownButton = Instance.new("TextButton")
+	dropdownButton.Size = UDim2.new(1, 0, 1, 0)
+	dropdownButton.BackgroundTransparency = 1
+	dropdownButton.Text = ""
+	dropdownButton.Parent = dropdownFrame
+
+	-- Dropdown list
+	local listFrame = Instance.new("Frame")
+	listFrame.Size = UDim2.new(1, 0, 0, 0)
+	listFrame.Position = UDim2.fromOffset(0, 30)
+	listFrame.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
+	listFrame.BorderSizePixel = 0
+	listFrame.Visible = false
+	listFrame.ClipsDescendants = true
+	listFrame.Parent = dropdownFrame
+	createCorner(listFrame, UILibrary.Theme.ButtonCornerRadius)
+	createStroke(listFrame, UILibrary.Theme.StrokeColor, 1)
+
+	local listLayout = Instance.new("UIListLayout")
+	listLayout.Padding = UDim.new(0, 1)
+	listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	listLayout.Parent = listFrame
+
+	local isOpen = false
+	local currentSelection = default
+
+	local function updateListSize()
+		local count = #options
+		listFrame.Size = UDim2.new(1, 0, 0, math.min(count * 26, 130)) -- Max 5 items visible
+	end
+
+	local function closeDropdown()
+		isOpen = false
+		tween(listFrame, { Size = UDim2.new(1, 0, 0, 0) }, 0.2)
+		tween(arrow, { Rotation = 0 }, 0.2)
+		task.wait(0.2)
+		listFrame.Visible = false
+	end
+
+	local function openDropdown()
+		if isOpen then return end
+		isOpen = true
+		listFrame.Visible = true
+		updateListSize()
+		tween(listFrame, { Size = UDim2.new(1, 0, 0, math.min(#options * 26, 130)) }, 0.2)
+		tween(arrow, { Rotation = 180 }, 0.2)
+	end
+
+	local function selectOption(option)
+		currentSelection = option
+		selectedLabel.Text = option
+		closeDropdown()
+		callback(option)
+	end
+
+	-- Create option buttons
+	for _, option in ipairs(options) do
+		local optionButton = Instance.new("TextButton")
+		optionButton.Size = UDim2.new(1, 0, 0, 25)
+		optionButton.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
+		optionButton.TextColor3 = UILibrary.Theme.PrimaryText
+		optionButton.Font = Enum.Font.Gotham
+		optionButton.Text = option
+		optionButton.TextSize = 13
+		optionButton.AutoButtonColor = false
+		optionButton.BorderSizePixel = 0
+		optionButton.Parent = listFrame
+
+		optionButton.MouseEnter:Connect(function()
+			tween(optionButton, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
+		end)
+		optionButton.MouseLeave:Connect(function()
+			tween(optionButton, { BackgroundColor3 = UILibrary.Theme.TertiaryBackground }, 0.15)
+		end)
+		optionButton.MouseButton1Click:Connect(function()
+			selectOption(option)
+		end)
+	end
+
+	-- Dropdown button functionality
+	dropdownButton.MouseButton1Click:Connect(function()
+		if isOpen then
+			closeDropdown()
+		else
+			openDropdown()
+		end
+	end)
+
+	-- Close dropdown when clicking outside
+	local closeConnection
+	closeConnection = UIS.InputBegan:Connect(function(input)
+		if isOpen and input.UserInputType == Enum.UserInputType.MouseButton1 then
+			if not dropdownFrame:IsDescendantOf(input.Parent) then
+				closeDropdown()
+			end
+		end
+	end)
+
+	-- Hover effects
+	container.MouseEnter:Connect(function()
+		tween(container, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
+	end)
+	container.MouseLeave:Connect(function()
+		tween(container, { BackgroundColor3 = UILibrary.Theme.ElementBackground }, 0.15)
+	end)
+
+	-- Clean up connection when container is destroyed
+	container.Destroying:Connect(function()
+		if closeConnection then
+			closeConnection:Disconnect()
+		end
+	end)
+
+	return container
+end
+
 function UILibrary:SetupDragging()
 	local dragging = false
 	local dragStart, startPos
