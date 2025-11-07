@@ -74,11 +74,11 @@ function UILibrary:CreateWindow(config)
 	local parent = gethui() or CoreGui
 
 	-- Remove any previous instance
-	local existing = parent:FindFirstChild(config.Name or "UILibrary")
+	local existing = parent:FindFirstChild("67Library")
 	if existing then existing:Destroy() end
 
 	w.ScreenGui = Instance.new("ScreenGui")
-	w.ScreenGui.Name = config.Name or "UILibrary"
+	w.ScreenGui.Name = "67Library"
 	w.ScreenGui.ResetOnSpawn = false
 	w.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	w.ScreenGui.IgnoreGuiInset = true
