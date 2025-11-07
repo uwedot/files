@@ -413,20 +413,20 @@ function UILibrary:AddSlider(tab, config)
 	local currentValue = snap(default)
 
 	local container = Instance.new("Frame")
-	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight) -- Changed to match other elements
+	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight + 12) -- Slightly taller for breathing room
 	container.BackgroundColor3 = UILibrary.Theme.ElementBackground
 	container.BorderSizePixel = 0
 	container.Parent = tab.Container
 	createCorner(container, UILibrary.Theme.CornerRadius)
 
 	local labelFrame = Instance.new("Frame")
-	labelFrame.Size = UDim2.new(1, -16, 0, 16) -- Reduced height
-	labelFrame.Position = UDim2.fromOffset(12, 6) -- Adjusted padding
+	labelFrame.Size = UDim2.new(1, -24, 0, 18)
+	labelFrame.Position = UDim2.fromOffset(12, 6) -- Better vertical spacing
 	labelFrame.BackgroundTransparency = 1
 	labelFrame.Parent = container
 
 	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Size = UDim2.new(0.5, 0, 1, 0)
+	nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Font = FancyFontSemibold
 	nameLabel.Text = label
@@ -436,8 +436,8 @@ function UILibrary:AddSlider(tab, config)
 	nameLabel.Parent = labelFrame
 
 	local valueLabel = Instance.new("TextLabel")
-	valueLabel.Size = UDim2.new(0.5, 0, 1, 0)
-	valueLabel.Position = UDim2.new(0.5, 0, 0, 0)
+	valueLabel.Size = UDim2.new(0.4, 0, 1, 0)
+	valueLabel.Position = UDim2.new(0.6, 0, 0, 0)
 	valueLabel.BackgroundTransparency = 1
 	valueLabel.Font = FancyFontBold
 	valueLabel.TextColor3 = UILibrary.Theme.AccentColor
@@ -446,32 +446,33 @@ function UILibrary:AddSlider(tab, config)
 	valueLabel.Parent = labelFrame
 
 	local barBack = Instance.new("Frame")
-	barBack.Size = UDim2.new(1, -24, 0, 6) -- Made thinner
-	barBack.Position = UDim2.new(0, 12, 1, -10) -- Positioned closer to bottom
+	barBack.Size = UDim2.new(1, -24, 0, 8) -- Comfortable height
+	barBack.Position = UDim2.new(0, 12, 1, -14) -- Better positioned from bottom
 	barBack.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
 	barBack.BorderSizePixel = 0
 	barBack.Parent = container
-	createCorner(barBack, 3)
+	createCorner(barBack, 4)
 
 	local fill = Instance.new("Frame")
 	fill.Size = UDim2.new(0, 0, 1, 0)
 	fill.BackgroundColor3 = UILibrary.Theme.AccentColor
 	fill.BorderSizePixel = 0
 	fill.Parent = barBack
-	createCorner(fill, 3)
+	createCorner(fill, 4)
 
 	local handle = Instance.new("Frame")
-	handle.Size = UDim2.new(0, 12, 0, 12) -- Made slightly smaller
+	handle.Size = UDim2.new(0, 16, 0, 16) -- Larger handle for easier interaction
 	handle.BackgroundColor3 = UILibrary.Theme.PrimaryText
 	handle.BorderSizePixel = 0
 	handle.Parent = barBack
-	createCorner(handle, 6)
+	createCorner(handle, 8)
+	createStroke(handle, UILibrary.Theme.StrokeColor, 1) -- Added stroke for better visibility
 
 	local function updateDisplay()
 		valueLabel.Text = format(currentValue)
 		local p = (currentValue - min) / (max - min)
 		fill.Size = UDim2.new(p, 0, 1, 0)
-		handle.Position = UDim2.new(p, -6, 0.5, -6) -- Adjusted handle position
+		handle.Position = UDim2.new(p, -8, 0.5, -8) -- Centered handle
 	end
 
 	local dragging = false
@@ -506,6 +507,19 @@ function UILibrary:AddSlider(tab, config)
 	barBack.InputBegan:Connect(function(i)
 		if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
 			startDrag(i)
+		end
+	end)
+
+	-- Add hover effect for the entire container
+	container.MouseEnter:Connect(function()
+		tween(container, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
+		tween(handle, { BackgroundColor3 = UILibrary.Theme.AccentColor }, 0.15)
+	end)
+
+	container.MouseLeave:Connect(function()
+		if not dragging then
+			tween(container, { BackgroundColor3 = UILibrary.Theme.ElementBackground }, 0.15)
+			tween(handle, { BackgroundColor3 = UILibrary.Theme.PrimaryText }, 0.15)
 		end
 	end)
 
