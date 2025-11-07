@@ -625,7 +625,7 @@ function UILibrary:AddTextBox(tab, config)
 	return container
 end
 
--- NEW: Dropdown Element (FIXED VERSION)
+-- NEW: Dropdown Element (FIXED POSITION VERSION)
 function UILibrary:AddDropdown(tab, config)
 	config = config or {}
 	local label = config.Label or "Dropdown"
@@ -691,7 +691,6 @@ function UILibrary:AddDropdown(tab, config)
 	-- Dropdown list (moved to ScreenGui level to appear above other elements)
 	local listFrame = Instance.new("Frame")
 	listFrame.Size = UDim2.new(0, dropdownFrame.AbsoluteSize.X, 0, 0)
-	listFrame.Position = UDim2.fromOffset(dropdownFrame.AbsolutePosition.X, dropdownFrame.AbsolutePosition.Y + dropdownFrame.AbsoluteSize.Y + 2)
 	listFrame.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
 	listFrame.BorderSizePixel = 0
 	listFrame.Visible = false
@@ -715,6 +714,20 @@ function UILibrary:AddDropdown(tab, config)
 		listFrame.Size = UDim2.new(0, dropdownFrame.AbsoluteSize.X, 0, maxHeight)
 	end
 
+	local function updateListPosition()
+		if not dropdownFrame then return end
+		
+		-- Get the absolute position of the dropdown button
+		local dropdownAbsPos = dropdownFrame.AbsolutePosition
+		local dropdownAbsSize = dropdownFrame.AbsoluteSize
+		
+		-- Position the list frame directly below the dropdown button
+		listFrame.Position = UDim2.new(
+			0, dropdownAbsPos.X,
+			0, dropdownAbsPos.Y + dropdownAbsSize.Y + 2
+		)
+	end
+
 	local function closeDropdown()
 		if not isOpen then return end
 		isOpen = false
@@ -728,14 +741,11 @@ function UILibrary:AddDropdown(tab, config)
 		if isOpen then return end
 		isOpen = true
 		
-		-- Update position in case the window moved
-		listFrame.Position = UDim2.fromOffset(
-			dropdownFrame.AbsolutePosition.X,
-			dropdownFrame.AbsolutePosition.Y + dropdownFrame.AbsoluteSize.Y + 2
-		)
+		-- Update position and size before showing
+		updateListPosition()
+		updateListSize()
 		
 		listFrame.Visible = true
-		updateListSize()
 		tween(listFrame, { 
 			Size = UDim2.new(0, dropdownFrame.AbsoluteSize.X, 0, math.min(#options * 26, 130)) 
 		}, 0.2)
@@ -825,16 +835,16 @@ function UILibrary:AddDropdown(tab, config)
 	-- Update dropdown position when window moves (for draggable window)
 	local function updateDropdownPosition()
 		if isOpen then
-			listFrame.Position = UDim2.fromOffset(
-				dropdownFrame.AbsolutePosition.X,
-				dropdownFrame.AbsolutePosition.Y + dropdownFrame.AbsoluteSize.Y + 2
-			)
+			updateListPosition()
 		end
 	end
 
-	-- Listen for window movement
+	-- Listen for window movement and size changes
 	self.MainFrame:GetPropertyChangedSignal("Position"):Connect(updateDropdownPosition)
 	self.MainFrame:GetPropertyChangedSignal("Size"):Connect(updateDropdownPosition)
+	
+	-- Also update when the tab container changes (in case of scrolling)
+	tab.Container:GetPropertyChangedSignal("CanvasPosition"):Connect(updateDropdownPosition)
 
 	-- Hover effects
 	container.MouseEnter:Connect(function()
