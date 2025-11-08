@@ -24,7 +24,7 @@ local FNAF_ESP_DATA = {
     ["The Puppet"] = {P = {"Animatronics", "Puppet", "PuppetNPC"}, CO = Color3.new(0, 0, 0), CF = Color3.new(0.1, 0.1, 0.1), GN = "PuppetFNAFESPGUI", T = "Other"},
     Mangle = {P = {"Animatronics", "Mangle", "MangleNPC"}, CO = Color3.new(0.7, 0.2, 0.5), CF = Color3.new(0.8, 0.4, 0.6), GN = "MangleFNAFESPGUI", T = "Other"},
     ["Balloon Boy"] = {P = {"Animatronics", "BalloonBoy", "BalloonBoyNPC"}, CO = Color3.new(0.1, 0.8, 0.8), CF = Color3.new(0.2, 0.9, 0.9), GN = "BBoyFNAFESPGUI", T = "Other"},
-    Springtrap = {T = "FNAF3", CO = Color3.new(0.1, 0.1, 0.05), CF = Color3.new(0.2, 0.4, 0.1), GN = "SpringtrapFNAFESPGUI", P_Dynamic = {{"Animatronics", "Springtrap", "SpringtrapNPC", "Springtrap"}}},
+    Springtrap = {T = "FNAF3", CO = Color3.new(0.1, 0.1, 0.05), CF = Color3.new(0.2, 0.4, 0.1), GN = "SpringtrapFNAFESPGUI", P = {"Animatronics", "Springtrap", "SpringtrapNPC"}},
     ["Nightmare Bonnie"] = {P = {"Animatronics", "Bonnie", "BonnieNPC"}, CO = Color3.fromRGB(0, 0, 255), CF = Color3.new(0.4, 0.4, 1), GN = "NBonnaFNAFESPGUI", T = "FNAF4"},
     ["Nightmare Chica"] = {P = {"Animatronics", "Chica", "ChicaNPC"}, CO = Color3.fromRGB(255, 255, 0), CF = Color3.new(1, 1, 0), GN = "NChicaFNAFESPGUI", T = "FNAF4"},
     ["Nightmare Foxy"] = {P = {"Animatronics", "Foxy", "FoxyNPC"}, CO = Color3.fromRGB(255, 0, 0), CF = Color3.new(1, 0.4, 0.4), GN = "NFoxyFNAFESPGUI", T = "FNAF4"},
@@ -35,9 +35,7 @@ local FNAF_ESP_DATA = {
 
 local Window = UILibrary:CreateWindow({
     Title = "FNAF Co-Op Script",
-    Size = UDim2.fromOffset(350, 400),
-    MinimizeKey = Enum.KeyCode.RightControl,
-    Name = "FNAFCoOpUI"
+    MinimizeKey = Enum.KeyCode.RightControl
 })
 
 local FNAF1Tab = Window:AddTab("FNAF 1")
