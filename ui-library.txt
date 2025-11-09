@@ -730,65 +730,26 @@ function UILibrary:AddTextBox(tab, config)
 	return container
 end
 
--- Improved Notification System (Better Spacing and Layout)
-function UILibrary:Notify(titleText, description, duration, notifType)
+-- Improved Notification System (Fixed - Progress Bar Inside Notification)
+function UILibrary:Notify(titleText, description, duration)
     duration = duration or 3
-    notifType = notifType or "info" -- "info", "success", "error"
     
-    -- Adaptive sizing for PC vs Mobile with better spacing
+    -- Adaptive sizing for PC vs Mobile
     local isMobile = UIS.TouchEnabled
-    local notificationWidth = isMobile and 300 or 340
-    local baseHeight = isMobile and 70 or 80
+    local notificationWidth = isMobile and 280 or 320
+    local notificationHeight = isMobile and 60 or 70
     local fontSize = isMobile and 12 or 13
-    local titleFontSize = isMobile and 14 or 15
+    local titleFontSize = isMobile and 13 or 14
     
-    -- Calculate dynamic height based on description
-    local descriptionHeight = 0
-    if description then
-        local textSize = TextService:GetTextSize(
-            description, 
-            fontSize, 
-            FancyFont, 
-            Vector2.new(notificationWidth - 80, 1000)
-        )
-        descriptionHeight = math.min(textSize.Y, 60) -- Cap at 60 pixels
-    end
-    
-    local notificationHeight = baseHeight + descriptionHeight
-    
-    -- Define notification types with emojis and colors
-    local typeConfig = {
-        info = {
-            emoji = "ℹ️",
-            color = UILibrary.Theme.AccentColor,
-            bgColor = UILibrary.Theme.SecondaryBackground
-        },
-        success = {
-            emoji = "✅",
-            color = Color3.fromRGB(46, 204, 113), -- Green
-            bgColor = UILibrary.Theme.SecondaryBackground
-        },
-        error = {
-            emoji = "❌",
-            color = Color3.fromRGB(231, 76, 60), -- Red
-            bgColor = UILibrary.Theme.SecondaryBackground
-        }
-    }
-    
-    local config = typeConfig[notifType] or typeConfig.info
-
     local notification = Instance.new("Frame")
-    local progressContainer = Instance.new("Frame")
-    local progressBar = Instance.new("Frame")
+    local line = Instance.new("Frame")
     local title = Instance.new("TextLabel")
     local desc = Instance.new("TextLabel")
     local closeBtn = Instance.new("TextButton")
-    local icon = Instance.new("TextLabel")
-    local contentPadding = Instance.new("UIPadding")
 
     -- Use library theme colors
-    local bgColor = config.bgColor
-    local accentColor = config.color
+    local bgColor = UILibrary.Theme.SecondaryBackground
+    local accentColor = UILibrary.Theme.NotificationAccent
     local primaryText = UILibrary.Theme.PrimaryText
     local secondaryText = UILibrary.Theme.SecondaryText
 
@@ -804,64 +765,36 @@ function UILibrary:Notify(titleText, description, duration, notifType)
     createCorner(notification, UILibrary.Theme.CornerRadius)
     createStroke(notification, UILibrary.Theme.StrokeColor, 1)
 
-    -- Add internal padding for content
-    contentPadding.Parent = notification
-    contentPadding.PaddingTop = UDim.new(0, 12)
-    contentPadding.PaddingBottom = UDim.new(0, 12)
-    contentPadding.PaddingLeft = UDim.new(0, 12)
-    contentPadding.PaddingRight = UDim.new(0, 12)
+    -- Progress bar at bottom (INSIDE the notification)
+    line.Name = "Line"
+    line.Parent = notification
+    line.BackgroundColor3 = accentColor
+    line.BorderSizePixel = 0
+    line.Position = UDim2.new(0, 0, 1, -2) -- Position inside at bottom
+    line.Size = UDim2.new(0, 0, 0, 2)
+    line.ZIndex = 201
+    createCorner(line, 1)
 
-    -- Progress container (inside notification, at bottom)
-    progressContainer.Name = "ProgressContainer"
-    progressContainer.Parent = notification
-    progressContainer.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
-    progressContainer.BorderSizePixel = 0
-    progressContainer.Position = UDim2.new(0, 0, 1, -6)
-    progressContainer.Size = UDim2.new(1, 0, 0, 4)
-    createCorner(progressContainer, 2)
-
-    -- Progress bar (inside progress container)
-    progressBar.Name = "ProgressBar"
-    progressBar.Parent = progressContainer
-    progressBar.BackgroundColor3 = accentColor
-    progressBar.BorderSizePixel = 0
-    progressBar.Size = UDim2.new(0, 0, 1, 0)
-    createCorner(progressBar, 2)
-
-    -- Notification icon with emoji (larger and better positioned)
-    icon.Name = "Icon"
-    icon.Parent = notification
-    icon.BackgroundTransparency = 1
-    icon.Position = UDim2.new(0, 12, 0, 12)
-    icon.Size = UDim2.new(0, 24, 0, 24)
-    icon.Font = Enum.Font.SourceSansBold
-    icon.Text = config.emoji
-    icon.TextColor3 = accentColor
-    icon.TextSize = 16
-    icon.TextScaled = false
-    icon.TextXAlignment = Enum.TextXAlignment.Center
-    icon.TextYAlignment = Enum.TextYAlignment.Center
-
-    -- Close button (better positioning)
+    -- Close button
     closeBtn.Name = "CloseButton"
     closeBtn.Parent = notification
     closeBtn.BackgroundTransparency = 1
-    closeBtn.Position = UDim2.new(1, -28, 0, 8)
+    closeBtn.Position = UDim2.new(1, -25, 0, 5)
     closeBtn.Size = UDim2.new(0, 20, 0, 20)
     closeBtn.Font = FancyFontBold
     closeBtn.Text = "×"
     closeBtn.TextColor3 = UILibrary.Theme.TertiaryText
-    closeBtn.TextSize = 18
+    closeBtn.TextSize = 16
     closeBtn.TextScaled = false
     closeBtn.AutoButtonColor = false
     closeBtn.ZIndex = 201
 
-    -- Title (better positioning with more space)
+    -- Title with automatic scaling (moved left since no icon)
     title.Name = "Title"
     title.Parent = notification
     title.BackgroundTransparency = 1
-    title.Position = UDim2.new(0, 44, 0, 12)
-    title.Size = UDim2.new(1, -72, 0, 20)
+    title.Position = UDim2.new(0, 12, 0, 8)
+    title.Size = UDim2.new(1, -45, 0, 18)
     title.Font = FancyFontBold
     title.Text = titleText or "Notification"
     title.TextColor3 = primaryText
@@ -870,13 +803,14 @@ function UILibrary:Notify(titleText, description, duration, notifType)
     title.TextYAlignment = Enum.TextYAlignment.Top
     title.TextTruncate = Enum.TextTruncate.AtEnd
     title.ClipsDescendants = true
+    title.ZIndex = 201
 
-    -- Description (better positioning with dynamic height)
+    -- Description with automatic scaling (moved left since no icon)
     desc.Name = "Description"
     desc.Parent = notification
     desc.BackgroundTransparency = 1
-    desc.Position = UDim2.new(0, 44, 0, 36)
-    desc.Size = UDim2.new(1, -52, 0, descriptionHeight)
+    desc.Position = UDim2.new(0, 12, 0, isMobile and 26 or 28)
+    desc.Size = UDim2.new(1, -45, 0, isMobile and 28 or 32)
     desc.Font = FancyFont
     desc.Text = description or ""
     desc.TextColor3 = secondaryText
@@ -886,7 +820,15 @@ function UILibrary:Notify(titleText, description, duration, notifType)
     desc.TextWrapped = true
     desc.TextTruncate = Enum.TextTruncate.AtEnd
     desc.ClipsDescendants = true
-    desc.AutomaticSize = Enum.AutomaticSize.Y
+    desc.ZIndex = 201
+
+    -- Auto-resize description based on text length
+    if description then
+        local textSize = TextService:GetTextSize(description, fontSize, FancyFont, Vector2.new(desc.AbsoluteSize.X, 1000))
+        if textSize.Y > desc.AbsoluteSize.Y then
+            desc.TextWrapped = true
+        end
+    end
 
     -- Close button interactions
     closeBtn.MouseEnter:Connect(function()
@@ -912,10 +854,7 @@ function UILibrary:Notify(titleText, description, duration, notifType)
         end
 
         -- Slide out animation
-        local slideOut = tween(notification, {
-            Position = UDim2.new(1, 5, 0, 10),
-            BackgroundTransparency = 1
-        }, 0.25)
+        local slideOut = tween(notification, {Position = UDim2.new(1, 5, 0, 10)}, 0.25)
         
         -- Wait for animation to complete then destroy
         if slideOut then
@@ -938,17 +877,11 @@ function UILibrary:Notify(titleText, description, duration, notifType)
         end
     end)
 
-    -- Animation sequence with fade in
-    notification.BackgroundTransparency = 1
-    local fadeIn = tween(notification, {BackgroundTransparency = 0}, 0.2)
-    local slideIn = tween(notification, {
-        Position = UDim2.new(1, -notificationWidth - 5, 0, 10)
-    }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    -- Animation sequence
+    local slideIn = tween(notification, {Position = UDim2.new(1, -notificationWidth - 5, 0, 10)}, 0.3)
     
-    -- Progress bar animation
-    local progressTween = tween(progressBar, {
-        Size = UDim2.new(1, 0, 1, 0)
-    }, duration, Enum.EasingStyle.Linear)
+    -- Progress bar animation (INSIDE the notification)
+    local progressTween = tween(line, {Size = UDim2.new(1, 0, 0, 2)}, duration, Enum.EasingStyle.Linear)
     
     -- Auto-destroy after duration
     task.delay(duration, function()
