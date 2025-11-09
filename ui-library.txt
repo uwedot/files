@@ -730,86 +730,166 @@ function UILibrary:AddTextBox(tab, config)
 	return container
 end
 
--- Notification System
+-- Improved Notification System
 function UILibrary:Notify(titleText, description, duration)
-	local notification = Instance.new("Frame")
-	local line = Instance.new("Frame")
-	local icon = Instance.new("ImageLabel")
-	local title = Instance.new("TextLabel")
-	local desc = Instance.new("TextLabel")
+    duration = duration or 3
+    
+    -- Adaptive sizing for PC vs Mobile
+    local isMobile = UIS.TouchEnabled
+    local notificationWidth = isMobile and 280 or 320
+    local notificationHeight = isMobile and 60 or 70
+    local fontSize = isMobile and 12 or 13
+    local titleFontSize = isMobile and 13 or 14
+    
+    local notification = Instance.new("Frame")
+    local line = Instance.new("Frame")
+    local icon = Instance.new("ImageLabel")
+    local title = Instance.new("TextLabel")
+    local desc = Instance.new("TextLabel")
+    local closeBtn = Instance.new("TextButton")
 
-	-- Use library theme colors
-	local bgColor = UILibrary.Theme.SecondaryBackground
-	local accentColor = UILibrary.Theme.NotificationAccent
-	local primaryText = UILibrary.Theme.PrimaryText
-	local secondaryText = UILibrary.Theme.SecondaryText
+    -- Use library theme colors
+    local bgColor = UILibrary.Theme.SecondaryBackground
+    local accentColor = UILibrary.Theme.NotificationAccent
+    local primaryText = UILibrary.Theme.PrimaryText
+    local secondaryText = UILibrary.Theme.SecondaryText
 
-	notification.Name = "Notification"
-	notification.Parent = self.ScreenGui
-	notification.BackgroundColor3 = bgColor
-	notification.BackgroundTransparency = 0.1
-	notification.BorderSizePixel = 0
-	notification.Position = UDim2.new(1, 5, 0, 75)
-	notification.Size = UDim2.new(0, 350, 0, 70)
-	notification.ZIndex = 200
-	createCorner(notification, UILibrary.Theme.CornerRadius)
-	createStroke(notification, UILibrary.Theme.StrokeColor, 1)
+    notification.Name = "Notification"
+    notification.Parent = self.ScreenGui
+    notification.BackgroundColor3 = bgColor
+    notification.BackgroundTransparency = 0
+    notification.BorderSizePixel = 0
+    notification.Position = UDim2.new(1, 5, 0, 10)
+    notification.Size = UDim2.new(0, notificationWidth, 0, notificationHeight)
+    notification.ZIndex = 200
+    notification.ClipsDescendants = true
+    createCorner(notification, UILibrary.Theme.CornerRadius)
+    createStroke(notification, UILibrary.Theme.StrokeColor, 1)
 
-	line.Name = "Line"
-	line.Parent = notification
-	line.BackgroundColor3 = accentColor
-	line.BorderSizePixel = 0
-	line.Position = UDim2.new(0, 0, 1, -4)
-	line.Size = UDim2.new(0, 0, 0, 4)
-	createCorner(line, 2)
+    -- Progress bar at bottom
+    line.Name = "Line"
+    line.Parent = notification
+    line.BackgroundColor3 = accentColor
+    line.BorderSizePixel = 0
+    line.Position = UDim2.new(0, 0, 1, -2)
+    line.Size = UDim2.new(0, 0, 0, 2)
+    createCorner(line, 1)
 
-	icon.Name = "Icon"
-	icon.Parent = notification
-	icon.BackgroundTransparency = 1
-	icon.Position = UDim2.new(0, 12, 0.5, -20)
-	icon.Size = UDim2.new(0, 40, 0, 40)
-	icon.Image = "rbxassetid://3944668821"
-	icon.ImageColor3 = accentColor
-	icon.ScaleType = Enum.ScaleType.Fit
+    -- Compact icon
+    icon.Name = "Icon"
+    icon.Parent = notification
+    icon.BackgroundTransparency = 1
+    icon.Position = UDim2.new(0, 8, 0.5, -10)
+    icon.Size = UDim2.new(0, 20, 0, 20)
+    icon.Image = "rbxassetid://3944668821" -- Info icon
+    icon.ImageColor3 = accentColor
+    icon.ScaleType = Enum.ScaleType.Fit
 
-	title.Name = "Title"
-	title.Parent = notification
-	title.BackgroundColor3 = primaryText
-	title.BackgroundTransparency = 1
-	title.Position = UDim2.new(0, 62, 0, 12)
-	title.Size = UDim2.new(1, -70, 0, 18)
-	title.Font = FancyFontBold
-	title.Text = titleText or "Notification"
-	title.TextColor3 = primaryText
-	title.TextSize = 14
-	title.TextXAlignment = Enum.TextXAlignment.Left
-	title.TextYAlignment = Enum.TextYAlignment.Top
+    -- Close button
+    closeBtn.Name = "CloseButton"
+    closeBtn.Parent = notification
+    closeBtn.BackgroundTransparency = 1
+    closeBtn.Position = UDim2.new(1, -25, 0, 5)
+    closeBtn.Size = UDim2.new(0, 20, 0, 20)
+    closeBtn.Font = FancyFontBold
+    closeBtn.Text = "×"
+    closeBtn.TextColor3 = UILibrary.Theme.TertiaryText
+    closeBtn.TextSize = 16
+    closeBtn.TextScaled = false
+    closeBtn.AutoButtonColor = false
+    closeBtn.ZIndex = 201
 
-	desc.Name = "Description"
-	desc.Parent = notification
-	desc.BackgroundColor3 = secondaryText
-	desc.BackgroundTransparency = 1
-	desc.Position = UDim2.new(0, 62, 0, 32)
-	desc.Size = UDim2.new(1, -70, 0, 30)
-	desc.Font = FancyFont
-	desc.Text = description or ""
-	desc.TextColor3 = secondaryText
-	desc.TextSize = 12
-	desc.TextXAlignment = Enum.TextXAlignment.Left
-	desc.TextYAlignment = Enum.TextYAlignment.Top
-	desc.TextWrapped = true
+    -- Title with automatic scaling
+    title.Name = "Title"
+    title.Parent = notification
+    title.BackgroundTransparency = 1
+    title.Position = UDim2.new(0, 35, 0, 8)
+    title.Size = UDim2.new(1, -65, 0, 18)
+    title.Font = FancyFontBold
+    title.Text = titleText or "Notification"
+    title.TextColor3 = primaryText
+    title.TextSize = titleFontSize
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.TextYAlignment = Enum.TextYAlignment.Top
+    title.TextTruncate = Enum.TextTruncate.AtEnd
+    title.ClipsDescendants = true
 
-	-- Animation sequence
-	notification:TweenPosition(UDim2.new(1, -355, 0, 75), "Out", "Sine", 0.35)
-	task.wait(0.35)
-	
-	line:TweenSize(UDim2.new(1, 0, 0, 4), "Out", "Linear", duration or 3)
-	task.wait(duration or 3)
-	
-	notification:TweenPosition(UDim2.new(1, 5, 0, 75), "Out", "Sine", 0.35)
-	task.wait(0.35)
-	
-	notification:Destroy()
+    -- Description with automatic scaling
+    desc.Name = "Description"
+    desc.Parent = notification
+    desc.BackgroundTransparency = 1
+    desc.Position = UDim2.new(0, 35, 0, isMobile and 26 or 28)
+    desc.Size = UDim2.new(1, -65, 0, isMobile and 28 or 32)
+    desc.Font = FancyFont
+    desc.Text = description or ""
+    desc.TextColor3 = secondaryText
+    desc.TextSize = fontSize
+    desc.TextXAlignment = Enum.TextXAlignment.Left
+    desc.TextYAlignment = Enum.TextYAlignment.Top
+    desc.TextWrapped = true
+    desc.TextTruncate = Enum.TextTruncate.AtEnd
+    desc.ClipsDescendants = true
+
+    -- Auto-resize description based on text length
+    if description then
+        local textSize = TextService:GetTextSize(description, fontSize, FancyFont, Vector2.new(desc.AbsoluteSize.X, 1000))
+        if textSize.Y > desc.AbsoluteSize.Y then
+            desc.TextWrapped = true
+        end
+    end
+
+    -- Close button interactions
+    closeBtn.MouseEnter:Connect(function()
+        tween(closeBtn, {TextColor3 = UILibrary.Theme.PrimaryText}, 0.1)
+    end)
+    
+    closeBtn.MouseLeave:Connect(function()
+        tween(closeBtn, {TextColor3 = UILibrary.Theme.TertiaryText}, 0.1)
+    end)
+
+    local destroyNotification
+    destroyNotification = function()
+        -- Stop any ongoing animations
+        for _, tweenObj in pairs(notification:GetChildren()) do
+            if tweenObj:IsA("Tween") then
+                tweenObj:Cancel()
+            end
+        end
+
+        notification:TweenPosition(UDim2.new(1, 5, 0, 10), "Out", "Sine", 0.25)
+        task.wait(0.25)
+        notification:Destroy()
+    end
+
+    closeBtn.MouseButton1Click:Connect(destroyNotification)
+
+    -- Click anywhere on notification to close (optional)
+    notification.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            destroyNotification()
+        end
+    end)
+
+    -- Animation sequence
+    notification:TweenPosition(UDim2.new(1, -notificationWidth - 5, 0, 10), "Out", "Sine", 0.3)
+    
+    -- Progress bar animation
+    line:TweenSize(UDim2.new(1, 0, 0, 2), "Linear", "Linear", duration)
+    
+    -- Auto-destroy after duration
+    task.spawn(function()
+        local startTime = tick()
+        while notification and notification.Parent do
+            local elapsed = tick() - startTime
+            if elapsed >= duration then
+                destroyNotification()
+                break
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    return notification
 end
 
 function UILibrary:SetupDragging()
