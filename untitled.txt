@@ -113,9 +113,7 @@ end
 
 function ConnectionManager:Add(connection)
     if self.Disconnected then
-        if connection and type(connection) == "userdata" and connection.Disconnect then
-            connection:Disconnect()
-        end
+        self:SafeDisconnect(connection)
         return
     end
     
@@ -124,25 +122,30 @@ function ConnectionManager:Add(connection)
     end
 end
 
-function ConnectionManager:AddFunction(func)
-    if self.Disconnected then
-        return
+function ConnectionManager:SafeDisconnect(connection)
+    if not connection then return end
+    
+    if type(connection) == "userdata" then
+        -- RBXScriptConnection
+        if connection.Disconnect then
+            pcall(function()
+                connection:Disconnect()
+            end)
+        end
+    elseif type(connection) == "function" then
+        -- Function to call
+        pcall(connection)
     end
-    table.insert(self.Connections, func)
 end
 
 function ConnectionManager:DisconnectAll()
     if self.Disconnected then return end
     self.Disconnected = true
     
-    for _, connection in ipairs(self.Connections) do
-        if type(connection) == "function" then
-            pcall(connection)
-        elseif connection and type(connection) == "userdata" and connection.Disconnect then
-            pcall(function()
-                connection:Disconnect()
-            end)
-        end
+    for i = #self.Connections, 1, -1 do
+        local connection = self.Connections[i]
+        self:SafeDisconnect(connection)
+        self.Connections[i] = nil
     end
     self.Connections = {}
 end
