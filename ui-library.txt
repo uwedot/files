@@ -1,6 +1,7 @@
 local UILibrary = {}
 UILibrary.__index = UILibrary
 
+-- Cache services and functions
 local cloneref = cloneref or function(x) return x end
 local gethui = gethui or function() return nil end
 
@@ -9,864 +10,968 @@ local CoreGui = cloneref(game:GetService("CoreGui"))
 local TweenService = cloneref(game:GetService("TweenService"))
 local TextService = cloneref(game:GetService("TextService"))
 
-local FancyFont = Enum.Font.Gotham
-local FancyFontSemibold = Enum.Font.GothamSemibold
-local FancyFontBold = Enum.Font.GothamBold
+-- Font cache
+local Fonts = {
+    Regular = Enum.Font.Gotham,
+    Semibold = Enum.Font.GothamSemibold,
+    Bold = Enum.Font.GothamBold
+}
+
+-- Theme cache
+UILibrary.Theme = {
+    MainBackground = Color3.fromRGB(18, 18, 22),
+    SecondaryBackground = Color3.fromRGB(28, 28, 35),
+    TertiaryBackground = Color3.fromRGB(38, 38, 45),
+    ElementBackground = Color3.fromRGB(45, 45, 55),
+    AccentColor = Color3.fromRGB(88, 166, 255),
+    AccentHover = Color3.fromRGB(108, 186, 255),
+    AccentDark = Color3.fromRGB(68, 146, 235),
+    HoverColor = Color3.fromRGB(55, 55, 65),
+    PrimaryText = Color3.fromRGB(255, 255, 255),
+    SecondaryText = Color3.fromRGB(220, 220, 230),
+    TertiaryText = Color3.fromRGB(180, 180, 190),
+    MutedText = Color3.fromRGB(140, 140, 150),
+    ScrollBarColor = Color3.fromRGB(100, 100, 110),
+    StrokeColor = Color3.fromRGB(70, 70, 80),
+    NotificationAccent = Color3.fromRGB(241, 196, 15),
+    CornerRadius = 8,
+    ButtonCornerRadius = 6,
+    TitleBarHeight = 36,
+    TabBarHeight = 38,
+    ElementHeight = 32,
+    ElementPadding = 6,
+    ContainerPadding = 10
+}
+
+-- Reusable instance creation functions
+local function createInstance(className, props)
+    local obj = Instance.new(className)
+    for prop, value in pairs(props) do
+        obj[prop] = value
+    end
+    return obj
+end
 
 local function createCorner(parent, radius)
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, radius or 6)
-	c.Parent = parent
-	return c
+    return createInstance("UICorner", {
+        Parent = parent,
+        CornerRadius = UDim.new(0, radius or UILibrary.Theme.CornerRadius)
+    })
 end
 
 local function createStroke(parent, color, thickness)
-	local s = Instance.new("UIStroke")
-	s.Color = color or Color3.fromRGB(70, 70, 70)
-	s.Thickness = thickness or 1
-	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	s.Transparency = 0.5
-	s.Parent = parent
-	return s
+    return createInstance("UIStroke", {
+        Parent = parent,
+        Color = color or UILibrary.Theme.StrokeColor,
+        Thickness = thickness or 1,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Transparency = 0.5
+    })
 end
 
 local function tween(obj, props, duration, style, direction)
-	local info = TweenInfo.new(duration or 0.2, style or Enum.EasingStyle.Quad, direction or Enum.EasingDirection.Out)
-	local t = TweenService:Create(obj, info, props)
-	t:Play()
-	return t
+    local t = TweenService:Create(obj, TweenInfo.new(
+        duration or 0.2, 
+        style or Enum.EasingStyle.Quad, 
+        direction or Enum.EasingDirection.Out
+    ), props)
+    t:Play()
+    return t
 end
 
-UILibrary.Theme = {
-	MainBackground = Color3.fromRGB(18, 18, 22),
-	SecondaryBackground = Color3.fromRGB(28, 28, 35),
-	TertiaryBackground = Color3.fromRGB(38, 38, 45),
-	ElementBackground = Color3.fromRGB(45, 45, 55),
-	AccentColor = Color3.fromRGB(88, 166, 255),
-	AccentHover = Color3.fromRGB(108, 186, 255),
-	AccentDark = Color3.fromRGB(68, 146, 235),
-	HoverColor = Color3.fromRGB(55, 55, 65),
-	PrimaryText = Color3.fromRGB(255, 255, 255),
-	SecondaryText = Color3.fromRGB(220, 220, 230),
-	TertiaryText = Color3.fromRGB(180, 180, 190),
-	MutedText = Color3.fromRGB(140, 140, 150),
-	ScrollBarColor = Color3.fromRGB(100, 100, 110),
-	StrokeColor = Color3.fromRGB(70, 70, 80),
-	NotificationAccent = Color3.fromRGB(241, 196, 15),
-	CornerRadius = 8,
-	ButtonCornerRadius = 6,
-	TitleBarHeight = 36,
-	TabBarHeight = 38,
-	ElementHeight = 32,
-	ElementPadding = 6,
-	ContainerPadding = 10
-}
-
 function UILibrary:CreateWindow(config)
-	local w = setmetatable({}, UILibrary)
-	config = config or {}
-
-	w.Title = config.Title or "UI Panel"
-	w.Size = UDim2.fromOffset(360, 320)
-	w.MinimizeKey = config.MinimizeKey or Enum.KeyCode.RightControl
-	w.ToggleKey = config.ToggleKey or Enum.KeyCode.X
-	w.Connections, w.Elements, w.Tabs = {}, {}, {}
-	w.ActiveTab, w.IsMinimized, w.IsVisible = nil, false, true
-
-	local parent = gethui() or CoreGui
-
-	local existing = parent:FindFirstChild("67Library")
-	if existing then existing:Destroy() end
-
-	w.ScreenGui = Instance.new("ScreenGui")
-	w.ScreenGui.Name = "67Library"
-	w.ScreenGui.ResetOnSpawn = false
-	w.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	w.ScreenGui.IgnoreGuiInset = true
-	w.ScreenGui.DisplayOrder = 100
-	w.ScreenGui.Parent = parent
-
-	w.MainFrame = Instance.new("Frame")
-	w.MainFrame.Size = w.Size
-	w.MainFrame.Position = UDim2.new(0.5, -w.Size.X.Offset / 2, 0.5, -w.Size.Y.Offset / 2)
-	w.MainFrame.BackgroundColor3 = UILibrary.Theme.MainBackground
-	w.MainFrame.BorderSizePixel = 0
-	w.MainFrame.ClipsDescendants = true
-	w.MainFrame.Parent = w.ScreenGui
-	createStroke(w.MainFrame, UILibrary.Theme.StrokeColor, 1)
-
-	w:CreateTitleBar()
-	w:CreateTabBar()
-	w:SetupDragging()
-	if w.MinimizeKey then w:SetupMinimizeKeybind() end
-	w:SetupToggleVisibility()
-	return w
+    local w = setmetatable({}, UILibrary)
+    config = config or {}
+    
+    -- Initialize window properties
+    w.Title = config.Title or "UI Panel"
+    w.Size = UDim2.fromOffset(360, 320)
+    w.MinimizeKey = config.MinimizeKey or Enum.KeyCode.RightControl
+    w.ToggleKey = config.ToggleKey or Enum.KeyCode.X
+    w.Connections, w.Elements, w.Tabs = {}, {}, {}
+    w.ActiveTab, w.IsMinimized, w.IsVisible = nil, false, true
+    
+    -- Create UI hierarchy
+    local parent = gethui() or CoreGui
+    local existing = parent:FindFirstChild("67Library")
+    if existing then existing:Destroy() end
+    
+    w.ScreenGui = createInstance("ScreenGui", {
+        Name = "67Library",
+        ResetOnSpawn = false,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        IgnoreGuiInset = true,
+        DisplayOrder = 100,
+        Parent = parent
+    })
+    
+    w.MainFrame = createInstance("Frame", {
+        Parent = w.ScreenGui,
+        Size = w.Size,
+        Position = UDim2.new(0.5, -w.Size.X.Offset / 2, 0.5, -w.Size.Y.Offset / 2),
+        BackgroundColor3 = UILibrary.Theme.MainBackground,
+        BorderSizePixel = 0,
+        ClipsDescendants = true
+    })
+    
+    createStroke(w.MainFrame)
+    
+    -- Initialize window components
+    w:CreateTitleBar()
+    w:CreateTabBar()
+    w:SetupDragging()
+    if w.MinimizeKey then w:SetupMinimizeKeybind() end
+    w:SetupToggleVisibility()
+    
+    return w
 end
 
 function UILibrary:CreateTitleBar()
-	self.TitleBar = Instance.new("Frame")
-	self.TitleBar.Size = UDim2.new(1, 0, 0, UILibrary.Theme.TitleBarHeight)
-	self.TitleBar.BackgroundColor3 = UILibrary.Theme.SecondaryBackground
-	self.TitleBar.BorderSizePixel = 0
-	self.TitleBar.ClipsDescendants = true
-	self.TitleBar.Parent = self.MainFrame
-
-	self.TitleLabel = Instance.new("TextLabel")
-	self.TitleLabel.Size = UDim2.new(1, -50, 1, 0)
-	self.TitleLabel.Position = UDim2.fromOffset(14, 0)
-	self.TitleLabel.BackgroundTransparency = 1
-	self.TitleLabel.Font = FancyFontBold
-	self.TitleLabel.Text = self.Title
-	self.TitleLabel.TextColor3 = UILibrary.Theme.PrimaryText
-	self.TitleLabel.TextSize = 15
-	self.TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-	self.TitleLabel.Parent = self.TitleBar
-
-	self.MinimizeButton = Instance.new("TextButton")
-	self.MinimizeButton.Size = UDim2.fromOffset(28, 28)
-	self.MinimizeButton.Position = UDim2.new(1, -36, 0.5, -14)
-	self.MinimizeButton.Text = "−"
-	self.MinimizeButton.Font = FancyFontBold
-	self.MinimizeButton.TextSize = 16
-	self.MinimizeButton.BackgroundTransparency = 1
-	self.MinimizeButton.TextColor3 = UILibrary.Theme.SecondaryText
-	self.MinimizeButton.AutoButtonColor = false
-	self.MinimizeButton.BorderSizePixel = 0
-	self.MinimizeButton.Parent = self.TitleBar
-
-	table.insert(self.Connections, self.MinimizeButton.MouseEnter:Connect(function()
-		tween(self.MinimizeButton, { TextColor3 = UILibrary.Theme.AccentColor })
-	end))
-	table.insert(self.Connections, self.MinimizeButton.MouseLeave:Connect(function()
-		tween(self.MinimizeButton, { TextColor3 = UILibrary.Theme.SecondaryText })
-	end))
-	table.insert(self.Connections, self.MinimizeButton.MouseButton1Click:Connect(function()
-		self:ToggleMinimize()
-	end))
+    self.TitleBar = createInstance("Frame", {
+        Parent = self.MainFrame,
+        Size = UDim2.new(1, 0, 0, UILibrary.Theme.TitleBarHeight),
+        BackgroundColor3 = UILibrary.Theme.SecondaryBackground,
+        BorderSizePixel = 0,
+        ClipsDescendants = true
+    })
+    
+    self.TitleLabel = createInstance("TextLabel", {
+        Parent = self.TitleBar,
+        Size = UDim2.new(1, -50, 1, 0),
+        Position = UDim2.fromOffset(14, 0),
+        BackgroundTransparency = 1,
+        Font = Fonts.Bold,
+        Text = self.Title,
+        TextColor3 = UILibrary.Theme.PrimaryText,
+        TextSize = 15,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    self.MinimizeButton = createInstance("TextButton", {
+        Parent = self.TitleBar,
+        Size = UDim2.fromOffset(28, 28),
+        Position = UDim2.new(1, -36, 0.5, -14),
+        Text = "−",
+        Font = Fonts.Bold,
+        TextSize = 16,
+        BackgroundTransparency = 1,
+        TextColor3 = UILibrary.Theme.SecondaryText,
+        AutoButtonColor = false,
+        BorderSizePixel = 0
+    })
+    
+    -- Button interactions
+    local function setupButtonInteraction(button, hoverProps, leaveProps, clickFunc)
+        local enterConn = button.MouseEnter:Connect(function()
+            tween(button, hoverProps)
+        end)
+        
+        local leaveConn = button.MouseLeave:Connect(function()
+            tween(button, leaveProps)
+        end)
+        
+        local clickConn = button.MouseButton1Click:Connect(clickFunc)
+        
+        table.insert(self.Connections, enterConn)
+        table.insert(self.Connections, leaveConn)
+        table.insert(self.Connections, clickConn)
+    end
+    
+    setupButtonInteraction(
+        self.MinimizeButton,
+        {TextColor3 = UILibrary.Theme.AccentColor},
+        {TextColor3 = UILibrary.Theme.SecondaryText},
+        function() self:ToggleMinimize() end
+    )
 end
 
 function UILibrary:CreateTabBar()
-	self.TabBar = Instance.new("Frame")
-	self.TabBar.Size = UDim2.new(1, 0, 0, UILibrary.Theme.TabBarHeight)
-	self.TabBar.Position = UDim2.new(0, 0, 0, UILibrary.Theme.TitleBarHeight)
-	self.TabBar.BackgroundColor3 = UILibrary.Theme.SecondaryBackground
-	self.TabBar.BorderSizePixel = 0
-	self.TabBar.ClipsDescendants = true
-	self.TabBar.Parent = self.MainFrame
-
-	self.TabScrollingFrame = Instance.new("ScrollingFrame")
-	self.TabScrollingFrame.Size = UDim2.new(1, 0, 1, 0)
-	self.TabScrollingFrame.BackgroundTransparency = 1
-	self.TabScrollingFrame.ScrollBarThickness = 0
-	self.TabScrollingFrame.ScrollBarImageColor3 = UILibrary.Theme.ScrollBarColor
-	self.TabScrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.X
-	self.TabScrollingFrame.ScrollingDirection = Enum.ScrollingDirection.X
-	self.TabScrollingFrame.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Left
-	self.TabScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-	self.TabScrollingFrame.Parent = self.TabBar
-
-	local layout = Instance.new("UIListLayout")
-	layout.FillDirection = Enum.FillDirection.Horizontal
-	layout.Padding = UDim.new(0, 8)
-	layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	layout.VerticalAlignment = Enum.VerticalAlignment.Center
-	layout.Parent = self.TabScrollingFrame
-
-	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, 8)
-	padding.PaddingRight = UDim.new(0, 8)
-	padding.Parent = self.TabScrollingFrame
-
-	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		self.TabScrollingFrame.CanvasSize = UDim2.new(0, layout.AbsoluteContentSize.X, 0, 0)
-	end)
+    self.TabBar = createInstance("Frame", {
+        Parent = self.MainFrame,
+        Size = UDim2.new(1, 0, 0, UILibrary.Theme.TabBarHeight),
+        Position = UDim2.new(0, 0, 0, UILibrary.Theme.TitleBarHeight),
+        BackgroundColor3 = UILibrary.Theme.SecondaryBackground,
+        BorderSizePixel = 0,
+        ClipsDescendants = true
+    })
+    
+    self.TabScrollingFrame = createInstance("ScrollingFrame", {
+        Parent = self.TabBar,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        ScrollBarThickness = 0,
+        ScrollBarImageColor3 = UILibrary.Theme.ScrollBarColor,
+        AutomaticCanvasSize = Enum.AutomaticSize.X,
+        ScrollingDirection = Enum.ScrollingDirection.X,
+        VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Left,
+        CanvasSize = UDim2.new(0, 0, 0, 0)
+    })
+    
+    local layout = createInstance("UIListLayout", {
+        Parent = self.TabScrollingFrame,
+        FillDirection = Enum.FillDirection.Horizontal,
+        Padding = UDim.new(0, 8),
+        HorizontalAlignment = Enum.HorizontalAlignment.Left,
+        VerticalAlignment = Enum.VerticalAlignment.Center
+    })
+    
+    createInstance("UIPadding", {
+        Parent = self.TabScrollingFrame,
+        PaddingLeft = UDim.new(0, 8),
+        PaddingRight = UDim.new(0, 8)
+    })
+    
+    -- Auto-size canvas
+    local canvasConn = layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        self.TabScrollingFrame.CanvasSize = UDim2.new(0, layout.AbsoluteContentSize.X, 0, 0)
+    end)
+    
+    table.insert(self.Connections, canvasConn)
 end
 
 function UILibrary:SetupToggleVisibility()
-	if UIS.TouchEnabled then
-		self.ToggleButton = Instance.new("TextButton")
-		self.ToggleButton.Size = UDim2.fromOffset(40, 40)
-		self.ToggleButton.Position = UDim2.new(0, 20, 0, 20)
-		self.ToggleButton.BackgroundColor3 = UILibrary.Theme.AccentColor
-		self.ToggleButton.Text = "+"
-		self.ToggleButton.TextColor3 = UILibrary.Theme.PrimaryText
-		self.ToggleButton.Font = FancyFontBold
-		self.ToggleButton.TextSize = 18
-		self.ToggleButton.AutoButtonColor = false
-		self.ToggleButton.BorderSizePixel = 0
-		self.ToggleButton.ZIndex = 101
-		self.ToggleButton.Parent = self.ScreenGui
-		createCorner(self.ToggleButton, 8)
-		createStroke(self.ToggleButton, UILibrary.Theme.StrokeColor, 1)
-
-		self:SetupToggleButtonDragging()
-
-		self.ToggleButton.MouseEnter:Connect(function()
-			tween(self.ToggleButton, { BackgroundColor3 = UILibrary.Theme.AccentHover }, 0.15)
-		end)
-		self.ToggleButton.MouseLeave:Connect(function()
-			tween(self.ToggleButton, { BackgroundColor3 = UILibrary.Theme.AccentColor }, 0.15)
-		end)
-
-		self.ToggleButton.MouseButton1Click:Connect(function()
-			self:ToggleVisibility()
-		end)
-	else
-		table.insert(self.Connections, UIS.InputBegan:Connect(function(input, gameProcessed)
-			if not gameProcessed and input.KeyCode == self.ToggleKey then
-				self:ToggleVisibility()
-			end
-		end))
-	end
+    if UIS.TouchEnabled then
+        self.ToggleButton = createInstance("TextButton", {
+            Parent = self.ScreenGui,
+            Size = UDim2.fromOffset(40, 40),
+            Position = UDim2.new(0, 20, 0, 20),
+            BackgroundColor3 = UILibrary.Theme.AccentColor,
+            Text = "+",
+            TextColor3 = UILibrary.Theme.PrimaryText,
+            Font = Fonts.Bold,
+            TextSize = 18,
+            AutoButtonColor = false,
+            BorderSizePixel = 0,
+            ZIndex = 101
+        })
+        
+        createCorner(self.ToggleButton, 8)
+        createStroke(self.ToggleButton)
+        
+        self:SetupToggleButtonDragging()
+        
+        -- Toggle button interactions
+        local enterConn = self.ToggleButton.MouseEnter:Connect(function()
+            tween(self.ToggleButton, {BackgroundColor3 = UILibrary.Theme.AccentHover}, 0.15)
+        end)
+        
+        local leaveConn = self.ToggleButton.MouseLeave:Connect(function()
+            tween(self.ToggleButton, {BackgroundColor3 = UILibrary.Theme.AccentColor}, 0.15)
+        end)
+        
+        local clickConn = self.ToggleButton.MouseButton1Click:Connect(function()
+            self:ToggleVisibility()
+        end)
+        
+        table.insert(self.Connections, enterConn)
+        table.insert(self.Connections, leaveConn)
+        table.insert(self.Connections, clickConn)
+    else
+        local keyConn = UIS.InputBegan:Connect(function(input, gameProcessed)
+            if not gameProcessed and input.KeyCode == self.ToggleKey then
+                self:ToggleVisibility()
+            end
+        end)
+        
+        table.insert(self.Connections, keyConn)
+    end
 end
 
 function UILibrary:SetupToggleButtonDragging()
-	local dragging = false
-	local dragStart, startPos
-
-	local function update(input)
-		local delta = input.Position - dragStart
-		self.ToggleButton.Position = UDim2.new(
-			0, startPos.X.Offset + delta.X,
-			0, startPos.Y.Offset + delta.Y
-		)
-	end
-
-	self.ToggleButton.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			dragStart = input.Position
-			startPos = self.ToggleButton.Position
-
-			local connEnd
-			connEnd = input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-					connEnd:Disconnect()
-				end
-			end)
-		end
-	end)
-
-	UIS.InputChanged:Connect(function(input)
-		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-			update(input)
-		end
-	end)
+    local dragging, dragStart, startPos = false
+    
+    local function update(input)
+        local delta = input.Position - dragStart
+        self.ToggleButton.Position = UDim2.new(
+            0, startPos.X.Offset + delta.X,
+            0, startPos.Y.Offset + delta.Y
+        )
+    end
+    
+    local beginConn = self.ToggleButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = self.ToggleButton.Position
+            
+            local connEnd = input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                    if connEnd then
+                        connEnd:Disconnect()
+                    end
+                end
+            end)
+        end
+    end)
+    
+    local changeConn = UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end)
+    
+    table.insert(self.Connections, beginConn)
+    table.insert(self.Connections, changeConn)
 end
 
 function UILibrary:ToggleVisibility()
-	self.IsVisible = not self.IsVisible
-	self.MainFrame.Visible = self.IsVisible
-	
-	if self.ToggleButton then
-		self.ToggleButton.Text = self.IsVisible and "−" or "+"
-	end
+    self.IsVisible = not self.IsVisible
+    self.MainFrame.Visible = self.IsVisible
+    
+    if self.ToggleButton then
+        self.ToggleButton.Text = self.IsVisible and "−" or "+"
+    end
 end
 
 function UILibrary:AddTab(name)
-	local tab = {}
-	tab.Name = name or "Tab"
-	tab.Elements = {}
-
-	tab.Button = Instance.new("TextButton")
-	tab.Button.Size = UDim2.new(0, 110, 0, UILibrary.Theme.TabBarHeight - 10)
-	tab.Button.BackgroundColor3 = UILibrary.Theme.ElementBackground
-	tab.Button.Text = name
-	tab.Button.Font = FancyFontSemibold
-	tab.Button.TextColor3 = UILibrary.Theme.SecondaryText
-	tab.Button.TextSize = 13
-	tab.Button.AutoButtonColor = false
-	tab.Button.BorderSizePixel = 0
-	tab.Button.Parent = self.TabScrollingFrame
-	createCorner(tab.Button, UILibrary.Theme.ButtonCornerRadius)
-
-	tab.Indicator = Instance.new("Frame")
-	tab.Indicator.Size = UDim2.new(0.8, 0, 0, 2)
-	tab.Indicator.Position = UDim2.new(0.1, 0, 1, -3)
-	tab.Indicator.BackgroundColor3 = UILibrary.Theme.AccentColor
-	tab.Indicator.BorderSizePixel = 0
-	tab.Indicator.Visible = false
-	tab.Indicator.Parent = tab.Button
-	createCorner(tab.Indicator, 2)
-
-	tab.Container = Instance.new("ScrollingFrame")
-	tab.Container.Size = UDim2.new(1, 0, 1, -(UILibrary.Theme.TitleBarHeight + UILibrary.Theme.TabBarHeight))
-	tab.Container.Position = UDim2.fromOffset(0, UILibrary.Theme.TitleBarHeight + UILibrary.Theme.TabBarHeight)
-	tab.Container.BackgroundTransparency = 1
-	tab.Container.ScrollBarThickness = 0
-	tab.Container.ScrollBarImageColor3 = UILibrary.Theme.ScrollBarColor
-	tab.Container.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	tab.Container.ScrollingDirection = Enum.ScrollingDirection.Y
-	tab.Container.Active = true
-	tab.Container.Visible = false
-	tab.Container.CanvasSize = UDim2.new(0, 0, 0, 0)
-	tab.Container.Parent = self.MainFrame
-
-	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, UILibrary.Theme.ElementPadding)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	layout.Parent = tab.Container
-
-	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, UILibrary.Theme.ContainerPadding)
-	padding.PaddingTop = UDim.new(0, UILibrary.Theme.ContainerPadding)
-	padding.PaddingRight = UDim.new(0, UILibrary.Theme.ContainerPadding)
-	padding.PaddingBottom = UDim.new(0, UILibrary.Theme.ContainerPadding)
-	padding.Parent = tab.Container
-
-	tab.Button.MouseEnter:Connect(function()
-		if self.ActiveTab ~= tab then
-			tween(tab.Button, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
-		end
-	end)
-
-	tab.Button.MouseLeave:Connect(function()
-		if self.ActiveTab ~= tab then
-			tween(tab.Button, { BackgroundColor3 = UILibrary.Theme.ElementBackground }, 0.15)
-		end
-	end)
-
-	tab.Button.MouseButton1Click:Connect(function()
-		self:SwitchTab(tab)
-	end)
-
-	table.insert(self.Tabs, tab)
-	if not self.ActiveTab then
-		self:SwitchTab(tab)
-	end
-	return tab
+    local tab = {
+        Name = name or "Tab",
+        Elements = {}
+    }
+    
+    -- Tab button
+    tab.Button = createInstance("TextButton", {
+        Parent = self.TabScrollingFrame,
+        Size = UDim2.new(0, 110, 0, UILibrary.Theme.TabBarHeight - 10),
+        BackgroundColor3 = UILibrary.Theme.ElementBackground,
+        Text = name,
+        Font = Fonts.Semibold,
+        TextColor3 = UILibrary.Theme.SecondaryText,
+        TextSize = 13,
+        AutoButtonColor = false,
+        BorderSizePixel = 0
+    })
+    
+    createCorner(tab.Button, UILibrary.Theme.ButtonCornerRadius)
+    
+    -- Tab indicator
+    tab.Indicator = createInstance("Frame", {
+        Parent = tab.Button,
+        Size = UDim2.new(0.8, 0, 0, 2),
+        Position = UDim2.new(0.1, 0, 1, -3),
+        BackgroundColor3 = UILibrary.Theme.AccentColor,
+        BorderSizePixel = 0,
+        Visible = false
+    })
+    
+    createCorner(tab.Indicator, 2)
+    
+    -- Tab container
+    tab.Container = createInstance("ScrollingFrame", {
+        Parent = self.MainFrame,
+        Size = UDim2.new(1, 0, 1, -(UILibrary.Theme.TitleBarHeight + UILibrary.Theme.TabBarHeight)),
+        Position = UDim2.fromOffset(0, UILibrary.Theme.TitleBarHeight + UILibrary.Theme.TabBarHeight),
+        BackgroundTransparency = 1,
+        ScrollBarThickness = 0,
+        ScrollBarImageColor3 = UILibrary.Theme.ScrollBarColor,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        Active = true,
+        Visible = false,
+        CanvasSize = UDim2.new(0, 0, 0, 0)
+    })
+    
+    -- Container layout
+    createInstance("UIListLayout", {
+        Parent = tab.Container,
+        Padding = UDim.new(0, UILibrary.Theme.ElementPadding),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center
+    })
+    
+    createInstance("UIPadding", {
+        Parent = tab.Container,
+        PaddingLeft = UDim.new(0, UILibrary.Theme.ContainerPadding),
+        PaddingTop = UDim.new(0, UILibrary.Theme.ContainerPadding),
+        PaddingRight = UDim.new(0, UILibrary.Theme.ContainerPadding),
+        PaddingBottom = UDim.new(0, UILibrary.Theme.ContainerPadding)
+    })
+    
+    -- Tab interactions
+    local enterConn = tab.Button.MouseEnter:Connect(function()
+        if self.ActiveTab ~= tab then
+            tween(tab.Button, {BackgroundColor3 = UILibrary.Theme.HoverColor}, 0.15)
+        end
+    end)
+    
+    local leaveConn = tab.Button.MouseLeave:Connect(function()
+        if self.ActiveTab ~= tab then
+            tween(tab.Button, {BackgroundColor3 = UILibrary.Theme.ElementBackground}, 0.15)
+        end
+    end)
+    
+    local clickConn = tab.Button.MouseButton1Click:Connect(function()
+        self:SwitchTab(tab)
+    end)
+    
+    table.insert(self.Connections, enterConn)
+    table.insert(self.Connections, leaveConn)
+    table.insert(self.Connections, clickConn)
+    
+    table.insert(self.Tabs, tab)
+    if not self.ActiveTab then
+        self:SwitchTab(tab)
+    end
+    
+    return tab
 end
 
 function UILibrary:SwitchTab(tab)
-	if self.ActiveTab == tab then return end
-
-	for _, t in ipairs(self.Tabs) do
-		t.Container.Visible = false
-		t.Indicator.Visible = false
-		tween(t.Button, {
-			BackgroundColor3 = UILibrary.Theme.ElementBackground,
-			TextColor3 = UILibrary.Theme.SecondaryText
-		}, 0.15)
-	end
-
-	self.ActiveTab = tab
-	tab.Container.Visible = true
-	tab.Indicator.Visible = true
-
-	tween(tab.Button, {
-		BackgroundColor3 = UILibrary.Theme.AccentColor,
-		TextColor3 = UILibrary.Theme.PrimaryText
-	}, 0.15)
-
-	local canvasPositionX = self.TabScrollingFrame.CanvasPosition.X
-	local tabAbsolutePositionX = tab.Button.AbsolutePosition.X
-	local tabAbsoluteSizeX = tab.Button.AbsoluteSize.X
-	local frameAbsoluteSizeX = self.TabScrollingFrame.AbsoluteSize.X
-	local scrollingFrameAbsolutePositionX = self.TabScrollingFrame.AbsolutePosition.X
-
-	local visibleLeft = scrollingFrameAbsolutePositionX
-	local visibleRight = visibleLeft + frameAbsoluteSizeX
-
-	local tabLeft = tabAbsolutePositionX
-	local tabRight = tabLeft + tabAbsoluteSizeX
-
-	if tabLeft < visibleLeft then
-		self.TabScrollingFrame.CanvasPosition = Vector2.new(canvasPositionX - (visibleLeft - tabLeft) - 8, 0)
-	elseif tabRight > visibleRight then
-		self.TabScrollingFrame.CanvasPosition = Vector2.new(canvasPositionX + (tabRight - visibleRight) + 8, 0)
-	end
+    if self.ActiveTab == tab then return end
+    
+    for _, t in ipairs(self.Tabs) do
+        t.Container.Visible = false
+        t.Indicator.Visible = false
+        tween(t.Button, {
+            BackgroundColor3 = UILibrary.Theme.ElementBackground,
+            TextColor3 = UILibrary.Theme.SecondaryText
+        }, 0.15)
+    end
+    
+    self.ActiveTab = tab
+    tab.Container.Visible = true
+    tab.Indicator.Visible = true
+    
+    tween(tab.Button, {
+        BackgroundColor3 = UILibrary.Theme.AccentColor,
+        TextColor3 = UILibrary.Theme.PrimaryText
+    }, 0.15)
+    
+    -- Auto-scroll to make tab visible
+    local canvasPos = self.TabScrollingFrame.CanvasPosition.X
+    local tabPos = tab.Button.AbsolutePosition.X
+    local tabSize = tab.Button.AbsoluteSize.X
+    local frameSize = self.TabScrollingFrame.AbsoluteSize.X
+    local framePos = self.TabScrollingFrame.AbsolutePosition.X
+    
+    local visibleLeft, visibleRight = framePos, framePos + frameSize
+    local tabLeft, tabRight = tabPos, tabPos + tabSize
+    
+    if tabLeft < visibleLeft then
+        self.TabScrollingFrame.CanvasPosition = Vector2.new(canvasPos - (visibleLeft - tabLeft) - 8, 0)
+    elseif tabRight > visibleRight then
+        self.TabScrollingFrame.CanvasPosition = Vector2.new(canvasPos + (tabRight - visibleRight) + 8, 0)
+    end
 end
 
 function UILibrary:AddToggle(tab, config)
-	config = config or {}
-	local label = config.Label or "Toggle"
-	local default = config.Default or false
-	local callback = config.Callback or function() end
-	local val = default
-
-	local container = Instance.new("Frame")
-	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight)
-	container.BackgroundColor3 = UILibrary.Theme.ElementBackground
-	container.BorderSizePixel = 0
-	container.Parent = tab.Container
-	createCorner(container, UILibrary.Theme.CornerRadius)
-
-	local textLabel = Instance.new("TextLabel")
-	textLabel.Size = UDim2.new(1, -60, 1, 0)
-	textLabel.Position = UDim2.fromOffset(12, 0)
-	textLabel.BackgroundTransparency = 1
-	textLabel.Font = FancyFontSemibold
-	textLabel.Text = label
-	textLabel.TextColor3 = UILibrary.Theme.SecondaryText
-	textLabel.TextSize = 13
-	textLabel.TextXAlignment = Enum.TextXAlignment.Left
-	textLabel.Parent = container
-
-	local toggleFrame = Instance.new("Frame")
-	toggleFrame.Size = UDim2.fromOffset(44, 22)
-	toggleFrame.Position = UDim2.new(1, -52, 0.5, -11)
-	toggleFrame.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
-	toggleFrame.Parent = container
-	createCorner(toggleFrame, 11)
-
-	local knob = Instance.new("Frame")
-	knob.Size = UDim2.fromOffset(18, 18)
-	knob.Position = UDim2.fromOffset(2, 2)
-	knob.BackgroundColor3 = UILibrary.Theme.MutedText
-	knob.Parent = toggleFrame
-	createCorner(knob, 9)
-
-	local button = Instance.new("TextButton")
-	button.Size = UDim2.new(1, 0, 1, 0)
-	button.BackgroundTransparency = 1
-	button.Text = ""
-	button.Parent = container
-
-	local function update()
-		if val then
-			tween(toggleFrame, { BackgroundColor3 = UILibrary.Theme.AccentColor }, 0.2)
-			tween(knob, { Position = UDim2.fromOffset(24, 2), BackgroundColor3 = UILibrary.Theme.PrimaryText }, 0.2)
-		else
-			tween(toggleFrame, { BackgroundColor3 = UILibrary.Theme.TertiaryBackground }, 0.2)
-			tween(knob, { Position = UDim2.fromOffset(2, 2), BackgroundColor3 = UILibrary.Theme.MutedText }, 0.2)
-		end
-	end
-
-	button.MouseEnter:Connect(function()
-		tween(container, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
-	end)
-	button.MouseLeave:Connect(function()
-		tween(container, { BackgroundColor3 = UILibrary.Theme.ElementBackground }, 0.15)
-	end)
-	button.MouseButton1Click:Connect(function()
-		val = not val
-		update()
-		callback(val)
-	end)
-
-	update()
-	return container
+    config = config or {}
+    local label, default, callback = config.Label or "Toggle", config.Default or false, config.Callback or function() end
+    local val = default
+    
+    local container = createInstance("Frame", {
+        Parent = tab.Container,
+        Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight),
+        BackgroundColor3 = UILibrary.Theme.ElementBackground,
+        BorderSizePixel = 0
+    })
+    
+    createCorner(container)
+    
+    local textLabel = createInstance("TextLabel", {
+        Parent = container,
+        Size = UDim2.new(1, -60, 1, 0),
+        Position = UDim2.fromOffset(12, 0),
+        BackgroundTransparency = 1,
+        Font = Fonts.Semibold,
+        Text = label,
+        TextColor3 = UILibrary.Theme.SecondaryText,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local toggleFrame = createInstance("Frame", {
+        Parent = container,
+        Size = UDim2.fromOffset(44, 22),
+        Position = UDim2.new(1, -52, 0.5, -11),
+        BackgroundColor3 = UILibrary.Theme.TertiaryBackground
+    })
+    
+    createCorner(toggleFrame, 11)
+    
+    local knob = createInstance("Frame", {
+        Parent = toggleFrame,
+        Size = UDim2.fromOffset(18, 18),
+        Position = UDim2.fromOffset(2, 2),
+        BackgroundColor3 = UILibrary.Theme.MutedText
+    })
+    
+    createCorner(knob, 9)
+    
+    local button = createInstance("TextButton", {
+        Parent = container,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = ""
+    })
+    
+    local function update()
+        if val then
+            tween(toggleFrame, {BackgroundColor3 = UILibrary.Theme.AccentColor}, 0.2)
+            tween(knob, {Position = UDim2.fromOffset(24, 2), BackgroundColor3 = UILibrary.Theme.PrimaryText}, 0.2)
+        else
+            tween(toggleFrame, {BackgroundColor3 = UILibrary.Theme.TertiaryBackground}, 0.2)
+            tween(knob, {Position = UDim2.fromOffset(2, 2), BackgroundColor3 = UILibrary.Theme.MutedText}, 0.2)
+        end
+    end
+    
+    -- Interactions
+    local enterConn = button.MouseEnter:Connect(function()
+        tween(container, {BackgroundColor3 = UILibrary.Theme.HoverColor}, 0.15)
+    end)
+    
+    local leaveConn = button.MouseLeave:Connect(function()
+        tween(container, {BackgroundColor3 = UILibrary.Theme.ElementBackground}, 0.15)
+    end)
+    
+    local clickConn = button.MouseButton1Click:Connect(function()
+        val = not val
+        update()
+        callback(val)
+    end)
+    
+    table.insert(self.Connections, enterConn)
+    table.insert(self.Connections, leaveConn)
+    table.insert(self.Connections, clickConn)
+    
+    update()
+    return container
 end
 
 function UILibrary:AddSlider(tab, config)
-	config = config or {}
-	local label = config.Label or "Slider"
-	local min = config.Min or 0
-	local max = config.Max or 100
-	local default = config.Default or min
-	local increment = config.Increment or 1
-	local callback = config.Callback or function() end
-
-	local function getDecimals()
-		if increment >= 1 then
-			return 0
-		end
-		
-		local incrementStr = tostring(increment)
-		local decimalPart = incrementStr:match("%.(%d+)")
-		if decimalPart then
-			return #decimalPart
-		end
-		return 0
-	end
-
-	local decimals = getDecimals()
-
-	local function snap(v)
-		local s = math.floor((v / increment) + 0.5) * increment
-		return math.clamp(s, min, max)
-	end
-
-	local function format(v)
-		if decimals > 0 then
-			local formatted = string.format("%." .. decimals .. "f", v)
-			formatted = formatted:gsub("0+$", "")
-			formatted = formatted:gsub("%.$", "")
-			return formatted
-		else
-			return tostring(math.floor(v))
-		end
-	end
-
-	local currentValue = snap(default)
-
-	local container = Instance.new("Frame")
-	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight + 12)
-	container.BackgroundColor3 = UILibrary.Theme.ElementBackground
-	container.BorderSizePixel = 0
-	container.Parent = tab.Container
-	createCorner(container, UILibrary.Theme.CornerRadius)
-
-	local labelFrame = Instance.new("Frame")
-	labelFrame.Size = UDim2.new(1, -24, 0, 18)
-	labelFrame.Position = UDim2.fromOffset(12, 6)
-	labelFrame.BackgroundTransparency = 1
-	labelFrame.Parent = container
-
-	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
-	nameLabel.BackgroundTransparency = 1
-	nameLabel.Font = FancyFontSemibold
-	nameLabel.Text = label
-	nameLabel.TextColor3 = UILibrary.Theme.SecondaryText
-	nameLabel.TextSize = 13
-	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-	nameLabel.Parent = labelFrame
-
-	local valueLabel = Instance.new("TextLabel")
-	valueLabel.Size = UDim2.new(0.4, 0, 1, 0)
-	valueLabel.Position = UDim2.new(0.6, 0, 0, 0)
-	valueLabel.BackgroundTransparency = 1
-	valueLabel.Font = FancyFontBold
-	valueLabel.TextColor3 = UILibrary.Theme.AccentColor
-	valueLabel.TextSize = 13
-	valueLabel.TextXAlignment = Enum.TextXAlignment.Right
-	valueLabel.Parent = labelFrame
-
-	local barBack = Instance.new("Frame")
-	barBack.Size = UDim2.new(1, -24, 0, 8)
-	barBack.Position = UDim2.new(0, 12, 1, -14)
-	barBack.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
-	barBack.BorderSizePixel = 0
-	barBack.Parent = container
-	createCorner(barBack, 4)
-
-	local fill = Instance.new("Frame")
-	fill.Size = UDim2.new(0, 0, 1, 0)
-	fill.BackgroundColor3 = UILibrary.Theme.AccentColor
-	fill.BorderSizePixel = 0
-	fill.Parent = barBack
-	createCorner(fill, 4)
-
-	local handle = Instance.new("Frame")
-	handle.Size = UDim2.new(0, 12, 0, 12)
-	handle.BackgroundColor3 = UILibrary.Theme.PrimaryText
-	handle.BorderSizePixel = 0
-	handle.Parent = barBack
-	createCorner(handle, 6)
-
-	local function updateDisplay()
-		valueLabel.Text = format(currentValue)
-		local p = (currentValue - min) / (max - min)
-		fill.Size = UDim2.new(p, 0, 1, 0)
-		handle.Position = UDim2.new(p, -6, 0.5, -6)
-	end
-
-	local dragging = false
-	local function startDrag(input)
-		dragging = true
-		local function update(inputPosition)
-			local x = inputPosition.X - barBack.AbsolutePosition.X
-			local percent = math.clamp(x / barBack.AbsoluteSize.X, 0, 1)
-			currentValue = snap(min + percent * (max - min))
-			updateDisplay()
-			callback(currentValue)
-		end
-
-		update(input.Position)
-
-		local moveConn, endConn
-		moveConn = UIS.InputChanged:Connect(function(i)
-			if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-				update(i.Position)
-			end
-		end)
-
-		endConn = UIS.InputEnded:Connect(function(i)
-			if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-				dragging = false
-				moveConn:Disconnect()
-				endConn:Disconnect()
-			end
-		end)
-	end
-
-	barBack.InputBegan:Connect(function(i)
-		if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-			startDrag(i)
-		end
-	end)
-
-	container.MouseEnter:Connect(function()
-		tween(container, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
-	end)
-
-	container.MouseLeave:Connect(function()
-		if not dragging then
-			tween(container, { BackgroundColor3 = UILibrary.Theme.ElementBackground }, 0.15)
-		end
-	end)
-
-	updateDisplay()
-	return container
+    config = config or {}
+    local label, min, max = config.Label or "Slider", config.Min or 0, config.Max or 100
+    local default, increment, callback = config.Default or min, config.Increment or 1, config.Callback or function() end
+    
+    -- Decimal calculation
+    local function getDecimals()
+        if increment >= 1 then return 0 end
+        local decimalPart = tostring(increment):match("%.(%d+)")
+        return decimalPart and #decimalPart or 0
+    end
+    
+    local decimals = getDecimals()
+    
+    local function snap(v)
+        return math.clamp(math.floor((v / increment) + 0.5) * increment, min, max)
+    end
+    
+    local function format(v)
+        if decimals > 0 then
+            local formatted = string.format("%." .. decimals .. "f", v)
+            return formatted:gsub("0+$", ""):gsub("%.$", "")
+        end
+        return tostring(math.floor(v))
+    end
+    
+    local currentValue = snap(default)
+    
+    local container = createInstance("Frame", {
+        Parent = tab.Container,
+        Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight + 12),
+        BackgroundColor3 = UILibrary.Theme.ElementBackground,
+        BorderSizePixel = 0
+    })
+    
+    createCorner(container)
+    
+    local labelFrame = createInstance("Frame", {
+        Parent = container,
+        Size = UDim2.new(1, -24, 0, 18),
+        Position = UDim2.fromOffset(12, 6),
+        BackgroundTransparency = 1
+    })
+    
+    local nameLabel = createInstance("TextLabel", {
+        Parent = labelFrame,
+        Size = UDim2.new(0.6, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Font = Fonts.Semibold,
+        Text = label,
+        TextColor3 = UILibrary.Theme.SecondaryText,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local valueLabel = createInstance("TextLabel", {
+        Parent = labelFrame,
+        Size = UDim2.new(0.4, 0, 1, 0),
+        Position = UDim2.new(0.6, 0, 0, 0),
+        BackgroundTransparency = 1,
+        Font = Fonts.Bold,
+        TextColor3 = UILibrary.Theme.AccentColor,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Right
+    })
+    
+    local barBack = createInstance("Frame", {
+        Parent = container,
+        Size = UDim2.new(1, -24, 0, 8),
+        Position = UDim2.new(0, 12, 1, -14),
+        BackgroundColor3 = UILibrary.Theme.TertiaryBackground,
+        BorderSizePixel = 0
+    })
+    
+    createCorner(barBack, 4)
+    
+    local fill = createInstance("Frame", {
+        Parent = barBack,
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = UILibrary.Theme.AccentColor,
+        BorderSizePixel = 0
+    })
+    
+    createCorner(fill, 4)
+    
+    local handle = createInstance("Frame", {
+        Parent = barBack,
+        Size = UDim2.new(0, 12, 0, 12),
+        BackgroundColor3 = UILibrary.Theme.PrimaryText,
+        BorderSizePixel = 0
+    })
+    
+    createCorner(handle, 6)
+    
+    local function updateDisplay()
+        valueLabel.Text = format(currentValue)
+        local p = (currentValue - min) / (max - min)
+        fill.Size = UDim2.new(p, 0, 1, 0)
+        handle.Position = UDim2.new(p, -6, 0.5, -6)
+    end
+    
+    local dragging = false
+    
+    local function startDrag(input)
+        dragging = true
+        
+        local function update(inputPosition)
+            local x = inputPosition.X - barBack.AbsolutePosition.X
+            local percent = math.clamp(x / barBack.AbsoluteSize.X, 0, 1)
+            currentValue = snap(min + percent * (max - min))
+            updateDisplay()
+            callback(currentValue)
+        end
+        
+        update(input.Position)
+        
+        local moveConn = UIS.InputChanged:Connect(function(i)
+            if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                update(i.Position)
+            end
+        end)
+        
+        local endConn = UIS.InputEnded:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+                if moveConn then
+                    moveConn:Disconnect()
+                end
+                if endConn then
+                    endConn:Disconnect()
+                end
+            end
+        end)
+    end
+    
+    local barConn = barBack.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            startDrag(i)
+        end
+    end)
+    
+    local enterConn = container.MouseEnter:Connect(function()
+        tween(container, {BackgroundColor3 = UILibrary.Theme.HoverColor}, 0.15)
+    end)
+    
+    local leaveConn = container.MouseLeave:Connect(function()
+        if not dragging then
+            tween(container, {BackgroundColor3 = UILibrary.Theme.ElementBackground}, 0.15)
+        end
+    end)
+    
+    table.insert(self.Connections, barConn)
+    table.insert(self.Connections, enterConn)
+    table.insert(self.Connections, leaveConn)
+    
+    updateDisplay()
+    return container
 end
 
 function UILibrary:AddButton(tab, config)
-	config = config or {}
-	local label = config.Label or "Button"
-	local callback = config.Callback or function() end
-
-	local b = Instance.new("TextButton")
-	b.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight)
-	b.BackgroundColor3 = UILibrary.Theme.AccentColor
-	b.TextColor3 = UILibrary.Theme.PrimaryText
-	b.Font = FancyFontSemibold
-	b.Text = label
-	b.TextSize = 13
-	b.AutoButtonColor = false
-	b.BorderSizePixel = 0
-	b.Parent = tab.Container
-	createCorner(b, UILibrary.Theme.CornerRadius)
-
-	b.MouseEnter:Connect(function()
-		tween(b, { BackgroundColor3 = UILibrary.Theme.AccentHover }, 0.15)
-	end)
-	b.MouseLeave:Connect(function()
-		tween(b, { BackgroundColor3 = UILibrary.Theme.AccentColor }, 0.15)
-	end)
-	b.MouseButton1Click:Connect(function()
-		tween(b, { BackgroundColor3 = UILibrary.Theme.AccentDark }, 0.05)
-		task.wait(0.05)
-		tween(b, { BackgroundColor3 = UILibrary.Theme.AccentColor }, 0.1)
-		callback()
-	end)
-	return b
+    config = config or {}
+    local label, callback = config.Label or "Button", config.Callback or function() end
+    
+    local b = createInstance("TextButton", {
+        Parent = tab.Container,
+        Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight),
+        BackgroundColor3 = UILibrary.Theme.AccentColor,
+        TextColor3 = UILibrary.Theme.PrimaryText,
+        Font = Fonts.Semibold,
+        Text = label,
+        TextSize = 13,
+        AutoButtonColor = false,
+        BorderSizePixel = 0
+    })
+    
+    createCorner(b)
+    
+    local enterConn = b.MouseEnter:Connect(function()
+        tween(b, {BackgroundColor3 = UILibrary.Theme.AccentHover}, 0.15)
+    end)
+    
+    local leaveConn = b.MouseLeave:Connect(function()
+        tween(b, {BackgroundColor3 = UILibrary.Theme.AccentColor}, 0.15)
+    end)
+    
+    local clickConn = b.MouseButton1Click:Connect(function()
+        tween(b, {BackgroundColor3 = UILibrary.Theme.AccentDark}, 0.05)
+        task.wait(0.05)
+        tween(b, {BackgroundColor3 = UILibrary.Theme.AccentColor}, 0.1)
+        callback()
+    end)
+    
+    table.insert(self.Connections, enterConn)
+    table.insert(self.Connections, leaveConn)
+    table.insert(self.Connections, clickConn)
+    
+    return b
 end
 
 function UILibrary:AddLabel(tab, text)
-	local l = Instance.new("TextLabel")
-	l.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight)
-	l.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
-	l.TextColor3 = UILibrary.Theme.TertiaryText
-	l.Font = FancyFont
-	l.Text = text or "Label"
-	l.TextSize = 13
-	l.TextXAlignment = Enum.TextXAlignment.Left
-	l.Parent = tab.Container
-	createCorner(l, UILibrary.Theme.CornerRadius)
-
-	local p = Instance.new("UIPadding")
-	p.PaddingLeft = UDim.new(0, 12)
-	p.Parent = l
-	return l
+    local l = createInstance("TextLabel", {
+        Parent = tab.Container,
+        Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight),
+        BackgroundColor3 = UILibrary.Theme.TertiaryBackground,
+        TextColor3 = UILibrary.Theme.TertiaryText,
+        Font = Fonts.Regular,
+        Text = text or "Label",
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    createCorner(l)
+    
+    createInstance("UIPadding", {
+        Parent = l,
+        PaddingLeft = UDim.new(0, 12)
+    })
+    
+    return l
 end
 
 function UILibrary:AddTextBox(tab, config)
-	config = config or {}
-	local label = config.Label or "Text Box"
-	local placeholder = config.Placeholder or "Enter text..."
-	local default = config.Default or ""
-	local clearOnFocus = config.ClearOnFocus or false
-	local callback = config.Callback or function() end
-
-	local container = Instance.new("Frame")
-	container.Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight)
-	container.BackgroundColor3 = UILibrary.Theme.ElementBackground
-	container.BorderSizePixel = 0
-	container.Parent = tab.Container
-	createCorner(container, UILibrary.Theme.CornerRadius)
-
-	local textLabel = Instance.new("TextLabel")
-	textLabel.Size = UDim2.new(0.4, -6, 1, 0)
-	textLabel.Position = UDim2.fromOffset(12, 0)
-	textLabel.BackgroundTransparency = 1
-	textLabel.Font = FancyFontSemibold
-	textLabel.Text = label
-	textLabel.TextColor3 = UILibrary.Theme.SecondaryText
-	textLabel.TextSize = 13
-	textLabel.TextXAlignment = Enum.TextXAlignment.Left
-	textLabel.Parent = container
-
-	local textBoxFrame = Instance.new("Frame")
-	textBoxFrame.Size = UDim2.new(0.6, -12, 0, 26)
-	textBoxFrame.Position = UDim2.new(0.4, 6, 0.5, -13)
-	textBoxFrame.BackgroundColor3 = UILibrary.Theme.TertiaryBackground
-	textBoxFrame.BorderSizePixel = 0
-	textBoxFrame.Parent = container
-	createCorner(textBoxFrame, 6)
-
-	local textBox = Instance.new("TextBox")
-	textBox.Size = UDim2.new(1, -12, 1, 0)
-	textBox.Position = UDim2.fromOffset(6, 0)
-	textBox.BackgroundTransparency = 1
-	textBox.Font = FancyFont
-	textBox.Text = default
-	textBox.PlaceholderText = placeholder
-	textBox.TextColor3 = UILibrary.Theme.PrimaryText
-	textBox.PlaceholderColor3 = UILibrary.Theme.MutedText
-	textBox.TextSize = 13
-	textBox.ClipsDescendants = true
-	textBox.ClearTextOnFocus = clearOnFocus
-	textBox.Parent = textBoxFrame
-
-	textBox.Focused:Connect(function()
-		tween(textBoxFrame, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
-		createStroke(textBoxFrame, UILibrary.Theme.AccentColor, 1)
-	end)
-
-	textBox.FocusLost:Connect(function(enterPressed)
-		tween(textBoxFrame, { BackgroundColor3 = UILibrary.Theme.TertiaryBackground }, 0.15)
-		for _, child in ipairs(textBoxFrame:GetChildren()) do
-			if child:IsA("UIStroke") then
-				child:Destroy()
-			end
-		end
-		
-		if enterPressed then
-			callback(textBox.Text)
-		end
-	end)
-
-	container.MouseEnter:Connect(function()
-		tween(container, { BackgroundColor3 = UILibrary.Theme.HoverColor }, 0.15)
-	end)
-
-	container.MouseLeave:Connect(function()
-		tween(container, { BackgroundColor3 = UILibrary.Theme.ElementBackground }, 0.15)
-	end)
-
-	return container
+    config = config or {}
+    local label, placeholder = config.Label or "Text Box", config.Placeholder or "Enter text..."
+    local default, clearOnFocus, callback = config.Default or "", config.ClearOnFocus or false, config.Callback or function() end
+    
+    local container = createInstance("Frame", {
+        Parent = tab.Container,
+        Size = UDim2.new(1, 0, 0, UILibrary.Theme.ElementHeight),
+        BackgroundColor3 = UILibrary.Theme.ElementBackground,
+        BorderSizePixel = 0
+    })
+    
+    createCorner(container)
+    
+    local textLabel = createInstance("TextLabel", {
+        Parent = container,
+        Size = UDim2.new(0.4, -6, 1, 0),
+        Position = UDim2.fromOffset(12, 0),
+        BackgroundTransparency = 1,
+        Font = Fonts.Semibold,
+        Text = label,
+        TextColor3 = UILibrary.Theme.SecondaryText,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local textBoxFrame = createInstance("Frame", {
+        Parent = container,
+        Size = UDim2.new(0.6, -12, 0, 26),
+        Position = UDim2.new(0.4, 6, 0.5, -13),
+        BackgroundColor3 = UILibrary.Theme.TertiaryBackground,
+        BorderSizePixel = 0
+    })
+    
+    createCorner(textBoxFrame, 6)
+    
+    local textBox = createInstance("TextBox", {
+        Parent = textBoxFrame,
+        Size = UDim2.new(1, -12, 1, 0),
+        Position = UDim2.fromOffset(6, 0),
+        BackgroundTransparency = 1,
+        Font = Fonts.Regular,
+        Text = default,
+        PlaceholderText = placeholder,
+        TextColor3 = UILibrary.Theme.PrimaryText,
+        PlaceholderColor3 = UILibrary.Theme.MutedText,
+        TextSize = 13,
+        ClipsDescendants = true,
+        ClearTextOnFocus = clearOnFocus
+    })
+    
+    local focusConn = textBox.Focused:Connect(function()
+        tween(textBoxFrame, {BackgroundColor3 = UILibrary.Theme.HoverColor}, 0.15)
+        createStroke(textBoxFrame, UILibrary.Theme.AccentColor, 1)
+    end)
+    
+    local focusLostConn = textBox.FocusLost:Connect(function(enterPressed)
+        tween(textBoxFrame, {BackgroundColor3 = UILibrary.Theme.TertiaryBackground}, 0.15)
+        
+        -- Remove stroke
+        for _, child in ipairs(textBoxFrame:GetChildren()) do
+            if child:IsA("UIStroke") then
+                child:Destroy()
+            end
+        end
+        
+        if enterPressed then
+            callback(textBox.Text)
+        end
+    end)
+    
+    local enterConn = container.MouseEnter:Connect(function()
+        tween(container, {BackgroundColor3 = UILibrary.Theme.HoverColor}, 0.15)
+    end)
+    
+    local leaveConn = container.MouseLeave:Connect(function()
+        tween(container, {BackgroundColor3 = UILibrary.Theme.ElementBackground}, 0.15)
+    end)
+    
+    table.insert(self.Connections, focusConn)
+    table.insert(self.Connections, focusLostConn)
+    table.insert(self.Connections, enterConn)
+    table.insert(self.Connections, leaveConn)
+    
+    return container
 end
 
--- Improved Notification System (Fixed - Progress Bar Inside)
 function UILibrary:Notify(titleText, description, duration)
     duration = duration or 3
     
-    -- Adaptive sizing for PC vs Mobile
     local isMobile = UIS.TouchEnabled
     local notificationWidth = isMobile and 280 or 320
     local notificationHeight = isMobile and 60 or 70
-    local fontSize = isMobile and 12 or 13
-    local titleFontSize = isMobile and 13 or 14
+    local fontSize, titleFontSize = isMobile and 12 or 13, isMobile and 13 or 14
     
-    local notification = Instance.new("Frame")
-    local lineContainer = Instance.new("Frame") -- Container for the progress bar
-    local line = Instance.new("Frame") -- Actual progress bar
-    local title = Instance.new("TextLabel")
-    local desc = Instance.new("TextLabel")
-    local closeBtn = Instance.new("TextButton")
-
-    -- Use library theme colors
-    local bgColor = UILibrary.Theme.SecondaryBackground
-    local accentColor = UILibrary.Theme.NotificationAccent
-    local primaryText = UILibrary.Theme.PrimaryText
-    local secondaryText = UILibrary.Theme.SecondaryText
-
-    notification.Name = "Notification"
-    notification.Parent = self.ScreenGui
-    notification.BackgroundColor3 = bgColor
-    notification.BackgroundTransparency = 0
-    notification.BorderSizePixel = 0
-    notification.Position = UDim2.new(1, 5, 0, 10)
-    notification.Size = UDim2.new(0, notificationWidth, 0, notificationHeight)
-    notification.ZIndex = 200
-    notification.ClipsDescendants = true
-    -- No corners on notification
-    createStroke(notification, UILibrary.Theme.StrokeColor, 1)
-
-    -- Container for progress bar to keep it properly inside
-    lineContainer.Name = "LineContainer"
-    lineContainer.Parent = notification
-    lineContainer.BackgroundColor3 = UILibrary.Theme.TertiaryBackground -- Background for the progress bar track
-    lineContainer.BorderSizePixel = 0
-    lineContainer.Position = UDim2.new(0, 0, 1, -4) -- Position at bottom with some padding
-    lineContainer.Size = UDim2.new(1, 0, 0, 4) -- Full width, 4 pixels tall
-    lineContainer.ZIndex = 201
-    lineContainer.ClipsDescendants = true -- Important: This keeps the progress bar contained
-
-    -- Progress bar (INSIDE the container)
-    line.Name = "Line"
-    line.Parent = lineContainer
-    line.BackgroundColor3 = accentColor
-    line.BorderSizePixel = 0
-    line.Position = UDim2.new(0, 0, 0, 0) -- Start from left
-    line.Size = UDim2.new(0, 0, 1, 0) -- Start at 0 width, full height of container
-    line.ZIndex = 202
-
-    -- Close button
-    closeBtn.Name = "CloseButton"
-    closeBtn.Parent = notification
-    closeBtn.BackgroundTransparency = 1
-    closeBtn.Position = UDim2.new(1, -25, 0, 5)
-    closeBtn.Size = UDim2.new(0, 20, 0, 20)
-    closeBtn.Font = FancyFontBold
-    closeBtn.Text = "×"
-    closeBtn.TextColor3 = UILibrary.Theme.TertiaryText
-    closeBtn.TextSize = 16
-    closeBtn.TextScaled = false
-    closeBtn.AutoButtonColor = false
-    closeBtn.ZIndex = 201
-
-    -- Title with automatic scaling (moved left since no icon)
-    title.Name = "Title"
-    title.Parent = notification
-    title.BackgroundTransparency = 1
-    title.Position = UDim2.new(0, 12, 0, 8)
-    title.Size = UDim2.new(1, -45, 0, 18)
-    title.Font = FancyFontBold
-    title.Text = titleText or "Notification"
-    title.TextColor3 = primaryText
-    title.TextSize = titleFontSize
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.TextYAlignment = Enum.TextYAlignment.Top
-    title.TextTruncate = Enum.TextTruncate.AtEnd
-    title.ClipsDescendants = true
-    title.ZIndex = 201
-
-    -- Description with automatic scaling (moved left since no icon)
-    desc.Name = "Description"
-    desc.Parent = notification
-    desc.BackgroundTransparency = 1
-    desc.Position = UDim2.new(0, 12, 0, isMobile and 26 or 28)
-    desc.Size = UDim2.new(1, -45, 0, isMobile and 28 or 32)
-    desc.Font = FancyFont
-    desc.Text = description or ""
-    desc.TextColor3 = secondaryText
-    desc.TextSize = fontSize
-    desc.TextXAlignment = Enum.TextXAlignment.Left
-    desc.TextYAlignment = Enum.TextYAlignment.Top
-    desc.TextWrapped = true
-    desc.TextTruncate = Enum.TextTruncate.AtEnd
-    desc.ClipsDescendants = true
-    desc.ZIndex = 201
-
-    -- Auto-resize description based on text length
+    local notification = createInstance("Frame", {
+        Parent = self.ScreenGui,
+        Name = "Notification",
+        BackgroundColor3 = UILibrary.Theme.SecondaryBackground,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, 5, 0, 10),
+        Size = UDim2.new(0, notificationWidth, 0, notificationHeight),
+        ZIndex = 200,
+        ClipsDescendants = true
+    })
+    
+    createStroke(notification)
+    
+    -- Progress bar container at the bottom of the notification
+    local progressBarContainer = createInstance("Frame", {
+        Parent = notification,
+        Name = "ProgressBarContainer",
+        BackgroundColor3 = UILibrary.Theme.TertiaryBackground,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 1, -3), -- Positioned at the bottom with small gap
+        Size = UDim2.new(1, 0, 0, 3), -- Thin progress bar
+        ZIndex = 201,
+        ClipsDescendants = true
+    })
+    
+    -- Progress bar fill
+    local progressBar = createInstance("Frame", {
+        Parent = progressBarContainer,
+        Name = "ProgressBar",
+        BackgroundColor3 = UILibrary.Theme.NotificationAccent,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(0, 0, 1, 0), -- Start with 0 width
+        ZIndex = 202
+    })
+    
+    local closeBtn = createInstance("TextButton", {
+        Parent = notification,
+        Name = "CloseButton",
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, -25, 0, 5),
+        Size = UDim2.new(0, 20, 0, 20),
+        Font = Fonts.Bold,
+        Text = "×",
+        TextColor3 = UILibrary.Theme.TertiaryText,
+        TextSize = 16,
+        AutoButtonColor = false,
+        ZIndex = 201
+    })
+    
+    local title = createInstance("TextLabel", {
+        Parent = notification,
+        Name = "Title",
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 12, 0, 8),
+        Size = UDim2.new(1, -45, 0, 18),
+        Font = Fonts.Bold,
+        Text = titleText or "Notification",
+        TextColor3 = UILibrary.Theme.PrimaryText,
+        TextSize = titleFontSize,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        ClipsDescendants = true,
+        ZIndex = 201
+    })
+    
+    local desc = createInstance("TextLabel", {
+        Parent = notification,
+        Name = "Description",
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 12, 0, isMobile and 26 or 28),
+        Size = UDim2.new(1, -45, 0, isMobile and 28 or 32),
+        Font = Fonts.Regular,
+        Text = description or "",
+        TextColor3 = UILibrary.Theme.SecondaryText,
+        TextSize = fontSize,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        TextWrapped = true,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        ClipsDescendants = true,
+        ZIndex = 201
+    })
+    
+    -- Handle text wrapping
     if description then
-        local textSize = TextService:GetTextSize(description, fontSize, FancyFont, Vector2.new(desc.AbsoluteSize.X, 1000))
+        local textSize = TextService:GetTextSize(description, fontSize, Fonts.Regular, Vector2.new(desc.AbsoluteSize.X, 1000))
         if textSize.Y > desc.AbsoluteSize.Y then
             desc.TextWrapped = true
         end
     end
-
+    
     -- Close button interactions
-    closeBtn.MouseEnter:Connect(function()
+    local closeEnterConn = closeBtn.MouseEnter:Connect(function()
         tween(closeBtn, {TextColor3 = UILibrary.Theme.PrimaryText}, 0.1)
     end)
     
-    closeBtn.MouseLeave:Connect(function()
+    local closeLeaveConn = closeBtn.MouseLeave:Connect(function()
         tween(closeBtn, {TextColor3 = UILibrary.Theme.TertiaryText}, 0.1)
     end)
-
-    local destroyNotification
+    
     local destroyed = false
     
-    destroyNotification = function()
+    local function destroyNotification()
         if destroyed then return end
         destroyed = true
         
-        -- Stop any ongoing animations
+        -- Cancel existing tweens
         for _, child in pairs(notification:GetChildren()) do
             if child:IsA("Tween") then
                 child:Cancel()
             end
         end
-
-        -- Slide out animation
+        
         local slideOut = tween(notification, {Position = UDim2.new(1, 5, 0, 10)}, 0.25)
         
-        -- Wait for animation to complete then destroy
         if slideOut then
             slideOut.Completed:Wait()
         end
@@ -875,108 +980,121 @@ function UILibrary:Notify(titleText, description, duration)
             notification:Destroy()
         end
     end
-
-    closeBtn.MouseButton1Click:Connect(destroyNotification)
-
-    -- Click anywhere on notification to close
-    local clickConn
-    clickConn = notification.InputBegan:Connect(function(input)
+    
+    local closeClickConn = closeBtn.MouseButton1Click:Connect(destroyNotification)
+    
+    local clickConn = notification.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             destroyNotification()
-            clickConn:Disconnect()
+            if clickConn then
+                clickConn:Disconnect()
+            end
         end
     end)
-
-    -- Animation sequence
-    local slideIn = tween(notification, {Position = UDim2.new(1, -notificationWidth - 5, 0, 10)}, 0.3)
     
-    -- Progress bar animation (INSIDE the container, properly contained)
-    local progressTween = tween(line, {Size = UDim2.new(1, 0, 1, 0)}, duration, Enum.EasingStyle.Linear)
+    -- Store connections for cleanup
+    table.insert(self.Connections, closeEnterConn)
+    table.insert(self.Connections, closeLeaveConn)
+    table.insert(self.Connections, closeClickConn)
+    table.insert(self.Connections, clickConn)
     
-    -- Auto-destroy after duration
+    -- Animation
+    tween(notification, {Position = UDim2.new(1, -notificationWidth - 5, 0, 10)}, 0.3)
+    tween(progressBar, {Size = UDim2.new(1, 0, 1, 0)}, duration, Enum.EasingStyle.Linear)
+    
     task.delay(duration, function()
         if not destroyed then
             destroyNotification()
         end
     end)
-
+    
     return notification
 end
 
 function UILibrary:SetupDragging()
-	local dragging = false
-	local dragStart, startPos
-
-	local function update(input)
-		local delta = input.Position - dragStart
-		self.MainFrame.Position = UDim2.new(
-			startPos.X.Scale, startPos.X.Offset + delta.X,
-			startPos.Y.Scale, startPos.Y.Offset + delta.Y
-		)
-	end
-
-	self.TitleBar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			dragStart = input.Position
-			startPos = self.MainFrame.Position
-
-			local connEnd
-			connEnd = input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-					connEnd:Disconnect()
-				end
-			end)
-		end
-	end)
-
-	UIS.InputChanged:Connect(function(input)
-		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-			update(input)
-		end
-	end)
+    local dragging, dragStart, startPos = false
+    
+    local function update(input)
+        local delta = input.Position - dragStart
+        self.MainFrame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
+    
+    local beginConn = self.TitleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = self.MainFrame.Position
+            
+            local connEnd = input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                    if connEnd then
+                        connEnd:Disconnect()
+                    end
+                end
+            end)
+        end
+    end)
+    
+    local changeConn = UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end)
+    
+    table.insert(self.Connections, beginConn)
+    table.insert(self.Connections, changeConn)
 end
 
 function UILibrary:SetupMinimizeKeybind()
-	table.insert(self.Connections, UIS.InputBegan:Connect(function(i, g)
-		if not g and i.KeyCode == self.MinimizeKey then
-			self:ToggleMinimize()
-		end
-	end))
+    local keyConn = UIS.InputBegan:Connect(function(i, g)
+        if not g and i.KeyCode == self.MinimizeKey then
+            self:ToggleMinimize()
+        end
+    end)
+    
+    table.insert(self.Connections, keyConn)
 end
 
 function UILibrary:ToggleMinimize()
-	self.IsMinimized = not self.IsMinimized
-	self.MinimizeButton.Text = self.IsMinimized and "+" or "−"
-
-	if self.IsMinimized then
-		tween(self.MainFrame, { Size = UDim2.fromOffset(self.MainFrame.Size.X.Offset, UILibrary.Theme.TitleBarHeight) }, 0.25)
-		if self.ActiveTab then self.ActiveTab.Container.Visible = false end
-		self.TabBar.Visible = false
-	else
-		tween(self.MainFrame, {
-			Size = UDim2.fromOffset(360, 320),
-			Position = UDim2.new(0.5, -180, 0.5, -160)
-		}, 0.25)
-		if self.ActiveTab then self.ActiveTab.Container.Visible = true end
-		self.TabBar.Visible = true
-	end
+    self.IsMinimized = not self.IsMinimized
+    self.MinimizeButton.Text = self.IsMinimized and "+" or "−"
+    
+    if self.IsMinimized then
+        tween(self.MainFrame, {Size = UDim2.fromOffset(self.MainFrame.Size.X.Offset, UILibrary.Theme.TitleBarHeight)}, 0.25)
+        if self.ActiveTab then self.ActiveTab.Container.Visible = false end
+        self.TabBar.Visible = false
+    else
+        tween(self.MainFrame, {
+            Size = UDim2.fromOffset(360, 320),
+            Position = UDim2.new(0.5, -180, 0.5, -160)
+        }, 0.25)
+        if self.ActiveTab then self.ActiveTab.Container.Visible = true end
+        self.TabBar.Visible = true
+    end
 end
 
 function UILibrary:Destroy()
-	for _, c in ipairs(self.Connections) do
-		pcall(function()
-			if c and c.Disconnect then c:Disconnect() end
-		end)
-	end
-	if self.ScreenGui then
-		self.ScreenGui:Destroy()
-	end
-	if self.ToggleButton then
-		self.ToggleButton:Destroy()
-	end
-	self.Connections, self.Elements, self.Tabs = {}, {}, {}
+    for _, c in ipairs(self.Connections) do
+        if type(c) == "table" and c.Disconnect then
+            pcall(c.Disconnect, c)
+        elseif type(c) == "userdata" and c.Disconnect then
+            pcall(c.Disconnect, c)
+        end
+    end
+    
+    if self.ScreenGui then
+        self.ScreenGui:Destroy()
+    end
+    
+    if self.ToggleButton then
+        self.ToggleButton:Destroy()
+    end
+    
+    self.Connections, self.Elements, self.Tabs = {}, {}, {}
 end
 
 return UILibrary
