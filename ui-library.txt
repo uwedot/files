@@ -67,7 +67,7 @@ function UILibrary:CreateWindow(config)
 	config = config or {}
 
 	w.Title = config.Title or "UI Panel"
-	w.Size = UDim2.fromOffset(360, 333)
+	w.Size = UDim2.fromOffset(360, 320) -- Changed from 333 to 320
 	w.MinimizeKey = config.MinimizeKey or Enum.KeyCode.RightControl
 	w.Connections, w.Elements, w.Tabs = {}, {}, {}
 	w.ActiveTab, w.IsMinimized = nil, false
@@ -704,8 +704,8 @@ function UILibrary:ToggleMinimize()
 		self.TabBar.Visible = false
 	else
 		tween(self.MainFrame, {
-			Size = UDim2.fromOffset(360, 333),
-			Position = UDim2.new(0.5, -180, 0.5, -166.5)
+			Size = UDim2.fromOffset(360, 320), -- Changed from 333 to 320
+			Position = UDim2.new(0.5, -180, 0.5, -160) -- Updated Y position calculation for 320 height
 		}, 0.25)
 		if self.ActiveTab then self.ActiveTab.Container.Visible = true end
 		self.TabBar.Visible = true
