@@ -730,7 +730,7 @@ function UILibrary:AddTextBox(tab, config)
 	return container
 end
 
--- Improved Notification System (Fixed Progress Bar)
+-- Improved Notification System (Fixed - Flat Design)
 function UILibrary:Notify(titleText, description, duration)
     duration = duration or 3
     
@@ -742,7 +742,6 @@ function UILibrary:Notify(titleText, description, duration)
     local titleFontSize = isMobile and 13 or 14
     
     local notification = Instance.new("Frame")
-    local lineContainer = Instance.new("Frame")
     local line = Instance.new("Frame")
     local title = Instance.new("TextLabel")
     local desc = Instance.new("TextLabel")
@@ -763,26 +762,17 @@ function UILibrary:Notify(titleText, description, duration)
     notification.Size = UDim2.new(0, notificationWidth, 0, notificationHeight)
     notification.ZIndex = 200
     notification.ClipsDescendants = true
-    createCorner(notification, UILibrary.Theme.CornerRadius)
+    -- Removed createCorner for flat design
     createStroke(notification, UILibrary.Theme.StrokeColor, 1)
 
-    -- Container for progress bar to keep it inside notification bounds
-    lineContainer.Name = "LineContainer"
-    lineContainer.Parent = notification
-    lineContainer.BackgroundTransparency = 1
-    lineContainer.BorderSizePixel = 0
-    lineContainer.Position = UDim2.new(0, 0, 1, -2)
-    lineContainer.Size = UDim2.new(1, 0, 0, 2)
-    lineContainer.ClipsDescendants = true
-
-    -- Progress bar at bottom (now properly contained)
+    -- Progress bar at bottom (flat)
     line.Name = "Line"
-    line.Parent = lineContainer
+    line.Parent = notification
     line.BackgroundColor3 = accentColor
     line.BorderSizePixel = 0
-    line.Position = UDim2.new(0, 0, 0, 0)
-    line.Size = UDim2.new(0, 0, 1, 0)
-    createCorner(line, 1)
+    line.Position = UDim2.new(0, 0, 1, -2)
+    line.Size = UDim2.new(0, 0, 0, 2)
+    -- Removed createCorner for flat progress bar
 
     -- Close button
     closeBtn.Name = "CloseButton"
@@ -887,8 +877,8 @@ function UILibrary:Notify(titleText, description, duration)
     -- Animation sequence
     local slideIn = tween(notification, {Position = UDim2.new(1, -notificationWidth - 5, 0, 10)}, 0.3)
     
-    -- Progress bar animation (now properly contained within lineContainer)
-    local progressTween = tween(line, {Size = UDim2.new(1, 0, 1, 0)}, duration, Enum.EasingStyle.Linear)
+    -- Progress bar animation
+    local progressTween = tween(line, {Size = UDim2.new(1, 0, 0, 2)}, duration, Enum.EasingStyle.Linear)
     
     -- Auto-destroy after duration
     task.delay(duration, function()
