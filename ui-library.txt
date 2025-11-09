@@ -52,6 +52,7 @@ UILibrary.Theme = {
 	MutedText = Color3.fromRGB(140, 140, 150),
 	ScrollBarColor = Color3.fromRGB(100, 100, 110),
 	StrokeColor = Color3.fromRGB(70, 70, 80),
+	NotificationAccent = Color3.fromRGB(241, 196, 15),
 	CornerRadius = 8,
 	ButtonCornerRadius = 6,
 	TitleBarHeight = 36,
@@ -727,6 +728,88 @@ function UILibrary:AddTextBox(tab, config)
 	end)
 
 	return container
+end
+
+-- Notification System
+function UILibrary:Notify(titleText, description, duration)
+	local notification = Instance.new("Frame")
+	local line = Instance.new("Frame")
+	local icon = Instance.new("ImageLabel")
+	local title = Instance.new("TextLabel")
+	local desc = Instance.new("TextLabel")
+
+	-- Use library theme colors
+	local bgColor = UILibrary.Theme.SecondaryBackground
+	local accentColor = UILibrary.Theme.NotificationAccent
+	local primaryText = UILibrary.Theme.PrimaryText
+	local secondaryText = UILibrary.Theme.SecondaryText
+
+	notification.Name = "Notification"
+	notification.Parent = self.ScreenGui
+	notification.BackgroundColor3 = bgColor
+	notification.BackgroundTransparency = 0.1
+	notification.BorderSizePixel = 0
+	notification.Position = UDim2.new(1, 5, 0, 75)
+	notification.Size = UDim2.new(0, 350, 0, 70)
+	notification.ZIndex = 200
+	createCorner(notification, UILibrary.Theme.CornerRadius)
+	createStroke(notification, UILibrary.Theme.StrokeColor, 1)
+
+	line.Name = "Line"
+	line.Parent = notification
+	line.BackgroundColor3 = accentColor
+	line.BorderSizePixel = 0
+	line.Position = UDim2.new(0, 0, 1, -4)
+	line.Size = UDim2.new(0, 0, 0, 4)
+	createCorner(line, 2)
+
+	icon.Name = "Icon"
+	icon.Parent = notification
+	icon.BackgroundTransparency = 1
+	icon.Position = UDim2.new(0, 12, 0.5, -20)
+	icon.Size = UDim2.new(0, 40, 0, 40)
+	icon.Image = "rbxassetid://3944668821"
+	icon.ImageColor3 = accentColor
+	icon.ScaleType = Enum.ScaleType.Fit
+
+	title.Name = "Title"
+	title.Parent = notification
+	title.BackgroundColor3 = primaryText
+	title.BackgroundTransparency = 1
+	title.Position = UDim2.new(0, 62, 0, 12)
+	title.Size = UDim2.new(1, -70, 0, 18)
+	title.Font = FancyFontBold
+	title.Text = titleText or "Notification"
+	title.TextColor3 = primaryText
+	title.TextSize = 14
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.TextYAlignment = Enum.TextYAlignment.Top
+
+	desc.Name = "Description"
+	desc.Parent = notification
+	desc.BackgroundColor3 = secondaryText
+	desc.BackgroundTransparency = 1
+	desc.Position = UDim2.new(0, 62, 0, 32)
+	desc.Size = UDim2.new(1, -70, 0, 30)
+	desc.Font = FancyFont
+	desc.Text = description or ""
+	desc.TextColor3 = secondaryText
+	desc.TextSize = 12
+	desc.TextXAlignment = Enum.TextXAlignment.Left
+	desc.TextYAlignment = Enum.TextYAlignment.Top
+	desc.TextWrapped = true
+
+	-- Animation sequence
+	notification:TweenPosition(UDim2.new(1, -355, 0, 75), "Out", "Sine", 0.35)
+	task.wait(0.35)
+	
+	line:TweenSize(UDim2.new(1, 0, 0, 4), "Out", "Linear", duration or 3)
+	task.wait(duration or 3)
+	
+	notification:TweenPosition(UDim2.new(1, 5, 0, 75), "Out", "Sine", 0.35)
+	task.wait(0.35)
+	
+	notification:Destroy()
 end
 
 function UILibrary:SetupDragging()
