@@ -186,19 +186,22 @@ function UILibrary:SetupToggleVisibility()
 	-- Mobile: Create toggle button
 	if UIS.TouchEnabled then
 		self.ToggleButton = Instance.new("TextButton")
-		self.ToggleButton.Size = UDim2.fromOffset(50, 50)
-		self.ToggleButton.Position = UDim2.new(0, 10, 0.5, -25)
+		self.ToggleButton.Size = UDim2.fromOffset(60, 60)
+		self.ToggleButton.Position = UDim2.new(0, 20, 0, 20)
 		self.ToggleButton.BackgroundColor3 = UILibrary.Theme.AccentColor
 		self.ToggleButton.Text = "☰"
 		self.ToggleButton.TextColor3 = UILibrary.Theme.PrimaryText
-		self.ToggleButton.Font = FancyFontBold
-		self.ToggleButton.TextSize = 16
+		self.ToggleButton.Font = Enum.Font.GothamBold
+		self.ToggleButton.TextSize = 20
 		self.ToggleButton.AutoButtonColor = false
 		self.ToggleButton.BorderSizePixel = 0
 		self.ToggleButton.ZIndex = 101
 		self.ToggleButton.Parent = self.ScreenGui
 		createCorner(self.ToggleButton, 8)
 		createStroke(self.ToggleButton, UILibrary.Theme.StrokeColor, 1)
+
+		-- Make the button draggable
+		self:SetupToggleButtonDragging()
 
 		-- Add hover effects
 		self.ToggleButton.MouseEnter:Connect(function()
@@ -222,13 +225,48 @@ function UILibrary:SetupToggleVisibility()
 	end
 end
 
+function UILibrary:SetupToggleButtonDragging()
+	local dragging = false
+	local dragStart, startPos
+
+	local function update(input)
+		local delta = input.Position - dragStart
+		self.ToggleButton.Position = UDim2.new(
+			0, startPos.X.Offset + delta.X,
+			0, startPos.Y.Offset + delta.Y
+		)
+	end
+
+	self.ToggleButton.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = self.ToggleButton.Position
+
+			local connEnd
+			connEnd = input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+					connEnd:Disconnect()
+				end
+			end)
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			update(input)
+		end
+	end)
+end
+
 function UILibrary:ToggleVisibility()
 	self.IsVisible = not self.IsVisible
 	self.MainFrame.Visible = self.IsVisible
 	
-	-- Update mobile button text
+	-- Update mobile button text to show current state
 	if self.ToggleButton then
-		self.ToggleButton.Text = self.IsVisible and "☰" or "☰"
+		self.ToggleButton.Text = self.IsVisible and "✕" or "☰"
 	end
 end
 
