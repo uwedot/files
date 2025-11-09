@@ -730,7 +730,7 @@ function UILibrary:AddTextBox(tab, config)
 	return container
 end
 
--- Improved Notification System
+-- Improved Notification System (Fixed)
 function UILibrary:Notify(titleText, description, duration)
     duration = duration or 3
     
@@ -743,7 +743,6 @@ function UILibrary:Notify(titleText, description, duration)
     
     local notification = Instance.new("Frame")
     local line = Instance.new("Frame")
-    local icon = Instance.new("ImageLabel")
     local title = Instance.new("TextLabel")
     local desc = Instance.new("TextLabel")
     local closeBtn = Instance.new("TextButton")
@@ -775,16 +774,6 @@ function UILibrary:Notify(titleText, description, duration)
     line.Size = UDim2.new(0, 0, 0, 2)
     createCorner(line, 1)
 
-    -- Compact icon
-    icon.Name = "Icon"
-    icon.Parent = notification
-    icon.BackgroundTransparency = 1
-    icon.Position = UDim2.new(0, 8, 0.5, -10)
-    icon.Size = UDim2.new(0, 20, 0, 20)
-    icon.Image = "rbxassetid://3944668821" -- Info icon
-    icon.ImageColor3 = accentColor
-    icon.ScaleType = Enum.ScaleType.Fit
-
     -- Close button
     closeBtn.Name = "CloseButton"
     closeBtn.Parent = notification
@@ -799,12 +788,12 @@ function UILibrary:Notify(titleText, description, duration)
     closeBtn.AutoButtonColor = false
     closeBtn.ZIndex = 201
 
-    -- Title with automatic scaling
+    -- Title with automatic scaling (moved left since no icon)
     title.Name = "Title"
     title.Parent = notification
     title.BackgroundTransparency = 1
-    title.Position = UDim2.new(0, 35, 0, 8)
-    title.Size = UDim2.new(1, -65, 0, 18)
+    title.Position = UDim2.new(0, 12, 0, 8)
+    title.Size = UDim2.new(1, -45, 0, 18)
     title.Font = FancyFontBold
     title.Text = titleText or "Notification"
     title.TextColor3 = primaryText
@@ -814,12 +803,12 @@ function UILibrary:Notify(titleText, description, duration)
     title.TextTruncate = Enum.TextTruncate.AtEnd
     title.ClipsDescendants = true
 
-    -- Description with automatic scaling
+    -- Description with automatic scaling (moved left since no icon)
     desc.Name = "Description"
     desc.Parent = notification
     desc.BackgroundTransparency = 1
-    desc.Position = UDim2.new(0, 35, 0, isMobile and 26 or 28)
-    desc.Size = UDim2.new(1, -65, 0, isMobile and 28 or 32)
+    desc.Position = UDim2.new(0, 12, 0, isMobile and 26 or 28)
+    desc.Size = UDim2.new(1, -45, 0, isMobile and 28 or 32)
     desc.Font = FancyFont
     desc.Text = description or ""
     desc.TextColor3 = secondaryText
@@ -848,44 +837,53 @@ function UILibrary:Notify(titleText, description, duration)
     end)
 
     local destroyNotification
+    local destroyed = false
+    
     destroyNotification = function()
+        if destroyed then return end
+        destroyed = true
+        
         -- Stop any ongoing animations
-        for _, tweenObj in pairs(notification:GetChildren()) do
-            if tweenObj:IsA("Tween") then
-                tweenObj:Cancel()
+        for _, child in pairs(notification:GetChildren()) do
+            if child:IsA("Tween") then
+                child:Cancel()
             end
         end
 
-        notification:TweenPosition(UDim2.new(1, 5, 0, 10), "Out", "Sine", 0.25)
-        task.wait(0.25)
-        notification:Destroy()
+        -- Slide out animation
+        local slideOut = tween(notification, {Position = UDim2.new(1, 5, 0, 10)}, 0.25)
+        
+        -- Wait for animation to complete then destroy
+        if slideOut then
+            slideOut.Completed:Wait()
+        end
+        
+        if notification and notification.Parent then
+            notification:Destroy()
+        end
     end
 
     closeBtn.MouseButton1Click:Connect(destroyNotification)
 
-    -- Click anywhere on notification to close (optional)
-    notification.InputBegan:Connect(function(input)
+    -- Click anywhere on notification to close
+    local clickConn
+    clickConn = notification.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             destroyNotification()
+            clickConn:Disconnect()
         end
     end)
 
     -- Animation sequence
-    notification:TweenPosition(UDim2.new(1, -notificationWidth - 5, 0, 10), "Out", "Sine", 0.3)
+    local slideIn = tween(notification, {Position = UDim2.new(1, -notificationWidth - 5, 0, 10)}, 0.3)
     
     -- Progress bar animation
-    line:TweenSize(UDim2.new(1, 0, 0, 2), "Linear", "Linear", duration)
+    local progressTween = tween(line, {Size = UDim2.new(1, 0, 0, 2)}, duration, Enum.EasingStyle.Linear)
     
     -- Auto-destroy after duration
-    task.spawn(function()
-        local startTime = tick()
-        while notification and notification.Parent do
-            local elapsed = tick() - startTime
-            if elapsed >= duration then
-                destroyNotification()
-                break
-            end
-            task.wait(0.1)
+    task.delay(duration, function()
+        if not destroyed then
+            destroyNotification()
         end
     end)
 
