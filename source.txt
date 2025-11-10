@@ -32,7 +32,7 @@ if DeviceType == "Mobile" then
     MobileToggleButton.Position = UDim2.new(0, 10, 0.5, -20)  -- Adjusted position for new size
     MobileToggleButton.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
     MobileToggleButton.Text = "−"
-    MobileToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MobileToggleButton.TextColor3 = PresetColor  -- Changed to use preset color
     MobileToggleButton.Font = Enum.Font.GothamBold
     MobileToggleButton.TextSize = 20  -- Reduced text size from 24 to 20
     MobileToggleButton.AutoButtonColor = false
@@ -88,6 +88,13 @@ if DeviceType == "Mobile" then
             BackgroundColor3 = Color3.fromRGB(34, 34, 34)
         }):Play()
     end)
+    
+    -- Update text color when preset color changes
+    coroutine.wrap(function()
+        while RunService.Heartbeat:Wait() do
+            MobileToggleButton.TextColor3 = PresetColor
+        end
+    end)()
     
     Instance.new("UICorner", MobileToggleButton)
 end
