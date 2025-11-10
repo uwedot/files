@@ -550,8 +550,8 @@ function lib:Window(text, preset, closebind)
                 Name = "SliderTitle",
                 Parent = Slider,
                 BackgroundTransparency = 1,
-                Position = UDim2.new(0.036, 0, 0.1, 0),  -- Lowered Y position
-                Size = UDim2.new(0, 187, 0, 20),  -- Adjusted height
+                Position = UDim2.new(0.036, 0, 0.1, 0),  -- Changed Y position from 0 to 0.1
+                Size = UDim2.new(0, 187, 0, 30),
                 Font = Enum.Font.Gotham,
                 Text = text,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -563,8 +563,8 @@ function lib:Window(text, preset, closebind)
                 Name = "SliderValue",
                 Parent = Slider,
                 BackgroundTransparency = 1,
-                Position = UDim2.new(0.036, 0, 0.1, 0),  -- Lowered Y position
-                Size = UDim2.new(0, 335, 0, 20),  -- Adjusted height
+                Position = UDim2.new(0.036, 0, 0.1, 0),  -- Changed Y position from 0 to 0.1
+                Size = UDim2.new(0, 335, 0, 30),
                 Font = Enum.Font.Gotham,
                 Text = tostring(start),
                 TextColor3 = Color3.fromRGB(255, 255, 255),
