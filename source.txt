@@ -577,7 +577,7 @@ function lib:Window(text, preset, closebind)
         Name = "Slider",
         Parent = Tab,
         BackgroundColor3 = Color3.fromRGB(34, 34, 34),
-        Size = UDim2.new(0, 363, 0, 62),  -- Reduced from 70 to 62 for better fit
+        Size = UDim2.new(0, 363, 0, 62),
         AutoButtonColor = false,
         Font = Enum.Font.SourceSans,
         Text = "",
@@ -595,7 +595,7 @@ function lib:Window(text, preset, closebind)
         Parent = Slider,
         BackgroundTransparency = 1,
         Position = UDim2.new(0.036, 0, 0, 0),
-        Size = UDim2.new(0, 187, 0, 30),  -- Adjusted height
+        Size = UDim2.new(0, 187, 0, 30),
         Font = Enum.Font.Gotham,
         Text = text,
         TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -608,7 +608,7 @@ function lib:Window(text, preset, closebind)
         Parent = Slider,
         BackgroundTransparency = 1,
         Position = UDim2.new(0.036, 0, 0, 0),
-        Size = UDim2.new(0, 335, 0, 30),  -- Adjusted height
+        Size = UDim2.new(0, 335, 0, 30),
         Font = Enum.Font.Gotham,
         Text = tostring(start),
         TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -622,8 +622,8 @@ function lib:Window(text, preset, closebind)
         Parent = Slider,
         BackgroundColor3 = Color3.fromRGB(50, 50, 50),
         BorderSizePixel = 0,
-        Position = UDim2.new(0.034, 0, 0.645, 0),  -- Adjusted position
-        Size = UDim2.new(0, 335, 0, 5)  -- Slightly thinner track
+        Position = UDim2.new(0.034, 0, 0.645, 0),
+        Size = UDim2.new(0, 335, 0, 5)
     })
 
     CreateInstance("UICorner", {
@@ -649,8 +649,8 @@ function lib:Window(text, preset, closebind)
         Name = "SlideCircle",
         Parent = SlideFrame,
         BackgroundTransparency = 1,
-        Position = UDim2.new((start or 0) / max, -10, 0.5, -10),  -- Better centering
-        Size = UDim2.new(0, 20, 0, 20),  -- Reduced from 24 to 20
+        Position = UDim2.new((start or 0) / max, -10, 0.5, -10),
+        Size = UDim2.new(0, 20, 0, 20),
         Image = "rbxassetid://3570695787",
         ImageColor3 = PresetColor,
         ScaleType = Enum.ScaleType.Fit,
@@ -681,8 +681,8 @@ function lib:Window(text, preset, closebind)
     local function updateSlider(value)
         value = math.clamp(value, min, max)
         local posX = value / max
-        local pos = UDim2.new(posX, -10, 0.5, -10)  -- Adjusted handle position
-        local pos1 = UDim2.new(posX, 0, 0, 5)  -- Adjusted track size
+        local pos = UDim2.new(posX, -10, 0.5, -10)
+        local pos1 = UDim2.new(posX, 0, 0, 5)
         
         CurrentValueFrame:TweenSize(pos1, "Out", "Sine", 0.1, true)
         SlideCircle:TweenPosition(pos, "Out", "Sine", 0.1, true)
@@ -691,45 +691,71 @@ function lib:Window(text, preset, closebind)
         pcall(callback, value)
     end
 
-    local function move(input)
-        local posX = math.clamp((input.Position.X - SlideFrame.AbsolutePosition.X) / SlideFrame.AbsoluteSize.X, 0, 1)
-        local value = min + (posX * (max - min))
+    -- Using the same dragging functionality from the second UI library
+    local function startDrag(input)
+        dragging = true
         
-        if increment > 0 then
-            value = math.floor(value / increment) * increment
-        end
-        
-        updateSlider(value)
-    end
-
-    -- Improved input handling for mobile
-    local function beginDrag(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            -- Immediate response for mobile
-            if input.UserInputType == Enum.UserInputType.Touch then
-                move(input)
+        local function update(inputPosition)
+            local x = inputPosition.X - SlideFrame.AbsolutePosition.X
+            local percent = math.clamp(x / SlideFrame.AbsoluteSize.X, 0, 1)
+            local value = min + percent * (max - min)
+            
+            -- Apply increment if specified
+            if increment > 0 then
+                value = math.floor(value / increment) * increment
             end
+            
+            updateSlider(value)
         end
+        
+        update(input.Position)
+        
+        local moveConn
+        moveConn = UserInputService.InputChanged:Connect(function(i)
+            if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                update(i.Position)
+            end
+        end)
+        
+        local endConn
+        endConn = UserInputService.InputEnded:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+                if moveConn then
+                    moveConn:Disconnect()
+                end
+                if endConn then
+                    endConn:Disconnect()
+                end
+            end
+        end)
     end
 
-    local function endDrag(input)
+    -- Connect input to slider handle and track
+    SlideCircle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
+            startDrag(input)
         end
-    end
-
-    -- Connect to both handle and track for better mobile experience
-    SlideCircle.InputBegan:Connect(beginDrag)
-    SlideCircle.InputEnded:Connect(endDrag)
+    end)
     
-    SlideFrame.InputBegan:Connect(beginDrag)
-    SlideFrame.InputEnded:Connect(endDrag)
+    SlideFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            startDrag(input)
+        end
+    end)
 
-    -- Improved input handling
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            move(input)
+    -- Hover effects for the main slider container
+    Slider.MouseEnter:Connect(function()
+        TweenService:Create(Slider, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(37, 37, 37)
+        }):Play()
+    end)
+
+    Slider.MouseLeave:Connect(function()
+        if not dragging then
+            TweenService:Create(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                BackgroundColor3 = Color3.fromRGB(34, 34, 34)
+            }):Play()
         end
     end)
 
