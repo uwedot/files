@@ -378,6 +378,21 @@ function lib:Window(text, preset, closebind)
 
         local tabcontent = {}
         
+        -- Add Label function to tabcontent
+        function tabcontent:Label(text)
+            local Label = CreateInstance("TextLabel", {
+                Name = "Label",
+                Parent = Tab,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(0, 363, 0, 30),
+                Font = Enum.Font.Gotham,
+                Text = text,
+                TextColor3 = Color3.fromRGB(200, 200, 200),
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+        end
+        
         function tabcontent:Button(text, callback)
             local Button = CreateInstance("TextButton", {
                 Name = "Button",
