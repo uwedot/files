@@ -1,3 +1,4 @@
+
 local lib = {
     RainbowColorValue = 0,
     HueSelectionPosition = 0
@@ -566,11 +567,10 @@ function lib:Window(text, preset, closebind)
             end
         end
 
-        function tabcontent:Slider(text, min, max, start, callback, options)
+        function tabcontent:Slider(text, min, max, increment, start, callback, options)
             local dragging = false
             start = start or min
             local options = options or {}
-            local increment = options.increment or 1
             local precise = options.precise or false
 
             -- Increased slider height for better touch interaction
@@ -658,43 +658,6 @@ function lib:Window(text, preset, closebind)
                 ZIndex = 2
             })
 
-            -- Increment buttons
-            local DecrementBtn = CreateInstance("TextButton", {
-                Name = "DecrementBtn",
-                Parent = Slider,
-                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-                Position = UDim2.new(0.034, 0, 0.15, 0),
-                Size = UDim2.new(0, 25, 0, 25),  -- Slightly larger for touch
-                Font = Enum.Font.GothamBold,
-                Text = "-",
-                TextColor3 = Color3.fromRGB(200, 200, 200),
-                TextSize = 16,
-                AutoButtonColor = false
-            })
-
-            CreateInstance("UICorner", {
-                Parent = DecrementBtn,
-                CornerRadius = UDim.new(0, 4)
-            })
-
-            local IncrementBtn = CreateInstance("TextButton", {
-                Name = "IncrementBtn",
-                Parent = Slider,
-                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-                Position = UDim2.new(0.12, 0, 0.15, 0),  -- Adjusted position
-                Size = UDim2.new(0, 25, 0, 25),  -- Slightly larger for touch
-                Font = Enum.Font.GothamBold,
-                Text = "+",
-                TextColor3 = Color3.fromRGB(200, 200, 200),
-                TextSize = 16,
-                AutoButtonColor = false
-            })
-
-            CreateInstance("UICorner", {
-                Parent = IncrementBtn,
-                CornerRadius = UDim.new(0, 4)
-            })
-
             -- Preset color sync
             coroutine.wrap(function()
                 while RunService.Heartbeat:Wait() do
@@ -758,45 +721,6 @@ function lib:Window(text, preset, closebind)
                     move(input)
                 end
             end)
-
-            -- Increment/Decrement button functionality
-            local function changeValue(amount)
-                local currentValue = tonumber(SliderValue.Text) or start
-                local newValue = math.clamp(currentValue + amount, min, max)
-                
-                -- Apply increment if specified
-                if increment > 0 then
-                    newValue = math.floor(newValue / increment) * increment
-                end
-                
-                updateSlider(newValue)
-            end
-
-            DecrementBtn.MouseButton1Click:Connect(function()
-                changeValue(-increment)
-            end)
-
-            IncrementBtn.MouseButton1Click:Connect(function()
-                changeValue(increment)
-            end)
-
-            -- Hover effects for buttons
-            local function setupButtonHover(button)
-                button.MouseEnter:Connect(function()
-                    TweenCreate(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-                    }):Play()
-                end)
-
-                button.MouseLeave:Connect(function()
-                    TweenCreate(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-                    }):Play()
-                end)
-            end
-
-            setupButtonHover(DecrementBtn)
-            setupButtonHover(IncrementBtn)
 
             -- Set initial value
             updateSlider(start)
