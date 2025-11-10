@@ -1,7 +1,7 @@
 local UILibrary = {}
 UILibrary.__index = UILibrary
 
--- Cache services and functions
+-- Cache services and function
 local cloneref = cloneref or function(x) return x end
 local gethui = gethui or function() return nil end
 
@@ -859,36 +859,34 @@ function UILibrary:Notify(titleText, description, duration)
     createCorner(notification)
     -- Removed stroke from notification
     
-    -- Progress bar container at the bottom of the notification
-    local progressBarContainer = createInstance("Frame", {
+    -- Timer display container at the bottom of the notification
+    local timerContainer = createInstance("Frame", {
         Parent = notification,
-        Name = "ProgressBarContainer",
+        Name = "TimerContainer",
         BackgroundColor3 = UILibrary.Theme.TertiaryBackground,
         BorderSizePixel = 0,
-        Position = UDim2.new(0, 0, 1, -3), -- This positions it outside the frame - FIXED BELOW
-        Size = UDim2.new(1, 0, 0, 3), -- Thin progress bar
+        Position = UDim2.new(0, 0, 1, -3), -- Positioned at the bottom with small gap
+        Size = UDim2.new(1, 0, 0, 3), -- Thin timer bar
         ZIndex = 201,
         ClipsDescendants = true
     })
     
-    -- FIX: Change the position to be inside the notification frame
-    progressBarContainer.Position = UDim2.new(0, 0, 1, -3) -- This is actually correct, but let's verify the math
-    
-    -- Alternative fix if the above doesn't work:
-    -- progressBarContainer.Position = UDim2.new(0, 0, 0, notificationHeight - 3)
-    
-    -- Progress bar fill
-    local progressBar = createInstance("Frame", {
-        Parent = progressBarContainer,
-        Name = "ProgressBar",
-        BackgroundColor3 = UILibrary.Theme.NotificationAccent,
-        BorderSizePixel = 0,
+    -- Timer text display
+    local timerText = createInstance("TextLabel", {
+        Parent = timerContainer,
+        Name = "TimerText",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
-        Size = UDim2.new(0, 0, 1, 0), -- Start with 0 width
+        Font = Fonts.Bold,
+        Text = tostring(duration),
+        TextColor3 = UILibrary.Theme.NotificationAccent,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center,
         ZIndex = 202
     })
     
-    -- Rest of the notification code remains the same...
     local closeBtn = createInstance("TextButton", {
         Parent = notification,
         Name = "CloseButton",
@@ -998,13 +996,38 @@ function UILibrary:Notify(titleText, description, duration)
     
     -- Animation
     tween(notification, {Position = UDim2.new(1, -notificationWidth - 5, 0, 10)}, 0.3)
-    tween(progressBar, {Size = UDim2.new(1, 0, 1, 0)}, duration, Enum.EasingStyle.Linear)
     
-    task.delay(duration, function()
-        if not destroyed then
-            destroyNotification()
+    -- Timer countdown
+    local startTime = tick()
+    local endTime = startTime + duration
+    
+    local timerConnection
+    timerConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        if destroyed then
+            timerConnection:Disconnect()
+            return
+        end
+        
+        local currentTime = tick()
+        local timeLeft = math.max(0, endTime - currentTime)
+        local secondsLeft = math.ceil(timeLeft)
+        
+        -- Update timer text
+        timerText.Text = tostring(secondsLeft)
+        
+        -- Update timer bar width based on time remaining
+        local progress = timeLeft / duration
+        timerContainer.Size = UDim2.new(progress, 0, 0, 3)
+        
+        if timeLeft <= 0 then
+            timerConnection:Disconnect()
+            if not destroyed then
+                destroyNotification()
+            end
         end
     end)
+    
+    table.insert(self.Connections, timerConnection)
     
     return notification
 end
