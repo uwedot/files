@@ -573,11 +573,12 @@ function lib:Window(text, preset, closebind)
             local increment = options.increment or 1
             local precise = options.precise or false
 
+            -- Increased slider height for better touch interaction
             local Slider = CreateInstance("TextButton", {
                 Name = "Slider",
                 Parent = Tab,
                 BackgroundColor3 = Color3.fromRGB(34, 34, 34),
-                Size = UDim2.new(0, 363, 0, 60),
+                Size = UDim2.new(0, 363, 0, 70),  -- Increased height from 60 to 70
                 AutoButtonColor = false,
                 Font = Enum.Font.SourceSans,
                 Text = "",
@@ -616,13 +617,19 @@ function lib:Window(text, preset, closebind)
                 TextXAlignment = Enum.TextXAlignment.Right
             })
 
+            -- Larger slider track
             local SlideFrame = CreateInstance("Frame", {
                 Name = "SlideFrame",
                 Parent = Slider,
                 BackgroundColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 0,
                 Position = UDim2.new(0.034, 0, 0.686, 0),
-                Size = UDim2.new(0, 335, 0, 3)
+                Size = UDim2.new(0, 335, 0, 6)  -- Increased height from 3 to 6
+            })
+
+            CreateInstance("UICorner", {
+                Parent = SlideFrame,
+                CornerRadius = UDim.new(1, 0)  -- Rounded ends for better appearance
             })
 
             local CurrentValueFrame = CreateInstance("Frame", {
@@ -630,17 +637,35 @@ function lib:Window(text, preset, closebind)
                 Parent = SlideFrame,
                 BackgroundColor3 = PresetColor,
                 BorderSizePixel = 0,
-                Size = UDim2.new((start or 0) / max, 0, 0, 3)
+                Size = UDim2.new((start or 0) / max, 0, 1, 0)
             })
 
+            CreateInstance("UICorner", {
+                Parent = CurrentValueFrame,
+                CornerRadius = UDim.new(1, 0)  -- Rounded ends for better appearance
+            })
+
+            -- Larger slider handle for better touch interaction
             local SlideCircle = CreateInstance("ImageButton", {
                 Name = "SlideCircle",
                 Parent = SlideFrame,
                 BackgroundTransparency = 1,
-                Position = UDim2.new((start or 0) / max, -6, -1.305, 0),
-                Size = UDim2.new(0, 11, 0, 11),
+                Position = UDim2.new((start or 0) / max, -12, -0.75, 0),  -- Adjusted position for larger handle
+                Size = UDim2.new(0, 24, 0, 24),  -- Increased size from 11 to 24
                 Image = "rbxassetid://3570695787",
-                ImageColor3 = PresetColor
+                ImageColor3 = PresetColor,
+                ScaleType = Enum.ScaleType.Fit
+            })
+
+            -- Make the entire slider area draggable for easier touch interaction
+            local SliderArea = CreateInstance("TextButton", {
+                Name = "SliderArea",
+                Parent = Slider,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0.034, 0, 0.5, 0),
+                Size = UDim2.new(0, 335, 0, 40),  -- Large touch area
+                Text = "",
+                AutoButtonColor = false
             })
 
             -- Preset color sync
@@ -654,8 +679,8 @@ function lib:Window(text, preset, closebind)
             local function updateSlider(value)
                 value = math.clamp(value, min, max)
                 local posX = value / max
-                local pos = UDim2.new(posX, -6, -1.305, 0)
-                local pos1 = UDim2.new(posX, 0, 0, 3)
+                local pos = UDim2.new(posX, -12, -0.75, 0)  -- Adjusted for larger handle
+                local pos1 = UDim2.new(posX, 0, 0, 6)  -- Adjusted for taller track
                 
                 CurrentValueFrame:TweenSize(pos1, "Out", "Sine", 0.1, true)
                 SlideCircle:TweenPosition(pos, "Out", "Sine", 0.1, true)
@@ -677,7 +702,7 @@ function lib:Window(text, preset, closebind)
                 updateSlider(value)
             end
 
-            -- Input handling
+            -- Input handling for slider handle
             local function beginDrag(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     dragging = true
@@ -693,10 +718,17 @@ function lib:Window(text, preset, closebind)
                 end
             end
 
+            -- Connect input to slider handle
             SlideCircle.InputBegan:Connect(beginDrag)
             SlideCircle.InputEnded:Connect(endDrag)
+            
+            -- Connect input to slider track for direct tapping
             SlideFrame.InputBegan:Connect(beginDrag)
             SlideFrame.InputEnded:Connect(endDrag)
+            
+            -- Connect input to the larger slider area for even easier touch
+            SliderArea.InputBegan:Connect(beginDrag)
+            SliderArea.InputEnded:Connect(endDrag)
 
             UserInputService.InputChanged:Connect(function(input)
                 if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
