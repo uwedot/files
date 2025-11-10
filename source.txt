@@ -1,8 +1,3 @@
---[[
-    Optimized UI Library for Roblox
-    Cleaned and optimized version
---]]
-
 local lib = {
     RainbowColorValue = 0,
     HueSelectionPosition = 0
@@ -108,20 +103,29 @@ function lib:Window(text, preset, closebind)
         Visible = true
     })
 
-    -- Tab Holder
-    local TabHold = CreateInstance("Frame", {
+    -- Tab Holder with Scrolling
+    local TabHold = CreateInstance("ScrollingFrame", {
         Name = "TabHold",
         Parent = Main,
         BackgroundTransparency = 1,
         Position = UDim2.new(0.034, 0, 0.147, 0),
-        Size = UDim2.new(0, 107, 0, 254)
+        Size = UDim2.new(0, 107, 0, 254),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = Color3.fromRGB(60, 60, 60),
+        ClipsDescendants = true
     })
 
-    CreateInstance("UIListLayout", {
+    local TabHoldLayout = CreateInstance("UIListLayout", {
         Parent = TabHold,
         SortOrder = Enum.SortOrder.LayoutOrder,
         Padding = UDim.new(0, 11)
     })
+
+    -- Update TabHolder canvas size when layout changes
+    TabHoldLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        TabHold.CanvasSize = UDim2.new(0, 0, 0, TabHoldLayout.AbsoluteContentSize.Y)
+    end)
 
     -- Title
     local Title = CreateInstance("TextLabel", {
@@ -233,6 +237,7 @@ function lib:Window(text, preset, closebind)
             Size = UDim2.new(0, 373, 0, 254),
             CanvasSize = UDim2.new(0, 0, 0, 0),
             ScrollBarThickness = 3,
+            ScrollBarImageColor3 = Color3.fromRGB(60, 60, 60),
             Visible = false
         })
 
@@ -241,6 +246,11 @@ function lib:Window(text, preset, closebind)
             SortOrder = Enum.SortOrder.LayoutOrder,
             Padding = UDim.new(0, 6)
         })
+
+        -- Update Tab canvas size when layout changes
+        TabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            Tab.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y)
+        end)
 
         -- Set first tab as active
         if not fs then
@@ -323,8 +333,6 @@ function lib:Window(text, preset, closebind)
             Button.MouseButton1Click:Connect(function()
                 pcall(callback)
             end)
-
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y)
         end
 
         function tabcontent:Toggle(text, default, callback)
@@ -450,13 +458,14 @@ function lib:Window(text, preset, closebind)
             if default then
                 UpdateToggleState()
             end
-
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y)
         end
 
-        function tabcontent:Slider(text, min, max, start, callback)
+        function tabcontent:Slider(text, min, max, start, callback, options)
             local dragging = false
             start = start or min
+            local options = options or {}
+            local increment = options.increment or 1
+            local precise = options.precise or false
 
             local Slider = CreateInstance("TextButton", {
                 Name = "Slider",
@@ -495,7 +504,7 @@ function lib:Window(text, preset, closebind)
                 Position = UDim2.new(0.036, 0, 0, 0),
                 Size = UDim2.new(0, 335, 0, 42),
                 Font = Enum.Font.Gotham,
-                Text = tostring(math.floor(((start / max) * (max - min) + min))),
+                Text = tostring(precise and start or math.floor(start)),
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Right
@@ -528,6 +537,43 @@ function lib:Window(text, preset, closebind)
                 ImageColor3 = PresetColor
             })
 
+            -- Increment buttons
+            local DecrementBtn = CreateInstance("TextButton", {
+                Name = "DecrementBtn",
+                Parent = Slider,
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+                Position = UDim2.new(0.034, 0, 0.15, 0),
+                Size = UDim2.new(0, 20, 0, 20),
+                Font = Enum.Font.GothamBold,
+                Text = "-",
+                TextColor3 = Color3.fromRGB(200, 200, 200),
+                TextSize = 14,
+                AutoButtonColor = false
+            })
+
+            CreateInstance("UICorner", {
+                Parent = DecrementBtn,
+                CornerRadius = UDim.new(0, 4)
+            })
+
+            local IncrementBtn = CreateInstance("TextButton", {
+                Name = "IncrementBtn",
+                Parent = Slider,
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+                Position = UDim2.new(0.104, 0, 0.15, 0),
+                Size = UDim2.new(0, 20, 0, 20),
+                Font = Enum.Font.GothamBold,
+                Text = "+",
+                TextColor3 = Color3.fromRGB(200, 200, 200),
+                TextSize = 14,
+                AutoButtonColor = false
+            })
+
+            CreateInstance("UICorner", {
+                Parent = IncrementBtn,
+                CornerRadius = UDim.new(0, 4)
+            })
+
             -- Preset color sync
             coroutine.wrap(function()
                 while RunService.Heartbeat:Wait() do
@@ -536,17 +582,30 @@ function lib:Window(text, preset, closebind)
                 end
             end)()
 
-            local function move(input)
-                local posX = math.clamp((input.Position.X - SlideFrame.AbsolutePosition.X) / SlideFrame.AbsoluteSize.X, 0, 1)
+            local function updateSlider(value)
+                value = math.clamp(value, min, max)
+                local posX = value / max
                 local pos = UDim2.new(posX, -6, -1.305, 0)
                 local pos1 = UDim2.new(posX, 0, 0, 3)
                 
                 CurrentValueFrame:TweenSize(pos1, "Out", "Sine", 0.1, true)
                 SlideCircle:TweenPosition(pos, "Out", "Sine", 0.1, true)
                 
-                local value = math.floor((posX * max / max) * (max - min) + min)
-                SliderValue.Text = tostring(value)
+                local displayValue = precise and value or math.floor(value)
+                SliderValue.Text = tostring(displayValue)
                 pcall(callback, value)
+            end
+
+            local function move(input)
+                local posX = math.clamp((input.Position.X - SlideFrame.AbsolutePosition.X) / SlideFrame.AbsoluteSize.X, 0, 1)
+                local value = min + (posX * (max - min))
+                
+                -- Apply increment if specified
+                if increment > 0 then
+                    value = math.floor(value / increment) * increment
+                end
+                
+                updateSlider(value)
             end
 
             -- Input handling
@@ -576,7 +635,47 @@ function lib:Window(text, preset, closebind)
                 end
             end)
 
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y)
+            -- Increment/Decrement button functionality
+            local function changeValue(amount)
+                local currentValue = tonumber(SliderValue.Text) or start
+                local newValue = math.clamp(currentValue + amount, min, max)
+                
+                -- Apply increment if specified
+                if increment > 0 then
+                    newValue = math.floor(newValue / increment) * increment
+                end
+                
+                updateSlider(newValue)
+            end
+
+            DecrementBtn.MouseButton1Click:Connect(function()
+                changeValue(-increment)
+            end)
+
+            IncrementBtn.MouseButton1Click:Connect(function()
+                changeValue(increment)
+            end)
+
+            -- Hover effects for buttons
+            local function setupButtonHover(button)
+                button.MouseEnter:Connect(function()
+                    TweenCreate(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                    }):Play()
+                end)
+
+                button.MouseLeave:Connect(function()
+                    TweenCreate(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                    }):Play()
+                end)
+            end
+
+            setupButtonHover(DecrementBtn)
+            setupButtonHover(IncrementBtn)
+
+            -- Set initial value
+            updateSlider(start)
         end
 
         function tabcontent:Dropdown(text, list, callback)
@@ -639,7 +738,8 @@ function lib:Window(text, preset, closebind)
                 Position = UDim2.new(-0.004, 0, 1.05, 0),
                 Size = UDim2.new(0, 342, 0, 0),
                 CanvasSize = UDim2.new(0, 0, 0, 0),
-                ScrollBarThickness = 3
+                ScrollBarThickness = 3,
+                ScrollBarImageColor3 = Color3.fromRGB(60, 60, 60)
             })
 
             local DropLayout = CreateInstance("UIListLayout", {
@@ -661,9 +761,6 @@ function lib:Window(text, preset, closebind)
                         Rotation = 0
                     }):Play()
                 end
-                
-                wait(0.2)
-                Tab.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y)
             end)
 
             -- Create dropdown items
@@ -713,14 +810,10 @@ function lib:Window(text, preset, closebind)
                     TweenCreate(ArrowImg, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                         Rotation = 0
                     }):Play()
-                    wait(0.2)
-                    Tab.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y)
                 end)
 
                 DropItemHolder.CanvasSize = UDim2.new(0, 0, 0, DropLayout.AbsoluteContentSize.Y)
             end
-
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y)
         end
 
         function tabcontent:Textbox(text, disappear, callback)
@@ -781,8 +874,6 @@ function lib:Window(text, preset, closebind)
                     end
                 end
             end)
-
-            Tab.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y)
         end
 
         return tabcontent
