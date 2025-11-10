@@ -528,7 +528,6 @@ function lib:Window(text, preset, closebind)
 
             Toggle.MouseButton1Click:Connect(ToggleState)
 
-            -- Initialize the toggle state
             UpdateToggleState()
 
             return {
@@ -542,205 +541,200 @@ function lib:Window(text, preset, closebind)
         end
 
         function tabcontent:Slider(text, min, max, increment, callback)
-    local dragging = false
-    increment = increment or 1
-    local start = min -- Default to min value
-    
-    local Slider = CreateInstance("TextButton", {
-        Name = "Slider",
-        Parent = Tab,
-        BackgroundColor3 = Color3.fromRGB(34, 34, 34),
-        Size = UDim2.new(0, 363, 0, 62),
-        AutoButtonColor = false,
-        Font = Enum.Font.SourceSans,
-        Text = "",
-        TextColor3 = Color3.fromRGB(0, 0, 0),
-        TextSize = 14
-    })
-
-    CreateInstance("UICorner", {
-        Parent = Slider,
-        CornerRadius = UDim.new(0, 5)
-    })
-
-    local SliderTitle = CreateInstance("TextLabel", {
-        Name = "SliderTitle",
-        Parent = Slider,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0.036, 0, 0.1, 0),
-        Size = UDim2.new(0, 187, 0, 30),
-        Font = Enum.Font.Gotham,
-        Text = text,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-
-    local SliderValue = CreateInstance("TextLabel", {
-        Name = "SliderValue",
-        Parent = Slider,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0.036, 0, 0.1, 0),
-        Size = UDim2.new(0, 335, 0, 30),
-        Font = Enum.Font.Gotham,
-        Text = tostring(start),
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Right
-    })
-
-    local SlideFrame = CreateInstance("Frame", {
-        Name = "SlideFrame",
-        Parent = Slider,
-        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-        BorderSizePixel = 0,
-        Position = UDim2.new(0.034, 0, 0.645, 0),
-        Size = UDim2.new(0, 335, 0, 5)
-    })
-
-    CreateInstance("UICorner", {
-        Parent = SlideFrame,
-        CornerRadius = UDim.new(1, 0)
-    })
-
-    local CurrentValueFrame = CreateInstance("Frame", {
-        Name = "CurrentValueFrame",
-        Parent = SlideFrame,
-        BackgroundColor3 = PresetColor,
-        BorderSizePixel = 0,
-        Size = UDim2.new((start - min) / (max - min), 0, 1, 0)
-    })
-
-    CreateInstance("UICorner", {
-        Parent = CurrentValueFrame,
-        CornerRadius = UDim.new(1, 0)
-    })
-
-    local SlideCircle = CreateInstance("ImageButton", {
-        Name = "SlideCircle",
-        Parent = SlideFrame,
-        BackgroundTransparency = 1,
-        Position = UDim2.new((start - min) / (max - min), -6, 0.5, -6), -- Changed from -8 to -6
-        Size = UDim2.new(0, 12, 0, 12), -- Changed from 16 to 12 (25% smaller)
-        Image = "rbxassetid://3570695787",
-        ImageColor3 = PresetColor,
-        ScaleType = Enum.ScaleType.Fit,
-        ZIndex = 2
-    })
-
-    coroutine.wrap(function()
-        while RunService.Heartbeat:Wait() do
-            CurrentValueFrame.BackgroundColor3 = PresetColor
-            SlideCircle.ImageColor3 = PresetColor
-        end
-    end)()
-
-    local function formatNumber(value)
-        if increment < 1 then
-            local formatted = string.format("%.10f", value)
-            formatted = formatted:gsub("%.(%d-)0*$", function(decimal)
-                return decimal == "" and "" or "." .. decimal
-            end)
-            formatted = formatted:gsub("%.$", "")
-            return formatted
-        else
-            return tostring(math.floor(value))
-        end
-    end
-
-    local function updateSlider(value)
-        value = math.clamp(value, min, max)
-        local normalizedValue = (value - min) / (max - min)
-        local circlePos = UDim2.new(normalizedValue, -6, 0.5, -6) -- Changed from -8 to -6
-        local frameSize = UDim2.new(normalizedValue, 0, 1, 0)
-        
-        -- Update both elements simultaneously
-        CurrentValueFrame.Size = frameSize
-        SlideCircle.Position = circlePos
-        
-        SliderValue.Text = formatNumber(value)
-        pcall(callback, value)
-    end
-
-    local function startDrag(input)
-        dragging = true
-        
-        local function update(inputPosition)
-            local slideFrameAbsolutePos = SlideFrame.AbsolutePosition.X
-            local slideFrameAbsoluteSize = SlideFrame.AbsoluteSize.X
+            local dragging = false
+            increment = increment or 1
+            local start = min
             
-            -- Calculate position relative to the slide frame
-            local x = math.clamp(inputPosition.X - slideFrameAbsolutePos, 0, slideFrameAbsoluteSize)
-            local percent = x / slideFrameAbsoluteSize
-            local value = min + percent * (max - min)
-            
-            -- Apply increment if specified
-            if increment > 0 then
-                value = math.floor(value / increment) * increment
-            end
-            
-            updateSlider(value)
-        end
-        
-        update(input.Position)
-        
-        local moveConn
-        moveConn = UserInputService.InputChanged:Connect(function(i)
-            if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                update(i.Position)
-            end
-        end)
-        
-        local endConn
-        endConn = UserInputService.InputEnded:Connect(function(i)
-            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                dragging = false
-                if moveConn then
-                    moveConn:Disconnect()
+            local Slider = CreateInstance("TextButton", {
+                Name = "Slider",
+                Parent = Tab,
+                BackgroundColor3 = Color3.fromRGB(34, 34, 34),
+                Size = UDim2.new(0, 363, 0, 62),
+                AutoButtonColor = false,
+                Font = Enum.Font.SourceSans,
+                Text = "",
+                TextColor3 = Color3.fromRGB(0, 0, 0),
+                TextSize = 14
+            })
+
+            CreateInstance("UICorner", {
+                Parent = Slider,
+                CornerRadius = UDim.new(0, 5)
+            })
+
+            local SliderTitle = CreateInstance("TextLabel", {
+                Name = "SliderTitle",
+                Parent = Slider,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0.036, 0, 0.1, 0),
+                Size = UDim2.new(0, 187, 0, 30),
+                Font = Enum.Font.Gotham,
+                Text = text,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+
+            local SliderValue = CreateInstance("TextLabel", {
+                Name = "SliderValue",
+                Parent = Slider,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0.036, 0, 0.1, 0),
+                Size = UDim2.new(0, 335, 0, 30),
+                Font = Enum.Font.Gotham,
+                Text = tostring(start),
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Right
+            })
+
+            local SlideFrame = CreateInstance("Frame", {
+                Name = "SlideFrame",
+                Parent = Slider,
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+                BorderSizePixel = 0,
+                Position = UDim2.new(0.034, 0, 0.645, 0),
+                Size = UDim2.new(0, 335, 0, 5)
+            })
+
+            CreateInstance("UICorner", {
+                Parent = SlideFrame,
+                CornerRadius = UDim.new(1, 0)
+            })
+
+            local CurrentValueFrame = CreateInstance("Frame", {
+                Name = "CurrentValueFrame",
+                Parent = SlideFrame,
+                BackgroundColor3 = PresetColor,
+                BorderSizePixel = 0,
+                Size = UDim2.new((start - min) / (max - min), 0, 1, 0)
+            })
+
+            CreateInstance("UICorner", {
+                Parent = CurrentValueFrame,
+                CornerRadius = UDim.new(1, 0)
+            })
+
+            local SlideCircle = CreateInstance("ImageButton", {
+                Name = "SlideCircle",
+                Parent = SlideFrame,
+                BackgroundTransparency = 1,
+                Position = UDim2.new((start - min) / (max - min), -6, 0.5, -6),
+                Size = UDim2.new(0, 12, 0, 12),
+                Image = "rbxassetid://3570695787",
+                ImageColor3 = PresetColor,
+                ScaleType = Enum.ScaleType.Fit,
+                ZIndex = 2
+            })
+
+            coroutine.wrap(function()
+                while RunService.Heartbeat:Wait() do
+                    CurrentValueFrame.BackgroundColor3 = PresetColor
+                    SlideCircle.ImageColor3 = PresetColor
                 end
-                if endConn then
-                    endConn:Disconnect()
+            end)()
+
+            local function formatNumber(value)
+                if increment < 1 then
+                    local formatted = string.format("%.10f", value)
+                    formatted = formatted:gsub("%.(%d-)0*$", function(decimal)
+                        return decimal == "" and "" or "." .. decimal
+                    end)
+                    formatted = formatted:gsub("%.$", "")
+                    return formatted
+                else
+                    return tostring(math.floor(value))
+                end
+            end
+
+            local function updateSlider(value)
+                value = math.clamp(value, min, max)
+                local normalizedValue = (value - min) / (max - min)
+                local circlePos = UDim2.new(normalizedValue, -6, 0.5, -6)
+                local frameSize = UDim2.new(normalizedValue, 0, 1, 0)
+                
+                CurrentValueFrame.Size = frameSize
+                SlideCircle.Position = circlePos
+                
+                SliderValue.Text = formatNumber(value)
+                pcall(callback, value)
+            end
+
+            local function startDrag(input)
+                dragging = true
+                
+                local function update(inputPosition)
+                    local slideFrameAbsolutePos = SlideFrame.AbsolutePosition.X
+                    local slideFrameAbsoluteSize = SlideFrame.AbsoluteSize.X
+                    
+                    local x = math.clamp(inputPosition.X - slideFrameAbsolutePos, 0, slideFrameAbsoluteSize)
+                    local percent = x / slideFrameAbsoluteSize
+                    local value = min + percent * (max - min)
+                    
+                    if increment > 0 then
+                        value = math.floor(value / increment) * increment
+                    end
+                    
+                    updateSlider(value)
                 end
                 
-                -- Reset background color when done dragging
-                if not Slider:IsMouseOver() then
+                update(input.Position)
+                
+                local moveConn
+                moveConn = UserInputService.InputChanged:Connect(function(i)
+                    if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                        update(i.Position)
+                    end
+                end)
+                
+                local endConn
+                endConn = UserInputService.InputEnded:Connect(function(i)
+                    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                        dragging = false
+                        if moveConn then
+                            moveConn:Disconnect()
+                        end
+                        if endConn then
+                            endConn:Disconnect()
+                        end
+                        
+                        if not Slider:IsMouseOver() then
+                            TweenService:Create(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                                BackgroundColor3 = Color3.fromRGB(34, 34, 34)
+                            }):Play()
+                        end
+                    end
+                end)
+            end
+
+            SlideCircle.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    startDrag(input)
+                end
+            end)
+            
+            SlideFrame.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    startDrag(input)
+                end
+            end)
+
+            Slider.MouseEnter:Connect(function()
+                TweenService:Create(Slider, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    BackgroundColor3 = Color3.fromRGB(37, 37, 37)
+                }):Play()
+            end)
+
+            Slider.MouseLeave:Connect(function()
+                if not dragging then
                     TweenService:Create(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                         BackgroundColor3 = Color3.fromRGB(34, 34, 34)
                     }):Play()
                 end
-            end
-        end)
-    end
+            end)
 
-    SlideCircle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            startDrag(input)
+            updateSlider(start)
         end
-    end)
-    
-    SlideFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            startDrag(input)
-        end
-    end)
-
-    Slider.MouseEnter:Connect(function()
-        TweenService:Create(Slider, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            BackgroundColor3 = Color3.fromRGB(37, 37, 37)
-        }):Play()
-    end)
-
-    Slider.MouseLeave:Connect(function()
-        if not dragging then
-            TweenService:Create(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                BackgroundColor3 = Color3.fromRGB(34, 34, 34)
-            }):Play()
-        end
-    end)
-
-    -- Initialize the slider with min value
-    updateSlider(start)
-end
 
         function tabcontent:Dropdown(text, list, callback)
             local droptog = false
