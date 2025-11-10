@@ -12,7 +12,6 @@ local Mouse = LocalPlayer:GetMouse()
 local PresetColor = Color3.fromRGB(44, 120, 224)
 local CloseBind = Enum.KeyCode.RightControl
 
--- Delete existing instance of the GUI before creating a new one
 if CoreGui:FindFirstChild("67Library") then
     CoreGui:FindFirstChild("67Library"):Destroy()
 end
@@ -28,13 +27,13 @@ local MobileToggleButton
 if DeviceType == "Mobile" then
     MobileToggleButton = Instance.new("TextButton")
     MobileToggleButton.Name = "MobileToggle"
-    MobileToggleButton.Size = UDim2.new(0, 40, 0, 40)  -- Changed from 50,50 to 40,40
-    MobileToggleButton.Position = UDim2.new(0, 10, 0.5, -20)  -- Adjusted position for new size
+    MobileToggleButton.Size = UDim2.new(0, 40, 0, 40)
+    MobileToggleButton.Position = UDim2.new(0, 10, 0.5, -20)
     MobileToggleButton.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
     MobileToggleButton.Text = "−"
-    MobileToggleButton.TextColor3 = PresetColor  -- Changed to use preset color
+    MobileToggleButton.TextColor3 = PresetColor
     MobileToggleButton.Font = Enum.Font.GothamBold
-    MobileToggleButton.TextSize = 20  -- Reduced text size from 24 to 20
+    MobileToggleButton.TextSize = 20
     MobileToggleButton.AutoButtonColor = false
     MobileToggleButton.Parent = ui
     
@@ -89,7 +88,6 @@ if DeviceType == "Mobile" then
         }):Play()
     end)
     
-    -- Update text color when preset color changes
     coroutine.wrap(function()
         while RunService.Heartbeat:Wait() do
             MobileToggleButton.TextColor3 = PresetColor
@@ -534,7 +532,7 @@ function lib:Window(text, preset, closebind)
         function tabcontent:Slider(text, min, max, increment, start, callback)
             local dragging = false
             start = start or min
-            increment = increment or 1  -- Default increment to 1 if not provided
+            increment = increment or 1
             
             local Slider = CreateInstance("TextButton", {
                 Name = "Slider",
@@ -557,7 +555,7 @@ function lib:Window(text, preset, closebind)
                 Name = "SliderTitle",
                 Parent = Slider,
                 BackgroundTransparency = 1,
-                Position = UDim2.new(0.036, 0, 0.1, 0),  -- Changed Y position from 0 to 0.1
+                Position = UDim2.new(0.036, 0, 0.1, 0),
                 Size = UDim2.new(0, 187, 0, 30),
                 Font = Enum.Font.Gotham,
                 Text = text,
@@ -570,7 +568,7 @@ function lib:Window(text, preset, closebind)
                 Name = "SliderValue",
                 Parent = Slider,
                 BackgroundTransparency = 1,
-                Position = UDim2.new(0.036, 0, 0.1, 0),  -- Changed Y position from 0 to 0.1
+                Position = UDim2.new(0.036, 0, 0.1, 0),
                 Size = UDim2.new(0, 335, 0, 30),
                 Font = Enum.Font.Gotham,
                 Text = tostring(start),
