@@ -408,7 +408,7 @@ function lib:Window(text, preset, closebind)
         end
 
         function tabcontent:Toggle(text, default, callback)
-            local toggled = false
+            local toggled = default or false
 
             local Toggle = CreateInstance("TextButton", {
                 Name = "Toggle",
@@ -518,15 +518,27 @@ function lib:Window(text, preset, closebind)
                     }):Play()
                     FrameToggleCircle:TweenPosition(UDim2.new(0.127, 0, 0.222, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.2, true)
                 end
-                toggled = not toggled
                 pcall(callback, toggled)
             end
 
-            Toggle.MouseButton1Click:Connect(UpdateToggleState)
-
-            if default then
+            local function ToggleState()
+                toggled = not toggled
                 UpdateToggleState()
             end
+
+            Toggle.MouseButton1Click:Connect(ToggleState)
+
+            -- Initialize the toggle state
+            UpdateToggleState()
+
+            return {
+                Set = function(self, state)
+                    if toggled ~= state then
+                        toggled = state
+                        UpdateToggleState()
+                    end
+                end
+            }
         end
 
         function tabcontent:Slider(text, min, max, increment, start, callback)
