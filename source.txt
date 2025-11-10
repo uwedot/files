@@ -3,29 +3,24 @@ local lib = {
     HueSelectionPosition = 0
 }
 
--- Services
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 
--- Variables
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local PresetColor = Color3.fromRGB(44, 120, 224)
 local CloseBind = Enum.KeyCode.RightControl
 
--- Main UI Container
 local ui = Instance.new("ScreenGui")
 ui.Name = "OptimizedUI"
 ui.Parent = CoreGui
 ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Mobile detection
 local DeviceType = UserInputService.TouchEnabled and "Mobile" or "PC"
 
--- Mobile toggle button (only for mobile devices)
 local MobileToggleButton
 if DeviceType == "Mobile" then
     MobileToggleButton = Instance.new("TextButton")
@@ -33,14 +28,13 @@ if DeviceType == "Mobile" then
     MobileToggleButton.Size = UDim2.new(0, 50, 0, 50)
     MobileToggleButton.Position = UDim2.new(0, 10, 0.5, -25)
     MobileToggleButton.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
-    MobileToggleButton.Text = "−"  -- Minus symbol for minimize
+    MobileToggleButton.Text = "−"
     MobileToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     MobileToggleButton.Font = Enum.Font.GothamBold
-    MobileToggleButton.TextSize = 24  -- Increased size for better visibility
+    MobileToggleButton.TextSize = 24
     MobileToggleButton.AutoButtonColor = false
     MobileToggleButton.Parent = ui
     
-    -- Make mobile button draggable
     local Dragging, DragInput, DragStart, StartPosition
     
     local function Update(input)
@@ -80,7 +74,6 @@ if DeviceType == "Mobile" then
         end
     end)
     
-    -- Hover effects for mobile button
     MobileToggleButton.MouseEnter:Connect(function()
         TweenService:Create(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             BackgroundColor3 = Color3.fromRGB(44, 44, 44)
@@ -96,15 +89,6 @@ if DeviceType == "Mobile" then
     Instance.new("UICorner", MobileToggleButton)
 end
 
--- Rainbow color animation
-coroutine.wrap(function()
-    while RunService.Heartbeat:Wait() do
-        lib.RainbowColorValue = (lib.RainbowColorValue + 1/255) % 1
-        lib.HueSelectionPosition = (lib.HueSelectionPosition + 1) % 80
-    end
-end)()
-
--- Utility Functions
 local function CreateInstance(className, properties)
     local instance = Instance.new(className)
     for property, value in pairs(properties) do
@@ -158,13 +142,11 @@ local function MakeDraggable(topbarobject, object)
     end)
 end
 
--- Main Library Functions
 function lib:Window(text, preset, closebind)
     CloseBind = closebind or CloseBind
     PresetColor = preset or PresetColor
     local fs = false
     
-    -- Main Window Frame
     local Main = CreateInstance("Frame", {
         Name = "Main",
         Parent = ui,
@@ -177,7 +159,6 @@ function lib:Window(text, preset, closebind)
         Visible = true
     })
 
-    -- Tab Holder with Scrolling
     local TabHold = CreateInstance("ScrollingFrame", {
         Name = "TabHold",
         Parent = Main,
@@ -196,12 +177,10 @@ function lib:Window(text, preset, closebind)
         Padding = UDim.new(0, 11)
     })
 
-    -- Update TabHolder canvas size when layout changes
     TabHoldLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         TabHold.CanvasSize = UDim2.new(0, 0, 0, TabHoldLayout.AbsoluteContentSize.Y)
     end)
 
-    -- Title
     local Title = CreateInstance("TextLabel", {
         Name = "Title",
         Parent = Main,
@@ -215,7 +194,6 @@ function lib:Window(text, preset, closebind)
         TextXAlignment = Enum.TextXAlignment.Left
     })
 
-    -- Drag Frame
     local DragFrame = CreateInstance("Frame", {
         Name = "DragFrame",
         Parent = Main,
@@ -223,7 +201,6 @@ function lib:Window(text, preset, closebind)
         Size = UDim2.new(0, 560, 0, 41)
     })
 
-    -- Tab Folder
     local TabFolder = CreateInstance("Folder", {
         Name = "TabFolder",
         Parent = Main
@@ -231,23 +208,21 @@ function lib:Window(text, preset, closebind)
 
     MakeDraggable(DragFrame, Main)
 
-    -- Toggle UI visibility
     local uitoggled = false
     
-    -- Mobile toggle functionality
     if DeviceType == "Mobile" and MobileToggleButton then
         MobileToggleButton.MouseButton1Click:Connect(function()
             uitoggled = not uitoggled
             
             if uitoggled then
                 Main.Visible = false
-                MobileToggleButton.Text = "+"  -- Plus symbol for unminimize
+                MobileToggleButton.Text = "+"
                 TweenService:Create(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                     BackgroundColor3 = Color3.fromRGB(44, 120, 224)
                 }):Play()
             else
                 Main.Visible = true
-                MobileToggleButton.Text = "−"  -- Minus symbol for minimize
+                MobileToggleButton.Text = "−"
                 TweenService:Create(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                     BackgroundColor3 = Color3.fromRGB(34, 34, 34)
                 }):Play()
@@ -255,7 +230,6 @@ function lib:Window(text, preset, closebind)
         end)
     end
 
-    -- PC toggle functionality (keyboard)
     UserInputService.InputBegan:Connect(function(input, processed)
         if not processed and input.KeyCode == CloseBind then
             uitoggled = not uitoggled
@@ -274,7 +248,6 @@ function lib:Window(text, preset, closebind)
         end
     end)
 
-    -- Change preset color function
     function lib:ChangePresetColor(newColor)
         PresetColor = newColor
     end
@@ -282,7 +255,6 @@ function lib:Window(text, preset, closebind)
     local tabhold = {}
     
     function tabhold:Tab(text)
-        -- Tab Button
         local TabBtn = CreateInstance("TextButton", {
             Name = "TabBtn",
             Parent = TabHold,
@@ -317,14 +289,12 @@ function lib:Window(text, preset, closebind)
 
         CreateInstance("UICorner", {Parent = TabBtnIndicator})
 
-        -- Preset color sync
         coroutine.wrap(function()
             while RunService.Heartbeat:Wait() do
                 TabBtnIndicator.BackgroundColor3 = PresetColor
             end
         end)()
 
-        -- Tab Content
         local Tab = CreateInstance("ScrollingFrame", {
             Name = "Tab",
             Parent = TabFolder,
@@ -345,12 +315,10 @@ function lib:Window(text, preset, closebind)
             Padding = UDim.new(0, 6)
         })
 
-        -- Update Tab canvas size when layout changes
         TabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             Tab.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y)
         end)
 
-        -- Set first tab as active
         if not fs then
             fs = true
             TabBtnIndicator.Size = UDim2.new(0, 13, 0, 2)
@@ -358,7 +326,6 @@ function lib:Window(text, preset, closebind)
             Tab.Visible = true
         end
 
-        -- Tab switching logic
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(TabFolder:GetChildren()) do
                 if v.Name == "Tab" then
@@ -415,7 +382,6 @@ function lib:Window(text, preset, closebind)
                 TextXAlignment = Enum.TextXAlignment.Left
             })
 
-            -- Hover effects
             Button.MouseEnter:Connect(function()
                 TweenCreate(Button, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                     BackgroundColor3 = Color3.fromRGB(37, 37, 37)
@@ -466,7 +432,6 @@ function lib:Window(text, preset, closebind)
                 TextXAlignment = Enum.TextXAlignment.Left
             })
 
-            -- Toggle Components
             local FrameToggle1 = CreateInstance("Frame", {
                 Name = "FrameToggle1",
                 Parent = Toggle,
@@ -503,7 +468,6 @@ function lib:Window(text, preset, closebind)
             })
             CreateInstance("UICorner", {Parent = FrameToggleCircle})
 
-            -- Preset color sync
             coroutine.wrap(function()
                 while RunService.Heartbeat:Wait() do
                     FrameToggle3.BackgroundColor3 = PresetColor
@@ -552,18 +516,15 @@ function lib:Window(text, preset, closebind)
 
             Toggle.MouseButton1Click:Connect(UpdateToggleState)
 
-            -- Set default state
             if default then
                 UpdateToggleState()
             end
         end
 
-        function tabcontent:Slider(text, min, max, increment, precise, start, callback, options)
+        function tabcontent:Slider(text, min, max, increment, start, callback)
     local dragging = false
     start = start or min
-    local options = options or {}
     
-    -- Optimized slider height for mobile
     local Slider = CreateInstance("TextButton", {
         Name = "Slider",
         Parent = Tab,
@@ -607,7 +568,6 @@ function lib:Window(text, preset, closebind)
         TextXAlignment = Enum.TextXAlignment.Right
     })
 
-    -- Optimized slider track
     local SlideFrame = CreateInstance("Frame", {
         Name = "SlideFrame",
         Parent = Slider,
@@ -635,20 +595,18 @@ function lib:Window(text, preset, closebind)
         CornerRadius = UDim.new(1, 0)
     })
 
-    -- Smaller slider handle (reduced from 20x20 to 16x16)
     local SlideCircle = CreateInstance("ImageButton", {
         Name = "SlideCircle",
         Parent = SlideFrame,
         BackgroundTransparency = 1,
-        Position = UDim2.new((start or 0) / max, -8, 0.5, -8),  -- Adjusted for smaller handle
-        Size = UDim2.new(0, 16, 0, 16),  -- Smaller handle size
+        Position = UDim2.new((start or 0) / max, -8, 0.5, -8),
+        Size = UDim2.new(0, 16, 0, 16),
         Image = "rbxassetid://3570695787",
         ImageColor3 = PresetColor,
         ScaleType = Enum.ScaleType.Fit,
         ZIndex = 2
     })
 
-    -- Preset color sync
     coroutine.wrap(function()
         while RunService.Heartbeat:Wait() do
             CurrentValueFrame.BackgroundColor3 = PresetColor
@@ -657,7 +615,7 @@ function lib:Window(text, preset, closebind)
     end)()
 
     local function formatNumber(value)
-        if precise then
+        if increment and increment < 1 then
             local formatted = string.format("%.10f", value)
             formatted = formatted:gsub("%.(%d-)0*$", function(decimal)
                 return decimal == "" and "" or "." .. decimal
@@ -672,7 +630,7 @@ function lib:Window(text, preset, closebind)
     local function updateSlider(value)
         value = math.clamp(value, min, max)
         local posX = value / max
-        local pos = UDim2.new(posX, -8, 0.5, -8)  -- Adjusted for smaller handle
+        local pos = UDim2.new(posX, -8, 0.5, -8)
         local pos1 = UDim2.new(posX, 0, 0, 5)
         
         CurrentValueFrame:TweenSize(pos1, "Out", "Sine", 0.1, true)
@@ -682,7 +640,6 @@ function lib:Window(text, preset, closebind)
         pcall(callback, value)
     end
 
-    -- Using the same dragging functionality from the second UI library
     local function startDrag(input)
         dragging = true
         
@@ -691,8 +648,7 @@ function lib:Window(text, preset, closebind)
             local percent = math.clamp(x / SlideFrame.AbsoluteSize.X, 0, 1)
             local value = min + percent * (max - min)
             
-            -- Apply increment if specified
-            if increment > 0 then
+            if increment and increment > 0 then
                 value = math.floor(value / increment) * increment
             end
             
@@ -722,7 +678,6 @@ function lib:Window(text, preset, closebind)
         end)
     end
 
-    -- Connect input to slider handle and track
     SlideCircle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             startDrag(input)
@@ -735,7 +690,6 @@ function lib:Window(text, preset, closebind)
         end
     end)
 
-    -- Hover effects for the main slider container
     Slider.MouseEnter:Connect(function()
         TweenService:Create(Slider, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             BackgroundColor3 = Color3.fromRGB(37, 37, 37)
@@ -750,7 +704,6 @@ function lib:Window(text, preset, closebind)
         end
     end)
 
-    -- Set initial value
     updateSlider(start)
 end
 
@@ -839,7 +792,6 @@ end
                 end
             end)
 
-            -- Create dropdown items
             for _, v in pairs(list) do
                 itemcount = itemcount + 1
                 if itemcount <= 3 then
@@ -865,7 +817,6 @@ end
                     CornerRadius = UDim.new(0, 4)
                 })
 
-                -- Hover effects
                 Item.MouseEnter:Connect(function()
                     TweenCreate(Item, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                         BackgroundColor3 = Color3.fromRGB(37, 37, 37)
