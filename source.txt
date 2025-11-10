@@ -1,4 +1,3 @@
-
 local lib = {
     RainbowColorValue = 0,
     HueSelectionPosition = 0
@@ -34,10 +33,10 @@ if DeviceType == "Mobile" then
     MobileToggleButton.Size = UDim2.new(0, 50, 0, 50)
     MobileToggleButton.Position = UDim2.new(0, 10, 0.5, -25)
     MobileToggleButton.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
-    MobileToggleButton.Text = "☰"
+    MobileToggleButton.Text = "−"  -- Minus symbol for minimize
     MobileToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     MobileToggleButton.Font = Enum.Font.GothamBold
-    MobileToggleButton.TextSize = 18
+    MobileToggleButton.TextSize = 24  -- Increased size for better visibility
     MobileToggleButton.AutoButtonColor = false
     MobileToggleButton.Parent = ui
     
@@ -246,12 +245,14 @@ function lib:Window(text, preset, closebind)
                 Main:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.6, true, function()
                     Main.Visible = false
                 end)
+                MobileToggleButton.Text = "+"  -- Plus symbol for unminimize
                 TweenService:Create(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                     BackgroundColor3 = Color3.fromRGB(44, 120, 224)
                 }):Play()
             else
                 Main.Visible = true
                 Main:TweenSize(UDim2.new(0, 560, 0, 319), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.6, true)
+                MobileToggleButton.Text = "−"  -- Minus symbol for minimize
                 TweenService:Create(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                     BackgroundColor3 = Color3.fromRGB(34, 34, 34)
                 }):Play()
@@ -268,9 +269,15 @@ function lib:Window(text, preset, closebind)
                 Main:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.6, true, function()
                     Main.Visible = false
                 end)
+                if DeviceType == "Mobile" and MobileToggleButton then
+                    MobileToggleButton.Text = "+"
+                end
             else
                 Main.Visible = true
                 Main:TweenSize(UDim2.new(0, 560, 0, 319), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.6, true)
+                if DeviceType == "Mobile" and MobileToggleButton then
+                    MobileToggleButton.Text = "−"
+                end
             end
         end
     end)
@@ -636,43 +643,6 @@ function lib:Window(text, preset, closebind)
                 ImageColor3 = PresetColor
             })
 
-            -- Increment buttons
-            local DecrementBtn = CreateInstance("TextButton", {
-                Name = "DecrementBtn",
-                Parent = Slider,
-                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-                Position = UDim2.new(0.034, 0, 0.15, 0),
-                Size = UDim2.new(0, 20, 0, 20),
-                Font = Enum.Font.GothamBold,
-                Text = "-",
-                TextColor3 = Color3.fromRGB(200, 200, 200),
-                TextSize = 14,
-                AutoButtonColor = false
-            })
-
-            CreateInstance("UICorner", {
-                Parent = DecrementBtn,
-                CornerRadius = UDim.new(0, 4)
-            })
-
-            local IncrementBtn = CreateInstance("TextButton", {
-                Name = "IncrementBtn",
-                Parent = Slider,
-                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-                Position = UDim2.new(0.104, 0, 0.15, 0),
-                Size = UDim2.new(0, 20, 0, 20),
-                Font = Enum.Font.GothamBold,
-                Text = "+",
-                TextColor3 = Color3.fromRGB(200, 200, 200),
-                TextSize = 14,
-                AutoButtonColor = false
-            })
-
-            CreateInstance("UICorner", {
-                Parent = IncrementBtn,
-                CornerRadius = UDim.new(0, 4)
-            })
-
             -- Preset color sync
             coroutine.wrap(function()
                 while RunService.Heartbeat:Wait() do
@@ -733,45 +703,6 @@ function lib:Window(text, preset, closebind)
                     move(input)
                 end
             end)
-
-            -- Increment/Decrement button functionality
-            local function changeValue(amount)
-                local currentValue = tonumber(SliderValue.Text) or start
-                local newValue = math.clamp(currentValue + amount, min, max)
-                
-                -- Apply increment if specified
-                if increment > 0 then
-                    newValue = math.floor(newValue / increment) * increment
-                end
-                
-                updateSlider(newValue)
-            end
-
-            DecrementBtn.MouseButton1Click:Connect(function()
-                changeValue(-increment)
-            end)
-
-            IncrementBtn.MouseButton1Click:Connect(function()
-                changeValue(increment)
-            end)
-
-            -- Hover effects for buttons
-            local function setupButtonHover(button)
-                button.MouseEnter:Connect(function()
-                    TweenCreate(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-                    }):Play()
-                end)
-
-                button.MouseLeave:Connect(function()
-                    TweenCreate(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-                    }):Play()
-                end)
-            end
-
-            setupButtonHover(DecrementBtn)
-            setupButtonHover(IncrementBtn)
 
             -- Set initial value
             updateSlider(start)
