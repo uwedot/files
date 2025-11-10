@@ -1,454 +1,223 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
-local UILibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/iaineverseen/files/refs/heads/main/ui-library.txt"))()
+local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/iaineverseen/files/refs/heads/main/source.txt"))()
 
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui", 5)
-
-local ActiveHighlights = {}
-local ActiveNameTags = {}
-
-local FNAF_ESP_DATA = {
-    Freddy = {P = {"Animatronics", "Freddy", "FreddyNPC"}, CO = Color3.fromRGB(139, 69, 19), CF = Color3.new(0.6, 0.35, 0.1), GN = "FreddyFNAFESPGUI", T = "FNAF1"},
-    Bonnie = {P = {"Animatronics", "Bonnie", "BonnieNPC"}, CO = Color3.new(0, 0, 1), CF = Color3.new(0.4, 0.4, 1), GN = "BonnieFNAFESPGUI", T = "FNAF1"},
-    Chica = {P = {"Animatronics", "Chica", "ChicaNPC"}, CO = Color3.new(1, 1, 0), CF = Color3.new(1, 1, 0), GN = "ChicaFNAFESPGUI", T = "FNAF1"},
-    Foxy = {P = {"Animatronics", "Foxy", "FoxyNPC"}, CO = Color3.new(1, 0, 0), CF = Color3.new(1, 0.4, 0.4), GN = "FoxyFNAFESPGUI", T = "FNAF1"},
-    ["Withered Freddy"] = {P = {"Animatronics", "Freddy", "FreddyNPC"}, CO = Color3.new(0.3, 0.2, 0.1), CF = Color3.new(0.4, 0.3, 0.2), GN = "WFreddyFNAFESPGUI", T = "Withered"},
-    ["Withered Bonnie"] = {P = {"Animatronics", "Bonnie", "BonnieNPC"}, CO = Color3.new(0, 0, 0.4), CF = Color3.new(0.1, 0.1, 0.6), GN = "WBonnaFNAFESPGUI", T = "Withered"},
-    ["Withered Chica"] = {P = {"Animatronics", "Chica", "ChicaNPC"}, CO = Color3.new(0.8, 0.5, 0.1), CF = Color3.new(0.9, 0.6, 0.2), GN = "WChicaFNAFESPGUI", T = "Withered"},
-    ["Withered Foxy"] = {P = {"Animatronics", "Foxy", "FoxyNPC"}, CO = Color3.new(0.5, 0, 0), CF = Color3.new(0.7, 0.1, 0.1), GN = "WFoxyFNAFESPGUI", T = "Withered"},
-    ["Toy Freddy"] = {P = {"Animatronics", "ToyFreddy", "ToyFreddyNPC"}, CO = Color3.new(0.4, 0.3, 0.2), CF = Color3.new(0.6, 0.5, 0.4), GN = "ToyFreddyFNAFESPGUI", T = "Toy"},
-    ["Toy Bonnie"] = {P = {"Animatronics", "ToyBonnie", "ToyBonnieNPC"}, CO = Color3.new(0.1, 0.7, 1), CF = Color3.new(0.2, 0.8, 1), GN = "ToyBonnieFNAFESPGUI", T = "Toy"},
-    ["Toy Chica"] = {P = {"Animatronics", "ToyChica", "ToyChicaNPC"}, CO = Color3.new(1, 1, 0), CF = Color3.new(1, 1, 0.4), GN = "ToyChicaFNAFESPGUI", T = "Toy"},
-    ["The Puppet"] = {P = {"Animatronics", "Puppet", "PuppetNPC"}, CO = Color3.new(0, 0, 0), CF = Color3.new(0.1, 0.1, 0.1), GN = "PuppetFNAFESPGUI", T = "Other"},
-    Mangle = {P = {"Animatronics", "Mangle", "MangleNPC"}, CO = Color3.new(0.7, 0.2, 0.5), CF = Color3.new(0.8, 0.4, 0.6), GN = "MangleFNAFESPGUI", T = "Other"},
-    ["Balloon Boy"] = {P = {"Animatronics", "BalloonBoy", "BalloonBoyNPC"}, CO = Color3.new(0.1, 0.8, 0.8), CF = Color3.new(0.2, 0.9, 0.9), GN = "BBoyFNAFESPGUI", T = "Other"},
-    Springtrap = {T = "FNAF3", CO = Color3.new(0.1, 0.1, 0.05), CF = Color3.new(0.2, 0.4, 0.1), GN = "SpringtrapFNAFESPGUI", P = {"Animatronics", "Springtrap", "SpringtrapNPC"}},
-    ["Nightmare Bonnie"] = {P = {"Animatronics", "Bonnie", "BonnieNPC"}, CO = Color3.fromRGB(0, 0, 255), CF = Color3.new(0.4, 0.4, 1), GN = "NBonnaFNAFESPGUI", T = "FNAF4"},
-    ["Nightmare Chica"] = {P = {"Animatronics", "Chica", "ChicaNPC"}, CO = Color3.fromRGB(255, 255, 0), CF = Color3.new(1, 1, 0), GN = "NChicaFNAFESPGUI", T = "FNAF4"},
-    ["Nightmare Foxy"] = {P = {"Animatronics", "Foxy", "FoxyNPC"}, CO = Color3.fromRGB(255, 0, 0), CF = Color3.new(1, 0.4, 0.4), GN = "NFoxyFNAFESPGUI", T = "FNAF4"},
-    ["Nightmare Fredbear"] = {P = {"Animatronics", "Fredbear", "FredbearNPC"}, CO = Color3.fromRGB(255, 165, 0), CF = Color3.new(1, 0.6, 0), GN = "NFredbearFNAFESPGUI", T = "FNAF4"},
-    Ballora = {T = "FNAF5", CO = Color3.new(0.6, 0, 1), CF = Color3.new(0.8, 0.3, 1), GN = "BalloraFNAFESPGUI", P_Dynamic = {{"BalloraNight1", "Ballora"}, {"Animatronics", "BalloraNPC", "BalloraNPC", "Ballora"}}},
-    ["Foxy (SL)"] = {T = "FNAF5", CO = Color3.new(1, 0.2, 0.8), CF = Color3.new(1, 0.7, 0.9), GN = "FoxySLFNAFESPGUI", P_Dynamic = {{"FoxyNight1", "Foxy"}, {"FoxyNight2", "Foxy"}}}
+local ESPStore = {
+    Highlights = {},
+    NameTags = {},
+    Enabled = {}
 }
 
-local Window = UILibrary:CreateWindow({
-    Title = "FNAF Co-Op Script",
-    MinimizeKey = Enum.KeyCode.RightControl
-})
+local FNAF_ESP_CONFIG = {
+    -- FNAF 1
+    Freddy = {Path = {"Animatronics", "Freddy", "FreddyNPC"}, Color = Color3.fromRGB(139, 69, 19), Type = "FNAF1"},
+    Bonnie = {Path = {"Animatronics", "Bonnie", "BonnieNPC"}, Color = Color3.new(0, 0, 1), Type = "FNAF1"},
+    Chica = {Path = {"Animatronics", "Chica", "ChicaNPC"}, Color = Color3.new(1, 1, 0), Type = "FNAF1"},
+    Foxy = {Path = {"Animatronics", "Foxy", "FoxyNPC"}, Color = Color3.new(1, 0, 0), Type = "FNAF1"},
+    
+    -- FNAF 2 Withered
+    ["Withered Freddy"] = {Path = {"Animatronics", "Freddy", "FreddyNPC"}, Color = Color3.new(0.3, 0.2, 0.1), Type = "Withered"},
+    ["Withered Bonnie"] = {Path = {"Animatronics", "Bonnie", "BonnieNPC"}, Color = Color3.new(0, 0, 0.4), Type = "Withered"},
+    ["Withered Chica"] = {Path = {"Animatronics", "Chica", "ChicaNPC"}, Color = Color3.new(0.8, 0.5, 0.1), Type = "Withered"},
+    ["Withered Foxy"] = {Path = {"Animatronics", "Foxy", "FoxyNPC"}, Color = Color3.new(0.5, 0, 0), Type = "Withered"},
+    
+    -- FNAF 2 Toy
+    ["Toy Freddy"] = {Path = {"Animatronics", "ToyFreddy", "ToyFreddyNPC"}, Color = Color3.new(0.4, 0.3, 0.2), Type = "Toy"},
+    ["Toy Bonnie"] = {Path = {"Animatronics", "ToyBonnie", "ToyBonnieNPC"}, Color = Color3.new(0.1, 0.7, 1), Type = "Toy"},
+    ["Toy Chica"] = {Path = {"Animatronics", "ToyChica", "ToyChicaNPC"}, Color = Color3.new(1, 1, 0), Type = "Toy"},
+    
+    -- FNAF 2 Other
+    ["The Puppet"] = {Path = {"Animatronics", "Puppet", "PuppetNPC"}, Color = Color3.new(0, 0, 0), Type = "Other"},
+    Mangle = {Path = {"Animatronics", "Mangle", "MangleNPC"}, Color = Color3.new(0.7, 0.2, 0.5), Type = "Other"},
+    ["Balloon Boy"] = {Path = {"Animatronics", "BalloonBoy", "BalloonBoyNPC"}, Color = Color3.new(0.1, 0.8, 0.8), Type = "Other"},
+    
+    -- FNAF 3
+    Springtrap = {Path = {"Animatronics", "Springtrap", "SpringtrapNPC"}, Color = Color3.new(0.1, 0.1, 0.05), Type = "FNAF3"},
+    
+    -- FNAF 4
+    ["Nightmare Bonnie"] = {Path = {"Animatronics", "Bonnie", "BonnieNPC"}, Color = Color3.fromRGB(0, 0, 255), Type = "FNAF4"},
+    ["Nightmare Chica"] = {Path = {"Animatronics", "Chica", "ChicaNPC"}, Color = Color3.fromRGB(255, 255, 0), Type = "FNAF4"},
+    ["Nightmare Foxy"] = {Path = {"Animatronics", "Foxy", "FoxyNPC"}, Color = Color3.fromRGB(255, 0, 0), Type = "FNAF4"},
+    ["Nightmare Fredbear"] = {Path = {"Animatronics", "Fredbear", "FredbearNPC"}, Color = Color3.fromRGB(255, 165, 0), Type = "FNAF4"},
+    
+    -- FNAF 5
+    Ballora = {Path = {"Animatronics", "BalloraNPC", "BalloraNPC", "Ballora"}, Color = Color3.new(0.6, 0, 1), Type = "FNAF5"},
+    ["Foxy (SL)"] = {Path = {"FoxyNight1", "Foxy"}, Color = Color3.new(1, 0.2, 0.8), Type = "FNAF5"}
+}
 
-local FNAF1Tab = Window:AddTab("FNAF 1")
-local FNAF2Tab = Window:AddTab("FNAF 2")
-local FNAF3Tab = Window:AddTab("FNAF 3")
-local FNAF4Tab = Window:AddTab("FNAF 4")
-local FNAF5Tab = Window:AddTab("FNAF 5")
-local MiscTab = Window:AddTab("Misc")
+local Window = lib:Window("FNAF COOP", Color3.fromRGB(44, 120, 224), Enum.KeyCode.RightControl)
 
-local CurrentlyEnabledESP = {}
+local Tabs = {
+    FNAF1 = Window:Tab("FNAF 1"),
+    FNAF2 = Window:Tab("FNAF 2"), 
+    FNAF3 = Window:Tab("FNAF 3"),
+    FNAF4 = Window:Tab("FNAF 4"),
+    FNAF5 = Window:Tab("FNAF 5"),
+    Misc = Window:Tab("MISC")
+}
 
-local function FindModel(path)
+local function GetModel(path)
     local current = Workspace
-    for _, partName in ipairs(path) do
-        current = current:FindFirstChild(partName)
+    for _, name in ipairs(path) do
+        current = current:FindFirstChild(name)
         if not current then return nil end
     end
     return current
 end
 
-local function InitializeModels()
-    for name, data in pairs(FNAF_ESP_DATA) do
-        if not data.P_Dynamic then
-            data.M = FindModel(data.P)
-        end
-    end
+local function CreateHighlight(model, color)
+    local highlight = Instance.new("Highlight")
+    highlight.OutlineColor = color
+    highlight.FillColor = color
+    highlight.FillTransparency = 0.8
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = model
+    highlight.Parent = model
+    return highlight
 end
 
-local function ToggleOutlineESP(animatronicName, animatronicData, enabled)
-    if enabled then
-        if not animatronicData.M then 
-            animatronicData.M = FindModel(animatronicData.P)
-        end
-        
-        if not animatronicData.M then 
-            warn("Failed to find model for: " .. animatronicName)
-            return 
-        end
-        
-        if ActiveHighlights[animatronicName] then 
-            pcall(function()
-                ActiveHighlights[animatronicName]:Destroy()
-            end)
-            ActiveHighlights[animatronicName] = nil
-        end
-        
-        local success, highlight = pcall(function()
-            local h = Instance.new("Highlight")
-            h.OutlineColor = animatronicData.CO
-            h.FillColor = animatronicData.CF
-            h.FillTransparency = 0.7
-            h.OutlineTransparency = 0
-            h.Adornee = animatronicData.M
-            h.Parent = animatronicData.M
-            return h
-        end)
-        
-        if not success then
-            warn("Failed to create highlight for: " .. animatronicName)
-            return
-        end
-        
-        ActiveHighlights[animatronicName] = highlight
-        CurrentlyEnabledESP[animatronicName] = {Type = "Outline", Data = animatronicData}
-    else
-        local highlight = ActiveHighlights[animatronicName]
-        if highlight then
-            pcall(function()
-                highlight:Destroy()
-            end)
-            ActiveHighlights[animatronicName] = nil
-            CurrentlyEnabledESP[animatronicName] = nil
-        end
-    end
-end
-
-local function ToggleNameESP(animatronicName, animatronicData, enabled)
-    if enabled then
-        if not animatronicData.M then 
-            animatronicData.M = FindModel(animatronicData.P)
-        end
-        
-        if not animatronicData.M then 
-            warn("Failed to find model for: " .. animatronicName)
-            return 
-        end
-        
-        if ActiveNameTags[animatronicName] then 
-            pcall(function()
-                ActiveNameTags[animatronicName]:Destroy()
-            end)
-            ActiveNameTags[animatronicName] = nil
-        end
-        
-        local success, nameBillboard = pcall(function()
-            local billboard = Instance.new("BillboardGui")
-            billboard.Size = UDim2.new(0, 120, 0, 25)
-            billboard.StudsOffset = Vector3.new(0, 3, 0)
-            billboard.Adornee = animatronicData.M.PrimaryPart or animatronicData.M:FindFirstChild("HumanoidRootPart") or animatronicData.M
-            billboard.AlwaysOnTop = true
-            billboard.Name = "NameBillboard"
-            billboard.Parent = animatronicData.M
-            
-            local nameLabel = Instance.new("TextLabel")
-            nameLabel.Text = animatronicName
-            nameLabel.TextColor3 = animatronicData.CO
-            nameLabel.TextSize = 12
-            nameLabel.BackgroundTransparency = 1
-            nameLabel.Size = UDim2.new(1, 0, 1, 0)
-            nameLabel.Font = Enum.Font.SourceSansBold
-            nameLabel.Parent = billboard
-            
-            return billboard
-        end)
-        
-        if not success then
-            warn("Failed to create name tag for: " .. animatronicName)
-            return
-        end
-        
-        ActiveNameTags[animatronicName] = nameBillboard
-        CurrentlyEnabledESP[animatronicName] = {Type = "Name", Data = animatronicData}
-    else
-        local nameTag = ActiveNameTags[animatronicName]
-        if nameTag then
-            pcall(function()
-                nameTag:Destroy()
-            end)
-            ActiveNameTags[animatronicName] = nil
-            CurrentlyEnabledESP[animatronicName] = nil
-        end
-    end
-end
-
-local function RemoveAllESP()
-    for name, highlight in pairs(ActiveHighlights) do
-        pcall(function()
-            if highlight then
-                highlight:Destroy()
-            end
-        end)
-    end
-    table.clear(ActiveHighlights)
+local function CreateNameTag(model, name, color)
+    local root = model.PrimaryPart or model:FindFirstChild("HumanoidRootPart") or model
     
-    for name, nameTag in pairs(ActiveNameTags) do
-        pcall(function()
-            if nameTag then
-                nameTag:Destroy()
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 100, 0, 20)
+    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
+    billboard.Adornee = root
+    billboard.AlwaysOnTop = true
+    billboard.Name = "ESPTag"
+    
+    local label = Instance.new("TextLabel")
+    label.Text = name
+    label.TextColor3 = color
+    label.TextSize = 12
+    label.Font = Enum.Font.SourceSansBold
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Parent = billboard
+    
+    billboard.Parent = root
+    return billboard
+end
+
+local function ToggleESP(name, config, enable, espType)
+    local store = espType == "Highlight" and ESPStore.Highlights or ESPStore.NameTags
+    
+    if enable then
+        if store[name] then return end
+        
+        local model = GetModel(config.Path)
+        if not model then return end
+        
+        local espObject
+        if espType == "Highlight" then
+            espObject = CreateHighlight(model, config.Color)
+        else
+            espObject = CreateNameTag(model, name, config.Color)
+        end
+        
+        store[name] = espObject
+        ESPStore.Enabled[name] = ESPStore.Enabled[name] or {}
+        ESPStore.Enabled[name][espType] = true
+        
+    else
+        if store[name] then
+            store[name]:Destroy()
+            store[name] = nil
+            if ESPStore.Enabled[name] then
+                ESPStore.Enabled[name][espType] = nil
+                if next(ESPStore.Enabled[name]) == nil then
+                    ESPStore.Enabled[name] = nil
+                end
             end
-        end)
+        end
     end
-    table.clear(ActiveNameTags)
+end
+
+local function ClearAllESP()
+    for _, highlight in pairs(ESPStore.Highlights) do
+        highlight:Destroy()
+    end
+    for _, nameTag in pairs(ESPStore.NameTags) do
+        nameTag:Destroy()
+    end
+    
+    ESPStore.Highlights = {}
+    ESPStore.NameTags = {}
 end
 
 local function RefreshESP()
-    local savedESP = {}
-    
-    for name, espInfo in pairs(CurrentlyEnabledESP) do
-        savedESP[name] = espInfo
+    local savedState = {}
+    for name, types in pairs(ESPStore.Enabled) do
+        savedState[name] = types
     end
     
-    pcall(RemoveAllESP)
+    ClearAllESP()
+    task.wait(0.3)
     
-    task.wait(0.2)
-    
-    for name, data in pairs(FNAF_ESP_DATA) do
-        if not data.P_Dynamic then
-            local success = pcall(function()
-                data.M = FindModel(data.P)
-            end)
-            if not success then
-                warn("Failed to refresh model for: " .. name)
+    for name, types in pairs(savedState) do
+        local config = FNAF_ESP_CONFIG[name]
+        if config then
+            for espType in pairs(types) do
+                ToggleESP(name, config, true, espType)
+                task.wait(0.05)
             end
         end
-    end
-    
-    task.wait(0.1)
-    
-    for name, espInfo in pairs(savedESP) do
-        local success = pcall(function()
-            if espInfo.Type == "Outline" then
-                ToggleOutlineESP(name, espInfo.Data, true)
-            elseif espInfo.Type == "Name" then
-                ToggleNameESP(name, espInfo.Data, true)
-            end
-        end)
-        
-        if not success then
-            warn("Failed to refresh ESP for: " .. name)
-        end
-        
-        task.wait(0.01)
     end
 end
 
-local function ToggleFNAF4ConsolidatedESP(enabled)
-    if enabled then
-        for name, data in pairs(FNAF_ESP_DATA) do
-            if data.T == "FNAF4" then
-                pcall(function()
-                    ToggleOutlineESP(name, data, true)
-                end)
-            end
-        end
-    else
-        for name, data in pairs(FNAF_ESP_DATA) do
-            if data.T == "FNAF4" then
-                pcall(function()
-                    ToggleOutlineESP(name, data, false)
-                end)
-            end
+local function CreateToggleGroup(tab, title, filter)
+    -- Add spacing between groups
+    tab:Button(title, function() end) -- Using button as section header
+    
+    for name, config in pairs(FNAF_ESP_CONFIG) do
+        if config.Type == filter then
+            tab:Toggle(name .. " Highlight", false, function(state)
+                ToggleESP(name, config, state, "Highlight")
+            end)
+            
+            tab:Toggle(name .. " Name Tag", false, function(state)
+                ToggleESP(name, config, state, "NameTag")
+            end)
         end
     end
 end
 
 -- FNAF 1 Tab
-UILibrary:AddLabel(FNAF1Tab, "FNAF 1 Outline ESP")
-for name, data in pairs(FNAF_ESP_DATA) do
-    if data.T == "FNAF1" then
-        UILibrary:AddToggle(FNAF1Tab, {
-            Label = name .. " Outline",
-            Default = false,
-            Callback = function(value)
-                pcall(function()
-                    ToggleOutlineESP(name, data, value)
-                end)
-            end
-        })
-    end
-end
-
-UILibrary:AddLabel(FNAF1Tab, "FNAF 1 Name ESP")
-for name, data in pairs(FNAF_ESP_DATA) do
-    if data.T == "FNAF1" then
-        UILibrary:AddToggle(FNAF1Tab, {
-            Label = name .. " Name",
-            Default = false,
-            Callback = function(value)
-                pcall(function()
-                    ToggleNameESP(name, data, value)
-                end)
-            end
-        })
-    end
-end
+CreateToggleGroup(Tabs.FNAF1, "FNAF 1 Animatronics", "FNAF1")
 
 -- FNAF 2 Tab
-UILibrary:AddLabel(FNAF2Tab, "Withered Animatronics Outline")
-for name, data in pairs(FNAF_ESP_DATA) do
-    if data.T == "Withered" then
-        UILibrary:AddToggle(FNAF2Tab, {
-            Label = name .. " Outline",
-            Default = false,
-            Callback = function(value)
-                pcall(function()
-                    ToggleOutlineESP(name, data, value)
-                end)
-            end
-        })
-    end
-end
-
-UILibrary:AddLabel(FNAF2Tab, "Toy Animatronics Outline")
-for name, data in pairs(FNAF_ESP_DATA) do
-    if data.T == "Toy" then
-        UILibrary:AddToggle(FNAF2Tab, {
-            Label = name .. " Outline",
-            Default = false,
-            Callback = function(value)
-                pcall(function()
-                    ToggleOutlineESP(name, data, value)
-                end)
-            end
-        })
-    end
-end
-
-UILibrary:AddLabel(FNAF2Tab, "Other Animatronics Outline")
-for name, data in pairs(FNAF_ESP_DATA) do
-    if data.T == "Other" then
-        UILibrary:AddToggle(FNAF2Tab, {
-            Label = name .. " Outline",
-            Default = false,
-            Callback = function(value)
-                pcall(function()
-                    ToggleOutlineESP(name, data, value)
-                end)
-            end
-        })
-    end
-end
-
-UILibrary:AddLabel(FNAF2Tab, "Name ESP")
-for name, data in pairs(FNAF_ESP_DATA) do
-    if data.T == "Withered" or data.T == "Toy" or data.T == "Other" then
-        UILibrary:AddToggle(FNAF2Tab, {
-            Label = name .. " Name",
-            Default = false,
-            Callback = function(value)
-                pcall(function()
-                    ToggleNameESP(name, data, value)
-                end)
-            end
-        })
-    end
-end
+CreateToggleGroup(Tabs.FNAF2, "Withered Animatronics", "Withered")
+CreateToggleGroup(Tabs.FNAF2, "Toy Animatronics", "Toy") 
+CreateToggleGroup(Tabs.FNAF2, "Other Animatronics", "Other")
 
 -- FNAF 3 Tab
-local springtrap = FNAF_ESP_DATA['Springtrap']
-UILibrary:AddLabel(FNAF3Tab, "Springtrap ESP")
-UILibrary:AddToggle(FNAF3Tab, {
-    Label = "Springtrap Outline",
-    Default = false,
-    Callback = function(value)
-        pcall(function()
-            ToggleOutlineESP("Springtrap", springtrap, value)
-        end)
-    end
-})
-
-UILibrary:AddToggle(FNAF3Tab, {
-    Label = "Springtrap Name",
-    Default = false,
-    Callback = function(value)
-        pcall(function()
-            ToggleNameESP("Springtrap", springtrap, value)
-        end)
-    end
-})
+Tabs.FNAF3:Button("Springtrap", function() end) -- Section header
+Tabs.FNAF3:Toggle("Springtrap Highlight", false, function(state)
+    ToggleESP("Springtrap", FNAF_ESP_CONFIG.Springtrap, state, "Highlight")
+end)
+Tabs.FNAF3:Toggle("Springtrap Name Tag", false, function(state)
+    ToggleESP("Springtrap", FNAF_ESP_CONFIG.Springtrap, state, "NameTag")
+end)
 
 -- FNAF 4 Tab
-UILibrary:AddLabel(FNAF4Tab, "FNAF 4 ESP")
-UILibrary:AddToggle(FNAF4Tab, {
-    Label = "All Nightmares ESP",
-    Default = false,
-    Callback = function(value)
-        pcall(function()
-            ToggleFNAF4ConsolidatedESP(value)
-        end)
-    end
-})
-
-UILibrary:AddLabel(FNAF4Tab, "Individual Nightmares Outline")
-for name, data in pairs(FNAF_ESP_DATA) do
-    if data.T == "FNAF4" then
-        UILibrary:AddToggle(FNAF4Tab, {
-            Label = name .. " Outline",
-            Default = false,
-            Callback = function(value)
-                pcall(function()
-                    ToggleOutlineESP(name, data, value)
-                end)
-            end
-        })
-    end
-end
-
-UILibrary:AddLabel(FNAF4Tab, "Individual Nightmares Name")
-for name, data in pairs(FNAF_ESP_DATA) do
-    if data.T == "FNAF4" then
-        UILibrary:AddToggle(FNAF4Tab, {
-            Label = name .. " Name",
-            Default = false,
-            Callback = function(value)
-                pcall(function()
-                    ToggleNameESP(name, data, value)
-                end)
-            end
-        })
-    end
-end
+CreateToggleGroup(Tabs.FNAF4, "Nightmare Animatronics", "FNAF4")
 
 -- FNAF 5 Tab
-local fnaf5Animatronics = {"Ballora", "Foxy (SL)"}
-UILibrary:AddLabel(FNAF5Tab, "Sister Location Outline")
-for _, name in ipairs(fnaf5Animatronics) do
-    local data = FNAF_ESP_DATA[name]
-    if data then
-        UILibrary:AddToggle(FNAF5Tab, {
-            Label = name .. " Outline",
-            Default = false,
-            Callback = function(value)
-                pcall(function()
-                    ToggleOutlineESP(name, data, value)
-                end)
-            end
-        })
-    end
-end
-
-UILibrary:AddLabel(FNAF5Tab, "Sister Location Name")
-for _, name in ipairs(fnaf5Animatronics) do
-    local data = FNAF_ESP_DATA[name]
-    if data then
-        UILibrary:AddToggle(FNAF5Tab, {
-            Label = name .. " Name",
-            Default = false,
-            Callback = function(value)
-                pcall(function()
-                    ToggleNameESP(name, data, value)
-                end)
-            end
-        })
-    end
-end
+CreateToggleGroup(Tabs.FNAF5, "Sister Location", "FNAF5")
 
 -- Misc Tab
-UILibrary:AddLabel(MiscTab, "Utility")
-UILibrary:AddButton(MiscTab, {
-    Label = "Refresh ESP",
-    Callback = function()
-        pcall(RefreshESP)
-    end
-})
+Tabs.Misc:Button("Utilities", function() end) -- Section header
+Tabs.Misc:Button("Refresh All ESP", function()
+    RefreshESP()
+end)
+Tabs.Misc:Button("Clear All ESP", function()
+    ClearAllESP()
+end)
 
-pcall(InitializeModels)
+-- Initialize available models
+task.spawn(function()
+    for name, config in pairs(FNAF_ESP_CONFIG) do
+        config.Model = GetModel(config.Path)
+    end
+end)
