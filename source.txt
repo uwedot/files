@@ -645,27 +645,54 @@ function lib:Window(text, preset, closebind)
                 CornerRadius = UDim.new(1, 0)  -- Rounded ends for better appearance
             })
 
-            -- Larger slider handle for better touch interaction
+            -- Larger slider handle for better touch interaction - properly positioned on track
             local SlideCircle = CreateInstance("ImageButton", {
                 Name = "SlideCircle",
                 Parent = SlideFrame,
                 BackgroundTransparency = 1,
-                Position = UDim2.new((start or 0) / max, -12, -0.75, 0),  -- Adjusted position for larger handle
+                Position = UDim2.new((start or 0) / max, -12, 0.5, -12),  -- Properly centered on track
                 Size = UDim2.new(0, 24, 0, 24),  -- Increased size from 11 to 24
                 Image = "rbxassetid://3570695787",
                 ImageColor3 = PresetColor,
-                ScaleType = Enum.ScaleType.Fit
+                ScaleType = Enum.ScaleType.Fit,
+                ZIndex = 2
             })
 
-            -- Make the entire slider area draggable for easier touch interaction
-            local SliderArea = CreateInstance("TextButton", {
-                Name = "SliderArea",
+            -- Increment buttons
+            local DecrementBtn = CreateInstance("TextButton", {
+                Name = "DecrementBtn",
                 Parent = Slider,
-                BackgroundTransparency = 1,
-                Position = UDim2.new(0.034, 0, 0.5, 0),
-                Size = UDim2.new(0, 335, 0, 40),  -- Large touch area
-                Text = "",
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+                Position = UDim2.new(0.034, 0, 0.15, 0),
+                Size = UDim2.new(0, 25, 0, 25),  -- Slightly larger for touch
+                Font = Enum.Font.GothamBold,
+                Text = "-",
+                TextColor3 = Color3.fromRGB(200, 200, 200),
+                TextSize = 16,
                 AutoButtonColor = false
+            })
+
+            CreateInstance("UICorner", {
+                Parent = DecrementBtn,
+                CornerRadius = UDim.new(0, 4)
+            })
+
+            local IncrementBtn = CreateInstance("TextButton", {
+                Name = "IncrementBtn",
+                Parent = Slider,
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+                Position = UDim2.new(0.12, 0, 0.15, 0),  -- Adjusted position
+                Size = UDim2.new(0, 25, 0, 25),  -- Slightly larger for touch
+                Font = Enum.Font.GothamBold,
+                Text = "+",
+                TextColor3 = Color3.fromRGB(200, 200, 200),
+                TextSize = 16,
+                AutoButtonColor = false
+            })
+
+            CreateInstance("UICorner", {
+                Parent = IncrementBtn,
+                CornerRadius = UDim.new(0, 4)
             })
 
             -- Preset color sync
@@ -679,7 +706,7 @@ function lib:Window(text, preset, closebind)
             local function updateSlider(value)
                 value = math.clamp(value, min, max)
                 local posX = value / max
-                local pos = UDim2.new(posX, -12, -0.75, 0)  -- Adjusted for larger handle
+                local pos = UDim2.new(posX, -12, 0.5, -12)  -- Properly centered on track
                 local pos1 = UDim2.new(posX, 0, 0, 6)  -- Adjusted for taller track
                 
                 CurrentValueFrame:TweenSize(pos1, "Out", "Sine", 0.1, true)
@@ -725,16 +752,51 @@ function lib:Window(text, preset, closebind)
             -- Connect input to slider track for direct tapping
             SlideFrame.InputBegan:Connect(beginDrag)
             SlideFrame.InputEnded:Connect(endDrag)
-            
-            -- Connect input to the larger slider area for even easier touch
-            SliderArea.InputBegan:Connect(beginDrag)
-            SliderArea.InputEnded:Connect(endDrag)
 
             UserInputService.InputChanged:Connect(function(input)
                 if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                     move(input)
                 end
             end)
+
+            -- Increment/Decrement button functionality
+            local function changeValue(amount)
+                local currentValue = tonumber(SliderValue.Text) or start
+                local newValue = math.clamp(currentValue + amount, min, max)
+                
+                -- Apply increment if specified
+                if increment > 0 then
+                    newValue = math.floor(newValue / increment) * increment
+                end
+                
+                updateSlider(newValue)
+            end
+
+            DecrementBtn.MouseButton1Click:Connect(function()
+                changeValue(-increment)
+            end)
+
+            IncrementBtn.MouseButton1Click:Connect(function()
+                changeValue(increment)
+            end)
+
+            -- Hover effects for buttons
+            local function setupButtonHover(button)
+                button.MouseEnter:Connect(function()
+                    TweenCreate(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                    }):Play()
+                end)
+
+                button.MouseLeave:Connect(function()
+                    TweenCreate(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                    }):Play()
+                end)
+            end
+
+            setupButtonHover(DecrementBtn)
+            setupButtonHover(IncrementBtn)
 
             -- Set initial value
             updateSlider(start)
