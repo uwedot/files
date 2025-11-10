@@ -34,8 +34,8 @@ UILibrary.Theme = {
     ScrollBarColor = Color3.fromRGB(100, 100, 110),
     StrokeColor = Color3.fromRGB(70, 70, 80),
     NotificationAccent = Color3.fromRGB(241, 196, 15),
-    CornerRadius = 8,
-    ButtonCornerRadius = 6,
+    CornerRadius = 0, -- Changed to 0 for no rounded corners
+    ButtonCornerRadius = 0, -- Changed to 0 for no rounded corners
     TitleBarHeight = 36,
     TabBarHeight = 38,
     ElementHeight = 32,
@@ -52,14 +52,7 @@ local function createInstance(className, props)
     return obj
 end
 
-local function createCorner(parent, radius)
-    return createInstance("UICorner", {
-        Parent = parent,
-        CornerRadius = UDim.new(0, radius or UILibrary.Theme.CornerRadius)
-    })
-end
-
--- Removed createStroke function completely since it was used for shadows
+-- Removed createCorner function completely since we don't want rounded corners
 
 local function tween(obj, props, duration, style, direction)
     local t = TweenService:Create(obj, TweenInfo.new(
@@ -78,7 +71,6 @@ function UILibrary:CreateWindow(config)
     -- Initialize window properties
     w.Title = config.Title or "UI Panel"
     w.Size = UDim2.fromOffset(360, 320)
-    w.MinimizeKey = config.MinimizeKey or Enum.KeyCode.RightControl
     w.ToggleKey = config.ToggleKey or Enum.KeyCode.X
     w.Connections, w.Elements, w.Tabs = {}, {}, {}
     w.ActiveTab, w.IsMinimized, w.IsVisible = nil, false, true
@@ -106,14 +98,12 @@ function UILibrary:CreateWindow(config)
         ClipsDescendants = true
     })
     
-    -- Removed stroke (shadow) from MainFrame
-    createCorner(w.MainFrame)
+    -- Removed corner creation
     
     -- Initialize window components
     w:CreateTitleBar()
     w:CreateTabBar()
     w:SetupDragging()
-    if w.MinimizeKey then w:SetupMinimizeKeybind() end
     w:SetupToggleVisibility()
     
     return w
@@ -128,7 +118,7 @@ function UILibrary:CreateTitleBar()
         ClipsDescendants = true
     })
     
-    createCorner(self.TitleBar, 0) -- No corner radius for title bar
+    -- Removed corner creation
     
     self.TitleLabel = createInstance("TextLabel", {
         Parent = self.TitleBar,
@@ -240,8 +230,7 @@ function UILibrary:SetupToggleVisibility()
             ZIndex = 101
         })
         
-        createCorner(self.ToggleButton, 8)
-        -- Removed stroke from ToggleButton
+        -- Removed corner creation
         
         self:SetupToggleButtonDragging()
         
@@ -338,7 +327,7 @@ function UILibrary:AddTab(name)
         BorderSizePixel = 0
     })
     
-    createCorner(tab.Button, UILibrary.Theme.ButtonCornerRadius)
+    -- Removed corner creation
     
     -- Tab indicator
     tab.Indicator = createInstance("Frame", {
@@ -350,7 +339,7 @@ function UILibrary:AddTab(name)
         Visible = false
     })
     
-    createCorner(tab.Indicator, 2)
+    -- Removed corner creation
     
     -- Tab container
     tab.Container = createInstance("ScrollingFrame", {
@@ -462,7 +451,7 @@ function UILibrary:AddToggle(tab, config)
         BorderSizePixel = 0
     })
     
-    createCorner(container)
+    -- Removed corner creation
     
     local textLabel = createInstance("TextLabel", {
         Parent = container,
@@ -483,7 +472,7 @@ function UILibrary:AddToggle(tab, config)
         BackgroundColor3 = UILibrary.Theme.TertiaryBackground
     })
     
-    createCorner(toggleFrame, 11)
+    -- Removed corner creation
     
     local knob = createInstance("Frame", {
         Parent = toggleFrame,
@@ -492,7 +481,7 @@ function UILibrary:AddToggle(tab, config)
         BackgroundColor3 = UILibrary.Theme.MutedText
     })
     
-    createCorner(knob, 9)
+    -- Removed corner creation
     
     local button = createInstance("TextButton", {
         Parent = container,
@@ -569,7 +558,7 @@ function UILibrary:AddSlider(tab, config)
         BorderSizePixel = 0
     })
     
-    createCorner(container)
+    -- Removed corner creation
     
     local labelFrame = createInstance("Frame", {
         Parent = container,
@@ -608,7 +597,7 @@ function UILibrary:AddSlider(tab, config)
         BorderSizePixel = 0
     })
     
-    createCorner(barBack, 4)
+    -- Removed corner creation
     
     local fill = createInstance("Frame", {
         Parent = barBack,
@@ -617,7 +606,7 @@ function UILibrary:AddSlider(tab, config)
         BorderSizePixel = 0
     })
     
-    createCorner(fill, 4)
+    -- Removed corner creation
     
     local handle = createInstance("Frame", {
         Parent = barBack,
@@ -626,7 +615,7 @@ function UILibrary:AddSlider(tab, config)
         BorderSizePixel = 0
     })
     
-    createCorner(handle, 6)
+    -- Removed corner creation
     
     local function updateDisplay()
         valueLabel.Text = format(currentValue)
@@ -709,7 +698,7 @@ function UILibrary:AddButton(tab, config)
         BorderSizePixel = 0
     })
     
-    createCorner(b)
+    -- Removed corner creation
     
     local enterConn = b.MouseEnter:Connect(function()
         tween(b, {BackgroundColor3 = UILibrary.Theme.AccentHover}, 0.15)
@@ -745,7 +734,7 @@ function UILibrary:AddLabel(tab, text)
         TextXAlignment = Enum.TextXAlignment.Left
     })
     
-    createCorner(l)
+    -- Removed corner creation
     
     createInstance("UIPadding", {
         Parent = l,
@@ -767,7 +756,7 @@ function UILibrary:AddTextBox(tab, config)
         BorderSizePixel = 0
     })
     
-    createCorner(container)
+    -- Removed corner creation
     
     local textLabel = createInstance("TextLabel", {
         Parent = container,
@@ -789,7 +778,7 @@ function UILibrary:AddTextBox(tab, config)
         BorderSizePixel = 0
     })
     
-    createCorner(textBoxFrame, 6)
+    -- Removed corner creation
     
     local textBox = createInstance("TextBox", {
         Parent = textBoxFrame,
@@ -808,13 +797,10 @@ function UILibrary:AddTextBox(tab, config)
     
     local focusConn = textBox.Focused:Connect(function()
         tween(textBoxFrame, {BackgroundColor3 = UILibrary.Theme.HoverColor}, 0.15)
-        -- Removed stroke addition on focus
     end)
     
     local focusLostConn = textBox.FocusLost:Connect(function(enterPressed)
         tween(textBoxFrame, {BackgroundColor3 = UILibrary.Theme.TertiaryBackground}, 0.15)
-        
-        -- Removed stroke removal code since we're not adding strokes anymore
         
         if enterPressed then
             callback(textBox.Text)
@@ -842,7 +828,7 @@ function UILibrary:Notify(titleText, description, duration)
     
     local isMobile = UIS.TouchEnabled
     local notificationWidth = isMobile and 280 or 320
-    local notificationHeight = isMobile and 60 or 70  -- Keeping original size
+    local notificationHeight = isMobile and 60 or 70
     local fontSize, titleFontSize = isMobile and 12 or 13, isMobile and 13 or 14
     
     local notification = createInstance("Frame", {
@@ -856,8 +842,7 @@ function UILibrary:Notify(titleText, description, duration)
         ClipsDescendants = true
     })
     
-    createCorner(notification)
-    -- Removed stroke from notification
+    -- Removed corner creation
     
     local closeBtn = createInstance("TextButton", {
         Parent = notification,
@@ -878,11 +863,11 @@ function UILibrary:Notify(titleText, description, duration)
         Name = "Title",
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 12, 0, 8),
-        Size = UDim2.new(1, -45, 0, 16),  -- Reduced height to make room
+        Size = UDim2.new(1, -45, 0, 16),
         Font = Fonts.Bold,
         Text = titleText or "Notification",
         TextColor3 = UILibrary.Theme.PrimaryText,
-        TextSize = titleFontSize - 1,  -- Slightly smaller text
+        TextSize = titleFontSize - 1,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextYAlignment = Enum.TextYAlignment.Top,
         TextTruncate = Enum.TextTruncate.AtEnd,
@@ -894,12 +879,12 @@ function UILibrary:Notify(titleText, description, duration)
         Parent = notification,
         Name = "Description",
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 12, 0, isMobile and 24 or 26),  -- Adjusted position
-        Size = UDim2.new(1, -45, 0, isMobile and 20 or 22),  -- Reduced height
+        Position = UDim2.new(0, 12, 0, isMobile and 24 or 26),
+        Size = UDim2.new(1, -45, 0, isMobile and 20 or 22),
         Font = Fonts.Regular,
         Text = description or "",
         TextColor3 = UILibrary.Theme.SecondaryText,
-        TextSize = fontSize - 1,  -- Slightly smaller text
+        TextSize = fontSize - 1,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextYAlignment = Enum.TextYAlignment.Top,
         TextWrapped = true,
@@ -913,12 +898,12 @@ function UILibrary:Notify(titleText, description, duration)
         Parent = notification,
         Name = "TimerLabel",
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 12, 0, isMobile and 44 or 48),  -- Positioned at bottom
+        Position = UDim2.new(0, 12, 0, isMobile and 44 or 48),
         Size = UDim2.new(1, -45, 0, 12),
         Font = Fonts.Semibold,
         Text = tostring(duration),
         TextColor3 = UILibrary.Theme.NotificationAccent,
-        TextSize = fontSize - 2,  -- Smaller text for timer
+        TextSize = fontSize - 2,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextYAlignment = Enum.TextYAlignment.Top,
         ZIndex = 201
@@ -1045,16 +1030,6 @@ function UILibrary:SetupDragging()
     
     table.insert(self.Connections, beginConn)
     table.insert(self.Connections, changeConn)
-end
-
-function UILibrary:SetupMinimizeKeybind()
-    local keyConn = UIS.InputBegan:Connect(function(i, g)
-        if not g and i.KeyCode == self.MinimizeKey then
-            self:ToggleMinimize()
-        end
-    end)
-    
-    table.insert(self.Connections, keyConn)
 end
 
 function UILibrary:ToggleMinimize()
