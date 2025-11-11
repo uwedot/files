@@ -153,29 +153,6 @@ function Library:Create(config)
     frame3.Parent = tabContainer
     tabContainer.Parent = main
 
-    -- Shadow with proper corners
-    local shadow = Instance.new("ImageLabel")
-    shadow.Name = "shadow"
-    shadow.Image = "rbxassetid://297774371"
-    shadow.ImageColor3 = Color3.fromRGB(15, 15, 15)
-    shadow.ImageTransparency = 0.5
-    shadow.SliceCenter = Rect.new(20, 20, 280, 280)
-    shadow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    shadow.BackgroundTransparency = 1
-    shadow.Position = UDim2.fromScale(0.306, 0.325)
-    shadow.Selectable = true
-    shadow.Size = UDim2.fromOffset(393, 272)
-    shadow.ZIndex = -1
-    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
-    shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-    
-    -- Add corner to shadow to match main frame
-    local shadowCorner = Instance.new("UICorner")
-    shadowCorner.CornerRadius = UDim.new(0, 6)
-    shadowCorner.Parent = shadow
-    
-    shadow.Parent = arizon
-
     main.Parent = arizon
 
     -- Event Handlers
@@ -193,12 +170,6 @@ function Library:Create(config)
             tabContainer.Visible = true
             tabContainer.BackgroundTransparency = 1
             frame3.BackgroundTransparency = 1
-            
-            -- Adjust shadow to cover the expanded menu
-            TweenService:Create(shadow, TweenInfo.new(0.2), {
-                Size = UDim2.fromOffset(393 + 142, 272) -- Expand shadow to cover sidebar
-            }):Play()
-            
             TweenService:Create(tabContainer, TweenInfo.new(0.1), {BackgroundTransparency = 0.7}):Play()
             TweenService:Create(frame3, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
         end)
@@ -206,12 +177,6 @@ function Library:Create(config)
         close1.MouseButton1Click:Connect(function()
             TweenService:Create(tabContainer, TweenInfo.new(0.1), {BackgroundTransparency = 1}):Play()
             TweenService:Create(frame3, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-            
-            -- Reset shadow size when closing menu
-            TweenService:Create(shadow, TweenInfo.new(0.2), {
-                Size = UDim2.fromOffset(393, 272) -- Return to original size
-            }):Play()
-            
             task.wait(0.1)
             tabContainer.Visible = false
         end)
@@ -229,7 +194,7 @@ function Library:Create(config)
             arizon:Destroy()
         end)
 
-        -- Drag Functionality (Fixed for mobile)
+        -- Drag Functionality (Mobile Compatible)
         local dragToggle = nil
         local dragInput = nil
         local dragStart = nil
@@ -241,10 +206,6 @@ function Library:Create(config)
             local frameY = math.clamp(startPos.Y.Offset + delta.Y, 0, arizon.AbsoluteSize.Y - main.AbsoluteSize.Y)
             
             TweenService:Create(main, TweenInfo.new(0.1), {
-                Position = UDim2.new(startPos.X.Scale, frameX, startPos.Y.Scale, frameY)
-            }):Play()
-            
-            TweenService:Create(shadow, TweenInfo.new(0.1), {
                 Position = UDim2.new(startPos.X.Scale, frameX, startPos.Y.Scale, frameY)
             }):Play()
         end
@@ -466,7 +427,7 @@ function Library:Create(config)
                 end)
             end
 
-            -- Slider Element (Fixed for Mobile)
+            -- Slider Element (Mobile Compatible)
             function elementHandler:Slider(title, min, max, start, inc, callback)
                 local slider = Instance.new("Frame")
                 slider.Name = "slider"
