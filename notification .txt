@@ -1,0 +1,182 @@
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local TextService = game:GetService("TextService")
+local Players = game:GetService("Players")
+
+local NotifGui = Instance.new("ScreenGui")
+NotifGui.Name = "AkaliNotif"
+NotifGui.Parent = game:GetService("CoreGui")
+
+local Container = Instance.new("Frame")
+Container.Name = "Container"
+Container.Position = UDim2.new(0, 20, 0.5, -20)
+Container.Size = UDim2.new(0, 300, 0.5, 0)
+Container.BackgroundTransparency = 1
+Container.Parent = NotifGui
+
+local function CreateImage(ID)
+    local NewImage = Instance.new("ImageLabel")
+    NewImage.Image = ID
+    NewImage.BackgroundTransparency = 1
+    return NewImage
+end
+
+local function CreateRoundedFrame()
+    local Frame = CreateImage("http://www.roblox.com/asset/?id=5761488251")
+    Frame.ScaleType = Enum.ScaleType.Slice
+    Frame.SliceCenter = Rect.new(2, 2, 298, 298)
+    Frame.ImageColor3 = Color3.fromRGB(30, 30, 30)
+    return Frame
+end
+
+local function CreateShadow()
+    local Shadow = CreateImage("http://www.roblox.com/asset/?id=5761498316")
+    Shadow.ScaleType = Enum.ScaleType.Slice
+    Shadow.SliceCenter = Rect.new(17, 17, 283, 283)
+    Shadow.Size = UDim2.fromScale(1, 1) + UDim2.fromOffset(30, 30)
+    Shadow.Position = -UDim2.fromOffset(15, 15)
+    Shadow.ImageColor3 = Color3.fromRGB(30, 30, 30)
+    return Shadow
+end
+
+local Padding, DescriptionPadding = 10, 10
+local InstructionObjects = {}
+local TweenTime, TweenStyle, TweenDirection = 1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out
+local LastTick = tick()
+
+local function CalculateBounds(objects)
+    local x, y = 0, 0
+    for _, obj in next, objects do
+        x += obj.AbsoluteSize.X
+        y += obj.AbsoluteSize.Y
+    end
+    return {X = x, Y = y}
+end
+
+local function Update()
+    local DeltaTime = tick() - LastTick
+    local previousObjects = {}
+    
+    for _, object in next, InstructionObjects do
+        local label, delta, done = object[1], object[2], object[3]
+        
+        if not done then
+            if delta < TweenTime then
+                object[2] = math.clamp(delta + DeltaTime, 0, 1)
+                delta = object[2]
+            else
+                object[3] = true
+            end
+        end
+        
+        local tweenValue = TweenService:GetValue(delta, TweenStyle, TweenDirection)
+        local previousBounds = CalculateBounds(previousObjects)
+        local targetPos = UDim2.new(0, 0, 0, previousBounds.Y + (Padding * #previousObjects))
+        label.Position = label.Position:Lerp(targetPos, tweenValue)
+        table.insert(previousObjects, label)
+    end
+    
+    LastTick = tick()
+end
+
+RunService:BindToRenderStep("UpdateList", 0, Update)
+
+local MaxWidth = Container.AbsoluteSize.X - Padding - DescriptionPadding
+
+local function CreateTextLabel(text, font, size)
+    local label = Instance.new("TextLabel")
+    label.Text = text
+    label.Font = font
+    label.TextSize = size
+    label.BackgroundTransparency = 1
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.RichText = true
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    return label
+end
+
+local function FadeOut(object)
+    local propType = string.sub(object.ClassName, 1, 4)
+    local properties = {
+        Text = "TextTransparency",
+        Fram = "BackgroundTransparency", 
+        Imag = "ImageTransparency"
+    }
+    
+    local prop = properties[propType]
+    TweenService:Create(object, TweenInfo.new(0.25, TweenStyle, TweenDirection), {
+        [prop] = 1
+    }):Play()
+end
+
+local function RemoveNotification(object, index)
+    FadeOut(object)
+    for _, child in next, object:GetDescendants() do
+        FadeOut(child)
+    end
+    
+    wait(0.25)
+    table.remove(InstructionObjects, index)
+    
+    for _, obj in next, InstructionObjects do
+        obj[2], obj[3] = 0, false
+    end
+end
+
+local function FindNotificationIndex(target)
+    for i, object in next, InstructionObjects do
+        if typeof(object) == "table" and object[1] == target then
+            return i
+        end
+    end
+end
+
+return {
+    Notify = function(properties)
+        properties = typeof(properties) == "table" and properties or {}
+        local title, description = properties.Title, properties.Description
+        local duration = properties.Duration or 5
+        
+        if not title and not description then return end
+        
+        local height = title and 26 or 0
+        
+        if description then
+            local textSize = TextService:GetTextSize(description, 14, Enum.Font.Gotham, Vector2.new(0, 0))
+            height += math.ceil(textSize.X / MaxWidth) * textSize.Y + 8
+        end
+        
+        local notification = CreateRoundedFrame()
+        notification.Size = UDim2.new(1, 0, 0, height)
+        notification.Position = UDim2.new(-1, 20, 0, #InstructionObjects * (height + Padding))
+        
+        if title then
+            local titleLabel = CreateTextLabel(title, Enum.Font.GothamSemibold, 14)
+            titleLabel.Size = UDim2.new(1, -10, 0, 26)
+            titleLabel.Position = UDim2.fromOffset(10, 0)
+            titleLabel.Parent = notification
+        end
+        
+        if description then
+            local descLabel = CreateTextLabel(description, Enum.Font.Gotham, 14)
+            descLabel.TextWrapped = true
+            descLabel.Size = UDim2.fromScale(1, 1) + UDim2.fromOffset(-DescriptionPadding, title and -26 or 0)
+            descLabel.Position = UDim2.fromOffset(10, title and 26 or 0)
+            descLabel.TextYAlignment = Enum.TextYAlignment[title and "Top" or "Center"]
+            descLabel.Parent = notification
+        end
+        
+        CreateShadow().Parent = notification
+        notification.Parent = Container
+        
+        table.insert(InstructionObjects, {notification, 0, false})
+        
+        coroutine.wrap(function()
+            wait(duration)
+            local index = FindNotificationIndex(notification)
+            if index then
+                RemoveNotification(notification, index)
+            end
+        end)()
+    end
+}
