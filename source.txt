@@ -29,7 +29,7 @@ if DeviceType == "Mobile" then
     MobileToggleButton.Name = "MobileToggle"
     MobileToggleButton.Size = UDim2.new(0, 40, 0, 40)
     MobileToggleButton.Position = UDim2.new(0, 10, 0.5, -20)
-    MobileToggleButton.BackgroundColor3 = Color3.fromRGB(54, 54, 54) -- Brighter background
+    MobileToggleButton.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
     MobileToggleButton.Text = "−"
     MobileToggleButton.TextColor3 = PresetColor
     MobileToggleButton.Font = Enum.Font.GothamBold
@@ -38,9 +38,8 @@ if DeviceType == "Mobile" then
     MobileToggleButton.Parent = ui
     
     local corner = Instance.new("UICorner", MobileToggleButton)
-    corner.CornerRadius = UDim.new(0, 8) -- More rounded corners
+    corner.CornerRadius = UDim.new(0, 8)
     
-    -- Add colored border/stroke effect
     local Stroke = Instance.new("UIStroke", MobileToggleButton)
     Stroke.Color = PresetColor
     Stroke.Thickness = 2
@@ -87,7 +86,7 @@ if DeviceType == "Mobile" then
     
     MobileToggleButton.MouseEnter:Connect(function()
         TweenService:Create(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            BackgroundColor3 = Color3.fromRGB(64, 64, 64) -- Brighter hover
+            BackgroundColor3 = Color3.fromRGB(64, 64, 64)
         }):Play()
         TweenService:Create(Stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Thickness = 3
@@ -173,7 +172,7 @@ function lib:Window(text, preset, closebind)
         Name = "Main",
         Parent = ui,
         AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = Color3.fromRGB(45, 45, 45), -- Brighter background
+        BackgroundColor3 = Color3.fromRGB(45, 45, 45),
         BorderSizePixel = 0,
         Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(0, 560, 0, 319),
@@ -183,7 +182,7 @@ function lib:Window(text, preset, closebind)
 
     CreateInstance("UICorner", {
         Parent = Main,
-        CornerRadius = UDim.new(0, 8) -- Rounded corners for main window
+        CornerRadius = UDim.new(0, 8)
     })
 
     local TabHold = CreateInstance("ScrollingFrame", {
@@ -194,7 +193,7 @@ function lib:Window(text, preset, closebind)
         Size = UDim2.new(0, 107, 0, 254),
         CanvasSize = UDim2.new(0, 0, 0, 0),
         ScrollBarThickness = 3,
-        ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80), -- Brighter scrollbar
+        ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80),
         ClipsDescendants = true
     })
 
@@ -214,10 +213,10 @@ function lib:Window(text, preset, closebind)
         BackgroundTransparency = 1,
         Position = UDim2.new(0.034, 0, 0.056, 0),
         Size = UDim2.new(0, 200, 0, 23),
-        Font = Enum.Font.GothamSemibold, -- Fancier font
+        Font = Enum.Font.GothamSemibold,
         Text = text,
-        TextColor3 = Color3.fromRGB(100, 100, 100), -- Brighter text
-        TextSize = 14, -- Slightly larger
+        TextColor3 = Color3.fromRGB(100, 100, 100),
+        TextSize = 14,
         TextXAlignment = Enum.TextXAlignment.Left
     })
 
@@ -298,9 +297,9 @@ function lib:Window(text, preset, closebind)
             Parent = TabBtn,
             BackgroundTransparency = 1,
             Size = UDim2.new(0, 107, 0, 21),
-            Font = Enum.Font.Gotham, -- Fancier font
+            Font = Enum.Font.Gotham,
             Text = text,
-            TextColor3 = Color3.fromRGB(180, 180, 180), -- Brighter text
+            TextColor3 = Color3.fromRGB(180, 180, 180),
             TextSize = 14,
             TextXAlignment = Enum.TextXAlignment.Left
         })
@@ -332,7 +331,7 @@ function lib:Window(text, preset, closebind)
             Size = UDim2.new(0, 373, 0, 254),
             CanvasSize = UDim2.new(0, 0, 0, 0),
             ScrollBarThickness = 3,
-            ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80), -- Brighter scrollbar
+            ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80),
             Visible = false
         })
 
@@ -365,7 +364,7 @@ function lib:Window(text, preset, closebind)
                 if v.Name == "TabBtn" then
                     v.TabBtnIndicator:TweenSize(UDim2.new(0, 0, 0, 2), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.2, true)
                     TweenCreate(v.TabTitle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        TextColor3 = Color3.fromRGB(180, 180, 180) -- Brighter inactive text
+                        TextColor3 = Color3.fromRGB(180, 180, 180)
                     }):Play()
                 end
             end
@@ -378,7 +377,6 @@ function lib:Window(text, preset, closebind)
 
         local tabcontent = {}
         
-        -- Add Label function to tabcontent
         function tabcontent:Label(text)
     local Label = CreateInstance("TextLabel", {
         Name = "Label",
@@ -389,7 +387,7 @@ function lib:Window(text, preset, closebind)
         Text = text,
         TextColor3 = Color3.fromRGB(200, 200, 200),
         TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Center  -- Changed from Left to Center
+        TextXAlignment = Enum.TextXAlignment.Center
     })
 end
         
@@ -397,7 +395,7 @@ end
             local Button = CreateInstance("TextButton", {
                 Name = "Button",
                 Parent = Tab,
-                BackgroundColor3 = Color3.fromRGB(54, 54, 54), -- Brighter background
+                BackgroundColor3 = Color3.fromRGB(54, 54, 54),
                 Size = UDim2.new(0, 363, 0, 42),
                 AutoButtonColor = false,
                 Font = Enum.Font.SourceSans,
@@ -408,7 +406,7 @@ end
 
             CreateInstance("UICorner", {
                 Parent = Button,
-                CornerRadius = UDim.new(0, 6) -- More rounded corners
+                CornerRadius = UDim.new(0, 6)
             })
 
             local ButtonTitle = CreateInstance("TextLabel", {
@@ -417,7 +415,7 @@ end
                 BackgroundTransparency = 1,
                 Position = UDim2.new(0.036, 0, 0, 0),
                 Size = UDim2.new(0, 187, 0, 42),
-                Font = Enum.Font.Gotham, -- Fancier font
+                Font = Enum.Font.Gotham,
                 Text = text,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
@@ -426,7 +424,7 @@ end
 
             Button.MouseEnter:Connect(function()
                 TweenCreate(Button, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    BackgroundColor3 = Color3.fromRGB(64, 64, 64) -- Brighter hover
+                    BackgroundColor3 = Color3.fromRGB(64, 64, 64)
                 }):Play()
             end)
 
@@ -447,7 +445,7 @@ end
             local Toggle = CreateInstance("TextButton", {
                 Name = "Toggle",
                 Parent = Tab,
-                BackgroundColor3 = Color3.fromRGB(54, 54, 54), -- Brighter background
+                BackgroundColor3 = Color3.fromRGB(54, 54, 54),
                 Size = UDim2.new(0, 363, 0, 42),
                 AutoButtonColor = false,
                 Font = Enum.Font.SourceSans,
@@ -458,7 +456,7 @@ end
 
             CreateInstance("UICorner", {
                 Parent = Toggle,
-                CornerRadius = UDim.new(0, 6) -- More rounded corners
+                CornerRadius = UDim.new(0, 6)
             })
 
             local ToggleTitle = CreateInstance("TextLabel", {
@@ -467,7 +465,7 @@ end
                 BackgroundTransparency = 1,
                 Position = UDim2.new(0.036, 0, 0, 0),
                 Size = UDim2.new(0, 187, 0, 42),
-                Font = Enum.Font.Gotham, -- Fancier font
+                Font = Enum.Font.Gotham,
                 Text = text,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
@@ -477,7 +475,7 @@ end
             local FrameToggle1 = CreateInstance("Frame", {
                 Name = "FrameToggle1",
                 Parent = Toggle,
-                BackgroundColor3 = Color3.fromRGB(70, 70, 70), -- Brighter background
+                BackgroundColor3 = Color3.fromRGB(70, 70, 70),
                 Position = UDim2.new(0.86, 0, 0.286, 0),
                 Size = UDim2.new(0, 37, 0, 18)
             })
@@ -486,7 +484,7 @@ end
             local FrameToggle2 = CreateInstance("Frame", {
                 Name = "FrameToggle2",
                 Parent = FrameToggle1,
-                BackgroundColor3 = Color3.fromRGB(54, 54, 54), -- Brighter background
+                BackgroundColor3 = Color3.fromRGB(54, 54, 54),
                 Position = UDim2.new(0.049, 0, 0.093, 0),
                 Size = UDim2.new(0, 33, 0, 14)
             })
@@ -504,7 +502,7 @@ end
             local FrameToggleCircle = CreateInstance("Frame", {
                 Name = "FrameToggleCircle",
                 Parent = FrameToggle1,
-                BackgroundColor3 = Color3.fromRGB(70, 70, 70), -- Brighter background
+                BackgroundColor3 = Color3.fromRGB(70, 70, 70),
                 Position = UDim2.new(0.127, 0, 0.222, 0),
                 Size = UDim2.new(0, 10, 0, 10)
             })
@@ -519,7 +517,7 @@ end
             local function UpdateToggleState()
                 if toggled then
                     TweenCreate(Toggle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundColor3 = Color3.fromRGB(64, 64, 64) -- Brighter hover
+                        BackgroundColor3 = Color3.fromRGB(64, 64, 64)
                     }):Play()
                     TweenCreate(FrameToggle1, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                         BackgroundTransparency = 1
@@ -548,7 +546,7 @@ end
                         BackgroundTransparency = 1
                     }):Play()
                     TweenCreate(FrameToggleCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundColor3 = Color3.fromRGB(70, 70, 70) -- Brighter background
+                        BackgroundColor3 = Color3.fromRGB(70, 70, 70)
                     }):Play()
                     FrameToggleCircle:TweenPosition(UDim2.new(0.127, 0, 0.222, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.2, true)
                 end
@@ -582,7 +580,7 @@ end
             local Slider = CreateInstance("TextButton", {
                 Name = "Slider",
                 Parent = Tab,
-                BackgroundColor3 = Color3.fromRGB(54, 54, 54), -- Brighter background
+                BackgroundColor3 = Color3.fromRGB(54, 54, 54),
                 Size = UDim2.new(0, 363, 0, 62),
                 AutoButtonColor = false,
                 Font = Enum.Font.SourceSans,
@@ -593,7 +591,7 @@ end
 
             CreateInstance("UICorner", {
                 Parent = Slider,
-                CornerRadius = UDim.new(0, 6) -- More rounded corners
+                CornerRadius = UDim.new(0, 6)
             })
 
             local SliderTitle = CreateInstance("TextLabel", {
@@ -602,7 +600,7 @@ end
                 BackgroundTransparency = 1,
                 Position = UDim2.new(0.036, 0, 0.1, 0),
                 Size = UDim2.new(0, 187, 0, 30),
-                Font = Enum.Font.Gotham, -- Fancier font
+                Font = Enum.Font.Gotham,
                 Text = text,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
@@ -615,7 +613,7 @@ end
                 BackgroundTransparency = 1,
                 Position = UDim2.new(0.036, 0, 0.1, 0),
                 Size = UDim2.new(0, 335, 0, 30),
-                Font = Enum.Font.Gotham, -- Fancier font
+                Font = Enum.Font.Gotham,
                 Text = tostring(start),
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
@@ -625,7 +623,7 @@ end
             local SlideFrame = CreateInstance("Frame", {
                 Name = "SlideFrame",
                 Parent = Slider,
-                BackgroundColor3 = Color3.fromRGB(70, 70, 70), -- Brighter background
+                BackgroundColor3 = Color3.fromRGB(70, 70, 70),
                 BorderSizePixel = 0,
                 Position = UDim2.new(0.034, 0, 0.645, 0),
                 Size = UDim2.new(0, 335, 0, 5)
@@ -669,12 +667,37 @@ end
             end)()
 
             local function formatNumber(value)
+                if math.abs(value) < 0.0001 and value ~= 0 then
+                    return string.format("%.2e", value)
+                end
+                
+                if math.abs(value) >= 10000 then
+                    local formatted = tostring(math.floor(value))
+                    local k = formatted:len() % 3
+                    if k == 0 then k = 3 end
+                    return formatted:sub(1, k) .. formatted:sub(k+1):gsub("(%d%d%d)", ",%1")
+                end
+                
                 if increment < 1 then
-                    local formatted = string.format("%.10f", value)
+                    local decimalPlaces = 0
+                    local tempIncrement = increment
+                    
+                    while tempIncrement < 1 do
+                        decimalPlaces = decimalPlaces + 1
+                        tempIncrement = tempIncrement * 10
+                        if tempIncrement >= 1 then break end
+                    end
+                    
+                    decimalPlaces = math.min(decimalPlaces + 1, 6)
+                    
+                    local formatString = "%." .. decimalPlaces .. "f"
+                    local formatted = string.format(formatString, value)
+                    
                     formatted = formatted:gsub("%.(%d-)0*$", function(decimal)
                         return decimal == "" and "" or "." .. decimal
                     end)
                     formatted = formatted:gsub("%.$", "")
+                    
                     return formatted
                 else
                     return tostring(math.floor(value))
@@ -753,7 +776,7 @@ end
 
             Slider.MouseEnter:Connect(function()
                 TweenService:Create(Slider, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    BackgroundColor3 = Color3.fromRGB(64, 64, 64) -- Brighter hover
+                    BackgroundColor3 = Color3.fromRGB(64, 64, 64)
                 }):Play()
             end)
 
@@ -776,14 +799,14 @@ end
             local Dropdown = CreateInstance("Frame", {
                 Name = "Dropdown",
                 Parent = Tab,
-                BackgroundColor3 = Color3.fromRGB(54, 54, 54), -- Brighter background
+                BackgroundColor3 = Color3.fromRGB(54, 54, 54),
                 ClipsDescendants = true,
                 Size = UDim2.new(0, 363, 0, 42)
             })
 
             CreateInstance("UICorner", {
                 Parent = Dropdown,
-                CornerRadius = UDim.new(0, 6) -- More rounded corners
+                CornerRadius = UDim.new(0, 6)
             })
 
             local DropdownBtn = CreateInstance("TextButton", {
@@ -803,7 +826,7 @@ end
                 BackgroundTransparency = 1,
                 Position = UDim2.new(0.036, 0, 0, 0),
                 Size = UDim2.new(0, 187, 0, 42),
-                Font = Enum.Font.Gotham, -- Fancier font
+                Font = Enum.Font.Gotham,
                 Text = text,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
@@ -829,7 +852,7 @@ end
                 Size = UDim2.new(0, 342, 0, 0),
                 CanvasSize = UDim2.new(0, 0, 0, 0),
                 ScrollBarThickness = 3,
-                ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80) -- Brighter scrollbar
+                ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
             })
 
             local DropLayout = CreateInstance("UIListLayout", {
@@ -863,11 +886,11 @@ end
                 local Item = CreateInstance("TextButton", {
                     Name = "Item",
                     Parent = DropItemHolder,
-                    BackgroundColor3 = Color3.fromRGB(54, 54, 54), -- Brighter background
+                    BackgroundColor3 = Color3.fromRGB(54, 54, 54),
                     ClipsDescendants = true,
                     Size = UDim2.new(0, 335, 0, 25),
                     AutoButtonColor = false,
-                    Font = Enum.Font.Gotham, -- Fancier font
+                    Font = Enum.Font.Gotham,
                     Text = v,
                     TextColor3 = Color3.fromRGB(255, 255, 255),
                     TextSize = 15
@@ -880,7 +903,7 @@ end
 
                 Item.MouseEnter:Connect(function()
                     TweenCreate(Item, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundColor3 = Color3.fromRGB(64, 64, 64) -- Brighter hover
+                        BackgroundColor3 = Color3.fromRGB(64, 64, 64)
                     }):Play()
                 end)
 
@@ -908,14 +931,14 @@ end
             local Textbox = CreateInstance("Frame", {
                 Name = "Textbox",
                 Parent = Tab,
-                BackgroundColor3 = Color3.fromRGB(54, 54, 54), -- Brighter background
+                BackgroundColor3 = Color3.fromRGB(54, 54, 54),
                 ClipsDescendants = true,
                 Size = UDim2.new(0, 363, 0, 42)
             })
 
             CreateInstance("UICorner", {
                 Parent = Textbox,
-                CornerRadius = UDim.new(0, 6) -- More rounded corners
+                CornerRadius = UDim.new(0, 6)
             })
 
             local TextboxTitle = CreateInstance("TextLabel", {
@@ -924,7 +947,7 @@ end
                 BackgroundTransparency = 1,
                 Position = UDim2.new(0.036, 0, 0, 0),
                 Size = UDim2.new(0, 187, 0, 42),
-                Font = Enum.Font.Gotham, -- Fancier font
+                Font = Enum.Font.Gotham,
                 Text = text,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
@@ -934,7 +957,7 @@ end
             local TextboxFrame = CreateInstance("Frame", {
                 Name = "TextboxFrame",
                 Parent = TextboxTitle,
-                BackgroundColor3 = Color3.fromRGB(64, 64, 64), -- Brighter background
+                BackgroundColor3 = Color3.fromRGB(64, 64, 64),
                 Position = UDim2.new(1.289, 0, 0.214, 0),
                 Size = UDim2.new(0, 100, 0, 23)
             })
@@ -948,7 +971,7 @@ end
                 Parent = TextboxFrame,
                 BackgroundTransparency = 1,
                 Size = UDim2.new(0, 100, 0, 23),
-                Font = Enum.Font.Gotham, -- Fancier font
+                Font = Enum.Font.Gotham,
                 Text = "",
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14
