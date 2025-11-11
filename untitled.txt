@@ -1,3 +1,8 @@
+--[[
+    Arizon UI Library
+    Cleaned and organized version with search functionality removed
+--]]
+
 local arizon = Instance.new("ScreenGui")
 arizon.Name = "arizon"
 arizon.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -86,17 +91,6 @@ function Library:Create(config)
     close.Position = UDim2.fromScale(0.931, 0.25)
     close.Size = UDim2.fromOffset(16, 16)
     close.Parent = topBar
-    
-    local search = Instance.new("ImageButton")
-    search.Name = "search"
-    search.Image = "http://www.roblox.com/asset/?id=9701781161"
-    search.ImageColor3 = Color3.fromRGB(126, 126, 126)
-    search.ScaleType = Enum.ScaleType.Fit
-    search.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    search.BackgroundTransparency = 1
-    search.Position = UDim2.fromScale(0.891, 0.265)
-    search.Size = UDim2.fromOffset(14, 14)
-    search.Parent = topBar
 
     topBar.Parent = main
 
@@ -221,23 +215,6 @@ function Library:Create(config)
             arizon:Destroy()
         end)
 
-        -- Search Events
-        search.MouseEnter:Connect(function()
-            TweenService:Create(search, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(163, 163, 163)}):Play()
-        end)
-
-        search.MouseLeave:Connect(function()
-            TweenService:Create(search, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(126, 126, 126)}):Play()
-        end)
-
-        search.MouseButton1Click:Connect(function()
-            for _, v in pairs(main:GetChildren()) do
-                if v.Name == "container" then
-                    v.search1.Visible = not v.search1.Visible
-                end
-            end
-        end)
-
         -- Drag Functionality (Permission from Mercury Lib Developers)
         topBar.MouseEnter:Connect(function()
             local inputConnection
@@ -318,55 +295,6 @@ function Library:Create(config)
         uIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
         uIListLayout.Parent = container
 
-        -- Search Bar
-        local searchBar = Instance.new("Frame")
-        searchBar.Name = "search1"
-        searchBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        searchBar.BorderSizePixel = 0
-        searchBar.LayoutOrder = -1
-        searchBar.Size = UDim2.fromOffset(361, 36)
-        searchBar.Visible = false
-
-        local searchIcon = Instance.new("ImageLabel")
-        searchIcon.Name = "imageLabel"
-        searchIcon.Image = "http://www.roblox.com/asset/?id=9634226499"
-        searchIcon.ImageColor3 = Color3.fromRGB(117, 117, 117)
-        searchIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        searchIcon.BackgroundTransparency = 1
-        searchIcon.Position = UDim2.fromScale(0.0249, 0.278)
-        searchIcon.Size = UDim2.fromOffset(15, 15)
-        searchIcon.Parent = searchBar
-
-        local searchTextBox = Instance.new("TextBox")
-        searchTextBox.Name = "textBox1"
-        searchTextBox.Font = Enum.Font.Gotham
-        searchTextBox.PlaceholderColor3 = Color3.fromRGB(125, 125, 125)
-        searchTextBox.PlaceholderText = "search.."
-        searchTextBox.Text = ""
-        searchTextBox.TextColor3 = Color3.fromRGB(188, 188, 188)
-        searchTextBox.TextSize = 12
-        searchTextBox.TextXAlignment = Enum.TextXAlignment.Left
-        searchTextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        searchTextBox.BackgroundTransparency = 1
-        searchTextBox.Position = UDim2.fromScale(-0.00264, 0)
-        searchTextBox.Size = UDim2.fromOffset(361, 36)
-
-        local searchPadding = Instance.new("UIPadding")
-        searchPadding.Name = "uIPadding1"
-        searchPadding.PaddingLeft = UDim.new(0, 30)
-        searchPadding.Parent = searchTextBox
-
-        searchTextBox.Parent = searchBar
-
-        local searchDivider = Instance.new("Frame")
-        searchDivider.Name = "frame2"
-        searchDivider.BackgroundColor3 = Color3.fromRGB(53, 53, 53)
-        searchDivider.BorderSizePixel = 0
-        searchDivider.Position = UDim2.fromScale(0, 0.98)
-        searchDivider.Size = UDim2.fromOffset(361, 1)
-        searchDivider.Parent = searchBar
-
-        searchBar.Parent = container
         container.Parent = main
 
         -- Tab Selection
