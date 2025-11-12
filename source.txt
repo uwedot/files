@@ -8,7 +8,6 @@ local Players = cloneref(game:GetService("Players"))
 local CoreGui = cloneref(game:GetService("CoreGui"))
 
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 local PresetColor = Color3.fromRGB(44, 120, 224)
 local CloseBind = Enum.KeyCode.RightControl
 
