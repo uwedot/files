@@ -36,7 +36,8 @@ if DeviceType == "Mobile" then
     MobileToggleButton = Instance.new("TextButton")
     MobileToggleButton.Name = "MobileToggle"
     MobileToggleButton.Size = UDim2.new(0, 40, 0, 40)
-    MobileToggleButton.Position = UDim2.new(0, 10, 0.5, -20)
+    MobileToggleButton.Position = UDim2.new(1, -50, 0, 10)  -- Changed to top right corner
+    MobileToggleButton.AnchorPoint = Vector2.new(1, 0)  -- Added anchor point for right alignment
     MobileToggleButton.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
     MobileToggleButton.Text = "−"
     MobileToggleButton.TextColor3 = PresetColor
