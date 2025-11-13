@@ -309,12 +309,13 @@ local function AddDraggingFunctionality(DragPoint, Main)
     end)
 end
 
--- Mobile Toggle Button
+-- Mobile Toggle Button (Smaller size)
 local MobileToggleButton = nil
+local MobileToggleIcon = nil
 if DeviceType == "Mobile" then
-    MobileToggleButton = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 8), {
-        Size = UDim2.new(0, 50, 0, 50),
-        Position = UDim2.new(1, -70, 0, 20),
+    MobileToggleButton = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 6), {
+        Size = UDim2.new(0, 40, 0, 40), -- Smaller size: 40x40 instead of 50x50
+        Position = UDim2.new(1, -50, 0, 20), -- Adjusted position
         AnchorPoint = Vector2.new(1, 0),
         Parent = Orion,
         Active = true,
@@ -322,19 +323,33 @@ if DeviceType == "Mobile" then
     }), {
         AddThemeObject(MakeElement("Stroke"), "Stroke"),
         AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072719338"), {
-            Size = UDim2.new(0, 24, 0, 24),
+            Size = UDim2.new(0, 20, 0, 20), -- Smaller icon: 20x20 instead of 24x24
             Position = UDim2.new(0.5, 0, 0.5, 0),
             AnchorPoint = Vector2.new(0.5, 0.5),
-            ImageColor3 = Color3.fromRGB(240, 240, 240)
+            ImageColor3 = Color3.fromRGB(240, 240, 240),
+            Name = "ToggleIcon"
         }), "Text"),
         SetProps(MakeElement("Button"), {
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1
         })
     }), "Second")
+    
+    MobileToggleIcon = MobileToggleButton:FindFirstChild("ToggleIcon")
 
     -- Add dragging functionality to the toggle button
     AddDraggingFunctionality(MobileToggleButton, MobileToggleButton)
+end
+
+-- Function to update mobile toggle button icon
+local function UpdateMobileToggleIcon(isVisible)
+    if DeviceType == "Mobile" and MobileToggleIcon then
+        if isVisible then
+            MobileToggleIcon.Image = "rbxassetid://7072719338" -- Hamburger icon
+        else
+            MobileToggleIcon.Image = "rbxassetid://7072720870" -- Plus icon
+        end
+    end
 end
 
 -- PC Keybind to Hide/Unhide GUI
@@ -607,12 +622,7 @@ function OrionLib:MakeWindow(WindowConfig)
         if toggleBtn then
             AddConnection(toggleBtn.MouseButton1Click, function()
                 MainWindow.Visible = not MainWindow.Visible
-                
-                -- Update icon based on visibility
-                local icon = MobileToggleButton:FindFirstChildOfClass("ImageLabel")
-                if icon then
-                    icon.Image = MainWindow.Visible and "rbxassetid://7072719338" or "rbxassetid://7072720870"
-                end
+                UpdateMobileToggleIcon(MainWindow.Visible)
                 
                 OrionLib:MakeNotification({
                     Name = "Interface " .. (MainWindow.Visible and "Shown" or "Hidden"),
@@ -627,6 +637,7 @@ function OrionLib:MakeWindow(WindowConfig)
     AddConnection(CloseBtn.MouseButton1Up, function()
         MainWindow.Visible = false
         UIHidden = true
+        UpdateMobileToggleIcon(false) -- Change to plus icon when closed
         OrionLib:MakeNotification({
             Name = "Interface Hidden",
             Content = DeviceType == "PC" and "Press X to reopen the interface" or "Tap the button to reopen the interface",
@@ -639,6 +650,7 @@ function OrionLib:MakeWindow(WindowConfig)
         if Input.KeyCode == Enum.KeyCode.RightShift and UIHidden and DeviceType == "PC" then
             MainWindow.Visible = true
             UIHidden = false
+            UpdateMobileToggleIcon(true) -- Change back to hamburger icon when shown
         end
     end)
 
