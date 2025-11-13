@@ -423,8 +423,6 @@ function OrionLib:MakeWindow(WindowConfig)
     WindowConfig = WindowConfig or {}
     WindowConfig.Name = WindowConfig.Name or "Orion Library"
     WindowConfig.CloseCallback = WindowConfig.CloseCallback or function() end
-    WindowConfig.ShowIcon = WindowConfig.ShowIcon or false
-    WindowConfig.Icon = WindowConfig.Icon or "rbxassetid://8834748103"
 
     -- Tab Holder
     local TabHolder = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 4), {
@@ -552,15 +550,6 @@ function OrionLib:MakeWindow(WindowConfig)
         DragPoint,
         WindowStuff
     }), "Main")
-
-    if WindowConfig.ShowIcon then
-        WindowName.Position = UDim2.new(0, 50, 0, -24)
-        local WindowIcon = SetProps(MakeElement("Image", WindowConfig.Icon), {
-            Size = UDim2.new(0, 20, 0, 20),
-            Position = UDim2.new(0, 25, 0, 15)
-        })
-        WindowIcon.Parent = MainWindow.TopBar
-    end
 
     AddDraggingFunctionality(DragPoint, MainWindow)
 
