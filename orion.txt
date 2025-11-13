@@ -30,6 +30,9 @@ local BLACKLISTED_KEYS = {
     Enum.KeyCode.Slash, Enum.KeyCode.Tab, Enum.KeyCode.Backspace, Enum.KeyCode.Escape
 }
 
+-- Device detection
+local DeviceType = UserInputService.TouchEnabled and "Mobile" or "PC"
+
 -- Optimized icon loading
 local Icons = {}
 local Success, Response = pcall(function()
@@ -306,6 +309,85 @@ local function AddDraggingFunctionality(DragPoint, Main)
     end)
 end
 
+-- Mobile Toggle Button
+if DeviceType == "Mobile" then
+    local ToggleButton = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 8), {
+        Size = UDim2.new(0, 50, 0, 50),
+        Position = UDim2.new(1, -70, 0, 20),
+        AnchorPoint = Vector2.new(1, 0),
+        Parent = Orion,
+        Active = true,
+        BackgroundTransparency = 0
+    }), {
+        AddThemeObject(MakeElement("Stroke"), "Stroke"),
+        AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072719338"), {
+            Size = UDim2.new(0, 24, 0, 24),
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            ImageColor3 = Color3.fromRGB(240, 240, 240)
+        }), "Text"),
+        SetProps(MakeElement("Button"), {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1
+        })
+    }), "Second")
+
+    -- Add dragging functionality to the toggle button
+    AddDraggingFunctionality(ToggleButton, ToggleButton)
+    
+    -- Store reference to the main window for toggle functionality
+    local MainWindowRef = nil
+    
+    -- Modified MakeWindow function to handle mobile toggle
+    local originalMakeWindow = OrionLib.MakeWindow
+    function OrionLib:MakeWindow(WindowConfig)
+        local window = originalMakeWindow(self, WindowConfig)
+        
+        -- Find the main window
+        for _, child in ipairs(Orion:GetChildren()) do
+            if child:IsA("Frame") and child ~= ToggleButton then
+                MainWindowRef = child
+                break
+            end
+        end
+        
+        -- Set up toggle functionality
+        ToggleButton:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+            if MainWindowRef then
+                MainWindowRef.Visible = not MainWindowRef.Visible
+                
+                -- Update icon based on visibility
+                local icon = ToggleButton:FindFirstChildOfClass("ImageLabel")
+                if icon then
+                    icon.Image = MainWindowRef.Visible and "rbxassetid://7072719338" or "rbxassetid://7072720870"
+                end
+            end
+        end)
+        
+        return window
+    end
+end
+
+-- PC Keybind to Hide/Unhide GUI
+if DeviceType == "PC" then
+    AddConnection(UserInputService.InputBegan, function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == Enum.KeyCode.X then
+            for _, child in ipairs(Orion:GetChildren()) do
+                if child:IsA("Frame") then
+                    child.Visible = not child.Visible
+                    
+                    OrionLib:MakeNotification({
+                        Name = "Interface " .. (child.Visible and "Shown" or "Hidden"),
+                        Content = child.Visible and "Interface is now visible" or "Press X to show interface",
+                        Time = 3
+                    })
+                end
+            end
+        end
+    end)
+end
+
 -- Notification System
 local NotificationHolder = SetProps(SetChildren(MakeElement("TFrame"), {
     SetProps(MakeElement("List"), {
@@ -555,15 +637,16 @@ function OrionLib:MakeWindow(WindowConfig)
         UIHidden = true
         OrionLib:MakeNotification({
             Name = "Interface Hidden",
-            Content = "Tap RightShift to reopen the interface",
+            Content = DeviceType == "PC" and "Press X to reopen the interface" or "Tap the button to reopen the interface",
             Time = 5
         })
         WindowConfig.CloseCallback()
     end)
 
     AddConnection(UserInputService.InputBegan, function(Input)
-        if Input.KeyCode == Enum.KeyCode.RightShift and UIHidden then
+        if Input.KeyCode == Enum.KeyCode.RightShift and UIHidden and DeviceType == "PC" then
             MainWindow.Visible = true
+            UIHidden = false
         end
     end)
 
