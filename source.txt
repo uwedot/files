@@ -4,10 +4,8 @@ local cloneref = (cloneref or function(x) return x end)
 local UserInputService = cloneref(game:GetService("UserInputService"))
 local TweenService = cloneref(game:GetService("TweenService"))
 local RunService = cloneref(game:GetService("RunService"))
-local Players = cloneref(game:GetService("Players"))
 local CoreGui = cloneref(game:GetService("CoreGui"))
 
-local LocalPlayer = Players.LocalPlayer
 local PresetColor = Color3.fromRGB(44, 120, 224)
 local CloseBind = Enum.KeyCode.RightControl
 
@@ -20,7 +18,6 @@ ui.Name = "67Library"
 ui.Parent = CoreGui
 ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Apply protection immediately after creation
 if setsecureinstance then
     setsecureinstance(ui)
 end
@@ -35,8 +32,8 @@ if DeviceType == "Mobile" then
     MobileToggleButton = Instance.new("TextButton")
     MobileToggleButton.Name = "MobileToggle"
     MobileToggleButton.Size = UDim2.new(0, 40, 0, 40)
-    MobileToggleButton.Position = UDim2.new(1, -50, 0, 10)  -- Changed to top right corner
-    MobileToggleButton.AnchorPoint = Vector2.new(1, 0)  -- Added anchor point for right alignment
+    MobileToggleButton.Position = UDim2.new(1, -50, 0, 10)
+    MobileToggleButton.AnchorPoint = Vector2.new(1, 0)
     MobileToggleButton.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
     MobileToggleButton.Text = "−"
     MobileToggleButton.TextColor3 = PresetColor
@@ -45,7 +42,6 @@ if DeviceType == "Mobile" then
     MobileToggleButton.AutoButtonColor = false
     MobileToggleButton.Parent = ui
     
-    -- Protect mobile toggle button
     if setsecureinstance then
         setsecureinstance(MobileToggleButton)
     end
@@ -117,13 +113,6 @@ if DeviceType == "Mobile" then
             Thickness = 2
         }):Play()
     end)
-    
-    coroutine.wrap(function()
-        while RunService.Heartbeat:Wait() do
-            MobileToggleButton.TextColor3 = PresetColor
-            Stroke.Color = PresetColor
-        end
-    end)()
 end
 
 local function CreateInstance(className, properties)
@@ -132,7 +121,6 @@ local function CreateInstance(className, properties)
         instance[property] = value
     end
     
-    -- Auto-protect all created instances
     if setsecureinstance then
         setsecureinstance(instance)
     end
@@ -299,10 +287,6 @@ function lib:Window(text, preset, closebind)
         end
     end)
 
-    function lib:ChangePresetColor(newColor)
-        PresetColor = newColor
-    end
-
     local tabhold = {}
     
     function tabhold:Tab(text)
@@ -339,12 +323,6 @@ function lib:Window(text, preset, closebind)
         })
 
         CreateInstance("UICorner", {Parent = TabBtnIndicator})
-
-        coroutine.wrap(function()
-            while RunService.Heartbeat:Wait() do
-                TabBtnIndicator.BackgroundColor3 = PresetColor
-            end
-        end)()
 
         local Tab = CreateInstance("ScrollingFrame", {
             Name = "Tab",
@@ -533,12 +511,6 @@ function lib:Window(text, preset, closebind)
             })
             CreateInstance("UICorner", {Parent = FrameToggleCircle})
 
-            coroutine.wrap(function()
-                while RunService.Heartbeat:Wait() do
-                    FrameToggle3.BackgroundColor3 = PresetColor
-                end
-            end)()
-
             local function UpdateToggleState()
                 if toggled then
                     TweenCreate(Toggle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -683,13 +655,6 @@ function lib:Window(text, preset, closebind)
                 ScaleType = Enum.ScaleType.Fit,
                 ZIndex = 2
             })
-
-            coroutine.wrap(function()
-                while RunService.Heartbeat:Wait() do
-                    CurrentValueFrame.BackgroundColor3 = PresetColor
-                    SlideCircle.ImageColor3 = PresetColor
-                end
-            end)()
 
             local function formatNumber(value)
                 if math.abs(value) < 0.0001 and value ~= 0 then
