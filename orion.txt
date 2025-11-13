@@ -254,13 +254,20 @@ local function AddDraggingFunctionality(DragPoint, Main)
         end
     end
     
+    -- Connect to the DragPoint and also to any buttons inside it
     DragPoint.InputBegan:Connect(onInputBegan)
     DragPoint.InputChanged:Connect(onInputChanged)
+    
+    -- If DragPoint has a button child, also connect to it
+    local buttonChild = DragPoint:FindFirstChildOfClass("TextButton")
+    if buttonChild then
+        buttonChild.InputBegan:Connect(onInputBegan)
+        buttonChild.InputChanged:Connect(onInputChanged)
+    end
     
     UserInputService.InputChanged:Connect(function(input)
         if (input == DragInput or input.UserInputType == Enum.UserInputType.Touch) and Dragging then
             local Delta = input.Position - MousePos
-            -- Removed TweenService and directly set the position for instant dragging
             Main.Position = UDim2.new(FramePos.X.Scale, FramePos.X.Offset + Delta.X, FramePos.Y.Scale, FramePos.Y.Offset + Delta.Y)
         end
     end)
@@ -287,7 +294,9 @@ if DeviceType == "Mobile" then
         }), "Text"),
         SetProps(MakeElement("Button"), {
             Size = UDim2.new(1, 0, 1, 0),
-            BackgroundTransparency = 1
+            BackgroundTransparency = 1,
+            -- Add this to prevent the button from blocking input
+            Active = false
         })
     }), "Second")
     
