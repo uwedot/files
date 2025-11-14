@@ -3,7 +3,6 @@ local lib = {}
 local cloneref = (cloneref or function(x) return x end)
 local UserInputService = cloneref(game:GetService("UserInputService"))
 local TweenService = cloneref(game:GetService("TweenService"))
-local RunService = cloneref(game:GetService("RunService"))
 local CoreGui = cloneref(game:GetService("CoreGui"))
 
 local PresetColor = Color3.fromRGB(44, 120, 224)
