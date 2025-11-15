@@ -1,0 +1,802 @@
+local function test_all_functions()
+    local results = {}
+    local skipped = {}
+    
+    local function log_test(name, success, error_msg)
+        results[name] = {success = success, error = error_msg}
+        if success == "SKIP" then
+            print(string.format("[SKIP] %s: %s", name, error_msg or "Not tested"))
+            skipped[name] = true
+        else
+            print(string.format("[%s] %s: %s", success and "PASS" or "FAIL", name, error_msg or "OK"))
+        end
+    end
+    
+    local function safe_test(name, test_func)
+        local success, err = pcall(test_func)
+        if not success then
+            log_test(name, false, tostring(err))
+        else
+            log_test(name, true, "OK")
+        end
+    end
+
+    -- ENVIRONMENT FUNCTIONS
+    print("=== TESTING ENVIRONMENT FUNCTIONS ===")
+    
+    safe_test("addspycallback", function()
+        local callback_called = false
+        addspycallback(function(info)
+            callback_called = true
+        end)
+        -- Trigger a remote event to test spy
+        if game:FindFirstChild("ReplicatedStorage") then
+            local remotes = game:GetService("ReplicatedStorage"):GetChildren()
+            if #remotes > 0 then
+                -- Spy should catch this
+            end
+        end
+    end)
+
+    safe_test("createsecurefolder", function()
+        createsecurefolder("TestSecureFolder")
+    end)
+
+    safe_test("fireclickdetector", function()
+        local cd = workspace:FindFirstChildOfClass("ClickDetector")
+        if cd then
+            fireclickdetector(cd, 20)
+        else
+            log_test("fireclickdetector", true, "No ClickDetector found (expected)")
+        end
+    end)
+
+    safe_test("fireproximityprompt", function()
+        local prompt = workspace:FindFirstChildOfClass("ProximityPrompt")
+        if prompt then
+            fireproximityprompt(prompt)
+        else
+            log_test("fireproximityprompt", true, "No ProximityPrompt found (expected)")
+        end
+    end)
+
+    safe_test("firetouchinterest", function()
+        local part1 = workspace:FindFirstChild("Part") or Instance.new("Part")
+        local part2 = workspace:FindFirstChild("Part2") or Instance.new("Part")
+        part1.Parent = workspace
+        part2.Parent = workspace
+        firetouchinterest(part1, part2, 0)
+        task.wait(0.1)
+        firetouchinterest(part1, part2, 1)
+    end)
+
+    safe_test("getinstances", function()
+        local instances = getinstances()
+        assert(type(instances) == "table", "Should return table")
+        assert(#instances > 0, "Should have instances")
+    end)
+
+    safe_test("getnilinstances", function()
+        local nil_instances = getnilinstances()
+        assert(type(nil_instances) == "table", "Should return table")
+    end)
+
+    safe_test("issecuredinstance", function()
+        local part = Instance.new("Part")
+        local secured = issecuredinstance(part)
+        assert(type(secured) == "boolean", "Should return boolean")
+        part:Destroy()
+    end)
+
+    safe_test("protectinstance", function()
+        local part = Instance.new("Part")
+        protectinstance(part)
+        part:Destroy()
+    end)
+
+    safe_test("setnormalinstance", function()
+        local part = Instance.new("Part")
+        local result = setnormalinstance(part)
+        assert(result == false or type(result) == "table", "Should return table or false")
+        part:Destroy()
+    end)
+
+    safe_test("setsimulationradius", function()
+        setsimulationradius(100)
+        setsimulationradius(500)
+    end)
+
+    safe_test("setsecureinstance", function()
+        local part = Instance.new("Part")
+        local result = setsecureinstance(part)
+        assert(result == false or type(result) == "table", "Should return table or false")
+        part:Destroy()
+    end)
+
+    -- LIBRARIES › CACHE
+    print("\n=== TESTING CACHE FUNCTIONS ===")
+    
+    safe_test("cloneref", function()
+        local original = game:GetService("Players")
+        local cloned = cloneref(original)
+        assert(cloned ~= nil, "Should return instance")
+    end)
+
+    safe_test("compareinstances", function()
+        local players = game:GetService("Players")
+        local cloned = cloneref(players)
+        local same = compareinstances(players, players)
+        local different = compareinstances(players, cloned)
+        assert(type(same) == "boolean", "Should return boolean")
+        assert(type(different) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("cache.invalidate", function()
+        local part = Instance.new("Part")
+        cache.invalidate(part)
+        part:Destroy()
+    end)
+
+    safe_test("cache.iscached", function()
+        local is_cached = cache.iscached(workspace)
+        assert(type(is_cached) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("cache.replace", function()
+        local old_part = Instance.new("Part")
+        local new_part = Instance.new("Part")
+        cache.replace(old_part, new_part)
+        old_part:Destroy()
+        new_part:Destroy()
+    end)
+
+    -- LIBRARIES › DEBUG
+    print("\n=== TESTING DEBUG FUNCTIONS ===")
+    
+    safe_test("debug.getconstant", function()
+        local test_func = function(a, b) return a + b end
+        local constant = debug.getconstant(test_func, 1)
+        -- Just test that it doesn't error
+    end)
+
+    safe_test("debug.getconstants", function()
+        local test_func = function(a, b) return a + b end
+        local constants = debug.getconstants(test_func)
+        assert(type(constants) == "table", "Should return table")
+    end)
+
+    safe_test("debug.getinfo", function()
+        local test_func = function() end
+        local info = debug.getinfo(test_func)
+        assert(type(info) == "table", "Should return table")
+    end)
+
+    safe_test("debug.getproto", function()
+        local test_func = function() 
+            return function() end
+        end
+        local proto = debug.getproto(test_func, 1)
+    end)
+
+    safe_test("debug.getprotos", function()
+        local test_func = function() 
+            return function() end
+        end
+        local protos = debug.getprotos(test_func)
+        assert(type(protos) == "table", "Should return table")
+    end)
+
+    safe_test("debug.getregistry", function()
+        local registry = debug.getregistry()
+        assert(type(registry) == "table", "Should return table")
+    end)
+
+    safe_test("debug.getstack", function()
+        local test_func = function() end
+        local stack = debug.getstack(test_func, 1)
+        assert(type(stack) == "table", "Should return table")
+    end)
+
+    safe_test("debug.getupvalue", function()
+        local upval = "test"
+        local test_func = function() return upval end
+        local value = debug.getupvalue(test_func, 1)
+    end)
+
+    safe_test("debug.getupvalues", function()
+        local upval = "test"
+        local test_func = function() return upval end
+        local upvalues = debug.getupvalues(test_func)
+        assert(type(upvalues) == "table", "Should return table")
+    end)
+
+    safe_test("debug.setconstant", function()
+        local test_func = function() return "original" end
+        debug.setconstant(test_func, 1, "modified")
+    end)
+
+    safe_test("debug.setmetatable", function()
+        local t = {}
+        local mt = {__index = function() return "test" end}
+        debug.setmetatable(t, mt)
+        assert(getmetatable(t) == mt, "Metatable should be set")
+    end)
+
+    safe_test("debug.setproto", function()
+        local test_func = function() return function() return "old" end end
+        local new_func = function() return "new" end
+        debug.setproto(test_func, 1, new_func)
+    end)
+
+    safe_test("debug.setstack", function()
+        local test_func = function() end
+        debug.setstack(test_func, 1, {test = true})
+    end)
+
+    safe_test("debug.setupvalue", function()
+        local upval = "old"
+        local test_func = function() return upval end
+        debug.setupvalue(test_func, 1, "new")
+    end)
+
+    safe_test("validlevel", function()
+        local test_func = function() end
+        local valid = validlevel(test_func, 1)
+        assert(type(valid) == "boolean", "Should return boolean")
+    end)
+
+    -- TABLE FUNCTIONS
+    print("\n=== TESTING TABLE FUNCTIONS ===")
+    
+    safe_test("getrawmetatable", function()
+        local t = {}
+        local mt = getrawmetatable(t)
+        assert(type(mt) == "table", "Should return table")
+    end)
+
+    safe_test("isreadonly", function()
+        local t = {}
+        local readonly = isreadonly(t)
+        assert(type(readonly) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("iswritable", function()
+        local t = {}
+        local writable = iswritable(t)
+        assert(type(writable) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("makereadonly", function()
+        local t = {}
+        makereadonly(t)
+        assert(isreadonly(t), "Should be readonly")
+    end)
+
+    safe_test("makewritable", function()
+        local t = {}
+        makereadonly(t)
+        makewritable(t)
+        assert(not isreadonly(t), "Should be writable")
+    end)
+
+    safe_test("setrawmetatable", function()
+        local t = {}
+        local mt = {}
+        local success = setrawmetatable(t, mt)
+        assert(type(success) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("setreadonly", function()
+        local t = {}
+        setreadonly(t, true)
+        setreadonly(t, false)
+    end)
+
+    -- SIGNAL FUNCTIONS
+    print("\n=== TESTING SIGNAL FUNCTIONS ===")
+    
+    safe_test("cansignalreplicate", function()
+        if game:FindFirstChild("ReplicatedStorage") then
+            local remote = game:GetService("ReplicatedStorage"):FindFirstChildOfClass("RemoteEvent")
+            if remote then
+                local can_replicate = cansignalreplicate(remote.OnClientEvent)
+                assert(type(can_replicate) == "boolean", "Should return boolean")
+            else
+                log_test("cansignalreplicate", true, "No RemoteEvent found (expected)")
+            end
+        end
+    end)
+
+    safe_test("disableconnection/enableconnection", function()
+        local test_signal = Instance.new("BindableEvent").Event
+        local conn = test_signal:Connect(function() end)
+        disableconnection(conn)
+        enableconnection(conn)
+        conn:Disconnect()
+    end)
+
+    safe_test("firesignal", function()
+        local test_signal = Instance.new("BindableEvent").Event
+        local fired = false
+        test_signal:Connect(function() fired = true end)
+        firesignal(test_signal)
+        assert(fired, "Signal should fire")
+    end)
+
+    safe_test("getallreplicatesignals", function()
+        local signals = getallreplicatesignals()
+        assert(type(signals) == "table", "Should return table")
+    end)
+
+    safe_test("getconnections", function()
+        local test_signal = Instance.new("BindableEvent").Event
+        test_signal:Connect(function() end)
+        local connections = getconnections(test_signal)
+        assert(type(connections) == "table", "Should return table")
+    end)
+
+    safe_test("getsignalarguments", function()
+        local test_signal = Instance.new("BindableEvent").Event
+        local conn = test_signal:Connect(function() end)
+        firesignal(test_signal, "test_arg")
+        local args = getsignalarguments(conn)
+        assert(type(args) == "table", "Should return table")
+        conn:Disconnect()
+    end)
+
+    safe_test("hooksignal", function()
+        local test_signal = Instance.new("BindableEvent").Event
+        local hooked = false
+        hooksignal(test_signal, function(info, ...)
+            hooked = true
+            return true
+        end)
+        firesignal(test_signal)
+        assert(hooked, "Signal should be hooked")
+        unhooksignal(test_signal)
+    end)
+
+    safe_test("isconnectionenabled", function()
+        local test_signal = Instance.new("BindableEvent").Event
+        local conn = test_signal:Connect(function() end)
+        local enabled = isconnectionenabled(conn)
+        assert(type(enabled) == "boolean", "Should return boolean")
+        conn:Disconnect()
+    end)
+
+    safe_test("issignalhooked", function()
+        local test_signal = Instance.new("BindableEvent").Event
+        local hooked = issignalhooked(test_signal)
+        assert(type(hooked) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("replicatesignal", function()
+        if game:FindFirstChild("ReplicatedStorage") then
+            local remote = game:GetService("ReplicatedStorage"):FindFirstChildOfClass("RemoteEvent")
+            if remote then
+                replicatesignal(remote.OnClientEvent, "test")
+            else
+                log_test("replicatesignal", true, "No RemoteEvent found (expected)")
+            end
+        end
+    end)
+
+    safe_test("unhooksignal", function()
+        local test_signal = Instance.new("BindableEvent").Event
+        hooksignal(test_signal, function() return true end)
+        unhooksignal(test_signal)
+    end)
+
+    -- SCRIPT FUNCTIONS
+    print("\n=== TESTING SCRIPT FUNCTIONS ===")
+    
+    safe_test("filtergc", function()
+        local results = filtergc("string", true)
+        assert(type(results) == "table", "Should return table")
+    end)
+
+    safe_test("getcallingscript", function()
+        local caller = getcallingscript()
+        -- May be nil depending on context
+    end)
+
+    safe_test("getgc", function()
+        local gc_objects = getgc(true)
+        assert(type(gc_objects) == "table", "Should return table")
+    end)
+
+    safe_test("getfunctionhash", function()
+        local test_func = function() end
+        local hash = getfunctionhash(test_func)
+        assert(type(hash) == "string", "Should return string")
+    end)
+
+    safe_test("getgenv", function()
+        local genv = getgenv()
+        assert(type(genv) == "table", "Should return table")
+    end)
+
+    safe_test("getloadedmodules", function()
+        local modules = getloadedmodules()
+        assert(type(modules) == "table", "Should return table")
+    end)
+
+    safe_test("getmodules", function()
+        local modules = getmodules(game)
+        assert(type(modules) == "table", "Should return table")
+    end)
+
+    safe_test("getrenv", function()
+        local renv = getrenv()
+        assert(type(renv) == "table", "Should return table")
+    end)
+
+    safe_test("getrenvglobal", function()
+        local value = getrenvglobal("print")
+        -- Just test it doesn't error
+    end)
+
+    safe_test("getrenvshared", function()
+        local value = getrenvshared("wait")
+        -- Just test it doesn't error
+    end)
+
+    safe_test("getrunningscripts", function()
+        local scripts = getrunningscripts()
+        -- May be nil or table
+    end)
+
+    safe_test("getscripts", function()
+        local scripts = getscripts()
+        assert(type(scripts) == "table", "Should return table")
+    end)
+
+    safe_test("getscriptbytecode", function()
+        local test_script = Instance.new("Script")
+        test_script.Source = "print('hello')"
+        local bytecode = getscriptbytecode(test_script)
+        assert(type(bytecode) == "string", "Should return string")
+        test_script:Destroy()
+    end)
+
+    safe_test("getscriptclosure", function()
+        local test_script = Instance.new("Script")
+        test_script.Source = "return function() end"
+        local closure = getscriptclosure(test_script)
+        assert(type(closure) == "function", "Should return function")
+        test_script:Destroy()
+    end)
+
+    safe_test("getsenv", function()
+        local test_script = Instance.new("LocalScript")
+        local senv = getsenv(test_script)
+        assert(type(senv) == "table", "Should return table")
+        test_script:Destroy()
+    end)
+
+    safe_test("getscripthash", function()
+        local test_script = Instance.new("Script")
+        test_script.Source = "print('test')"
+        local hash = getscripthash(test_script)
+        assert(type(hash) == "string", "Should return string")
+        test_script:Destroy()
+    end)
+
+    safe_test("gettenv", function()
+        local tenv = gettenv()
+        assert(type(tenv) == "table", "Should return table")
+    end)
+
+    safe_test("getthreadscript", function()
+        local script = getthreadscript(coroutine.running())
+        -- May be nil depending on context
+    end)
+
+    safe_test("islocalsourcecontainer", function()
+        local is_local = islocalsourcecontainer(game)
+        assert(type(is_local) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("require", function()
+        local module = Instance.new("ModuleScript")
+        module.Source = "return {value = 1}"
+        module.Parent = workspace
+        local result = require(module)
+        assert(type(result) == "table", "Should return module result")
+        module:Destroy()
+    end)
+
+    safe_test("setclosureidentity", function()
+        local test_func = function() end
+        setclosureidentity(test_func, 2)
+    end)
+
+    -- REFLECTION FUNCTIONS
+    print("\n=== TESTING REFLECTION FUNCTIONS ===")
+    
+    safe_test("checkcaller", function()
+        local is_caller = checkcaller()
+        assert(type(is_caller) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("gethiddenproperty", function()
+        local part = Instance.new("Part")
+        local value = gethiddenproperty(part, "Mass")
+        part:Destroy()
+    end)
+
+    safe_test("isexecutorclosure", function()
+        local test_func = function() end
+        local is_executor = isexecutorclosure(test_func)
+        assert(type(is_executor) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("iscclosure", function()
+        local test_func = function() end
+        local is_c = iscclosure(test_func)
+        assert(type(is_c) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("islineinfo", function()
+        local test_func = function() end
+        local has_lineinfo = islineinfo(test_func)
+        assert(type(has_lineinfo) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("islclosure", function()
+        local test_func = function() end
+        local is_l = islclosure(test_func)
+        assert(type(is_l) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("loadstring", function()
+        local func = loadstring("return 1 + 1")
+        local result = func()
+        assert(result == 2, "Should execute code")
+    end)
+
+    safe_test("sethiddenproperty", function()
+        local part = Instance.new("Part")
+        sethiddenproperty(part, "Mass", 10)
+        part:Destroy()
+    end)
+
+    safe_test("setscriptable", function()
+        local part = Instance.new("Part")
+        setscriptable(part, "Name", true)
+        part:Destroy()
+    end)
+
+    -- MISCELLANEOUS FUNCTIONS
+    print("\n=== TESTING MISCELLANEOUS FUNCTIONS ===")
+    
+    safe_test("clearteleportqueue", function()
+        clearteleportqueue()
+    end)
+
+    -- Premium functions - skip but log
+    log_test("decompile", "SKIP", "Premium feature")
+    log_test("saveinstance", "SKIP", "Premium feature")
+
+    safe_test("getclipboard", function()
+        local clipboard = getclipboard()
+        assert(type(clipboard) == "string", "Should return string")
+    end)
+
+    safe_test("getfflag", function()
+        local flag_value = getfflag("TestFlag")
+        assert(type(flag_value) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("getfpscap", function()
+        local fps_cap = getfpscap()
+        assert(type(fps_cap) == "number", "Should return number")
+    end)
+
+    safe_test("gethui", function()
+        local hui = gethui()
+        assert(typeof(hui) == "Instance", "Should return Instance")
+    end)
+
+    safe_test("gethwid", function()
+        local hwid = gethwid()
+        assert(type(hwid) == "string", "Should return string")
+    end)
+
+    safe_test("getnamecallmethod", function()
+        local method = getnamecallmethod()
+        -- May be nil or string
+    end)
+
+    safe_test("getobjects", function()
+        -- Test with a simple asset ID if available, otherwise skip
+        log_test("getobjects", "SKIP", "Requires valid asset ID")
+    end)
+
+    safe_test("getthreadidentity", function()
+        local identity = getthreadidentity()
+        assert(type(identity) == "number", "Should return number")
+    end)
+
+    safe_test("httpget", function()
+        local response = httpget("https://httpbin.org/get")
+        assert(type(response) == "string", "Should return string")
+    end)
+
+    safe_test("identifyexecutor", function()
+        local name, version = identifyexecutor()
+        assert(type(name) == "string", "Should return name string")
+    end)
+
+    safe_test("isscriptable", function()
+        local part = Instance.new("Part")
+        local scriptable = isscriptable(part)
+        assert(type(scriptable) == "boolean", "Should return boolean")
+        part:Destroy()
+    end)
+
+    safe_test("setclipboard", function()
+        setclipboard("test clipboard content")
+    end)
+
+    safe_test("setfflag", function()
+        setfflag("TestFlag", "true")
+    end)
+
+    safe_test("setfpscap", function()
+        setfpscap(60)
+    end)
+
+    safe_test("setnamecallmethod", function()
+        -- This must be called within __namecall hook
+        log_test("setnamecallmethod", "SKIP", "Must be called in __namecall hook")
+    end)
+
+    safe_test("setrbxclipboard", function()
+        setrbxclipboard("test rbx clipboard")
+    end)
+
+    safe_test("setthreadidentity", function()
+        setthreadidentity(2)
+        setthreadidentity(7) -- Reset to normal
+    end)
+
+    safe_test("messagebox", function()
+        local result = messagebox("Test Message", "Test Title", 0)
+        assert(type(result) == "number", "Should return number")
+    end)
+
+    safe_test("queue_on_teleport", function()
+        queue_on_teleport('print("teleport test")')
+    end)
+
+    safe_test("request", function()
+        local response = request({
+            Url = "https://httpbin.org/get",
+            Method = "GET"
+        })
+        assert(type(response) == "table", "Should return table")
+    end)
+
+    safe_test("zstdcompress", function()
+        local data = "test data to compress"
+        local compressed = zstdcompress(data)
+        assert(type(compressed) == "string", "Should return string")
+    end)
+
+    safe_test("zstddecompress", function()
+        local data = "test data"
+        local compressed = zstdcompress(data)
+        local decompressed = zstddecompress(compressed)
+        assert(decompressed == data, "Should decompress to original")
+    end)
+
+    -- HOOKING FUNCTIONS
+    print("\n=== TESTING HOOKING FUNCTIONS ===")
+    
+    safe_test("clonefunction", function()
+        local original = function() return "original" end
+        local cloned = clonefunction(original)
+        assert(type(cloned) == "function", "Should return function")
+    end)
+
+    safe_test("getcallbackvalue", function()
+        local test_func = function() end
+        local value = getcallbackvalue(test_func)
+        -- Return type varies
+    end)
+
+    safe_test("hookfunction", function()
+        local original_print = print
+        local hooked = false
+        local hook = hookfunction(print, function(...)
+            hooked = true
+            return original_print("[HOOKED]", ...)
+        end)
+        print("test")
+        assert(hooked, "Function should be hooked")
+        -- Restore
+        hookfunction(print, original_print)
+    end)
+
+    safe_test("hookmetamethod", function()
+        local mt = getrawmetatable(game)
+        setreadonly(mt, false)
+        local hooked = false
+        local original = hookmetamethod(game, "__index", function(self, key)
+            hooked = true
+            return original(self, key)
+        end)
+        local _ = game.Name -- Trigger index
+        assert(hooked, "Metamethod should be hooked")
+        -- Restore
+        hookmetamethod(game, "__index", original)
+        setreadonly(mt, true)
+    end)
+
+    safe_test("ishooked", function()
+        local test_func = function() end
+        local hooked = ishooked(test_func)
+        assert(type(hooked) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("isourcallstack", function()
+        local is_our = isourcallstack(1)
+        assert(type(is_our) == "boolean", "Should return boolean")
+    end)
+
+    safe_test("newcclosure", function()
+        local lua_func = function() return "test" end
+        local c_func = newcclosure(lua_func)
+        assert(type(c_func) == "function", "Should return function")
+    end)
+
+    safe_test("newlclosure", function()
+        local test_func = function() return "test" end
+        local l_func = newlclosure(test_func)
+        assert(type(l_func) == "function", "Should return function")
+    end)
+
+    safe_test("protectclosure", function()
+        local test_func = function() end
+        protectclosure(test_func)
+    end)
+
+    safe_test("restoreclosure", function()
+        local test_func = function() end
+        restoreclosure(test_func)
+    end)
+
+    -- Summary
+    print("\n=== TEST SUMMARY ===")
+    local passed = 0
+    local failed = 0
+    local skipped_count = 0
+    
+    for name, result in pairs(results) do
+        if result.success == "SKIP" then
+            skipped_count = skipped_count + 1
+        elseif result.success then
+            passed = passed + 1
+        else
+            failed = failed + 1
+        end
+    end
+    
+    print(string.format("Total: %d, Passed: %d, Failed: %d, Skipped: %d", 
+        passed + failed + skipped_count, passed, failed, skipped_count))
+    
+    if failed > 0 then
+        print("\nFailed tests:")
+        for name, result in pairs(results) do
+            if not result.success and result.success ~= "SKIP" then
+                print(string.format("  %s: %s", name, result.error))
+            end
+        end
+    end
+    
+    return results
+end
+
+-- Run the comprehensive test
+test_all_functions()
