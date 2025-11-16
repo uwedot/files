@@ -408,176 +408,192 @@ function Library:Window(title)
             UICorner_6.CornerRadius = UDim.new(0, 6)
             UICorner_6.Parent = TextLabel
         end
-        function TabFunctions:Slider(title, min, max, def, callback)
-            local dragging = false
-            local Slider = Instance.new("Frame")
-            local UICorner = Instance.new("UICorner")
-            local Title = Instance.new("TextLabel")
-            local SliderClick = Instance.new("TextButton")
-            local UICorner_2 = Instance.new("UICorner")
-            local SliderDrag = Instance.new("Frame")
-            local UICorner_3 = Instance.new("UICorner")
-            local Value = Instance.new("TextLabel")
-            
-            Slider.Name = "Slider"
-            Slider.Parent = Page
-            Slider.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-            Slider.Position = UDim2.new(0, 0, 0.515021443, 0)
-            Slider.Size = UDim2.new(1, -6, 0, 48)
-            
-            UICorner.CornerRadius = UDim.new(0, 6)
-            UICorner.Parent = Slider
-            
-            Title.Name = "Title"
-            Title.Parent = Slider
-            Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            Title.BackgroundTransparency = 1.000
-            Title.Position = UDim2.new(0, 8, 0, 0)
-            Title.Size = UDim2.new(1, -6, 0, 34)
-            Title.Font = Enum.Font.Gotham
-            Title.Text = title or "Slider"
-            Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Title.TextSize = 14.000
-            Title.TextXAlignment = Enum.TextXAlignment.Left
-            
-            SliderClick.Name = "SliderClick"
-            SliderClick.Parent = Slider
-            SliderClick.AnchorPoint = Vector2.new(0.5, 1)
-            SliderClick.BackgroundColor3 = Color3.fromRGB(52, 52, 52)
-            SliderClick.Position = UDim2.new(0.5, 0, 1, -8)
-            SliderClick.Size = UDim2.new(1, -12, 0, 6)
-            SliderClick.AutoButtonColor = false
-            SliderClick.Text = ''
-            
-            UICorner_2.CornerRadius = UDim.new(0, 6)
-            UICorner_2.Parent = SliderClick
-            
-            SliderDrag.Name = "SliderDrag"
-            SliderDrag.Parent = SliderClick
-            SliderDrag.BackgroundColor3 = Color3.fromRGB(188, 14, 69)
-            SliderDrag.Size = UDim2.new(0, 120, 1, 0)
-            
-            UICorner_3.CornerRadius = UDim.new(0, 6)
-            UICorner_3.Parent = SliderDrag
-            
-            Value.Name = "Value"
-            Value.Parent = Slider
-            Value.AnchorPoint = Vector2.new(1, 0)
-            Value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            Value.BackgroundTransparency = 1.000
-            Value.Position = UDim2.new(1, -10, 0, 0)
-            Value.Size = UDim2.new(1, 0, 0, 34)
-            Value.Font = Enum.Font.Gotham
-            Value.Text = tostring(def)
-            Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Value.TextSize = 14.000
-            Value.TextXAlignment = Enum.TextXAlignment.Right
-
-            callback = callback or function() end
+        function TabFunctions:Slider(title, min, max, def, increment, callback)
+    local dragging = false
+    local Slider = Instance.new("Frame")
+    local UICorner = Instance.new("UICorner")
+    local Title = Instance.new("TextLabel")
+    local SliderClick = Instance.new("TextButton")
+    local UICorner_2 = Instance.new("UICorner")
+    local SliderDrag = Instance.new("Frame")
+    local UICorner_3 = Instance.new("UICorner")
+    local Value = Instance.new("TextLabel")
     
-            local function slide(input)
-                local pos
-                if input.UserInputType == Enum.UserInputType.Touch then
-                    -- Mobile touch input
-                    local touchPos = input.Position
-                    pos = UDim2.new(math.clamp((touchPos.X - SliderClick.AbsolutePosition.X) / SliderClick.AbsoluteSize.X, 0, 1), 0, 0, 6)
-                else
-                    -- Mouse input
-                    pos = UDim2.new(math.clamp((input.Position.X - SliderClick.AbsolutePosition.X) / SliderClick.AbsoluteSize.X, 0, 1), 0, 0, 6)
+    Slider.Name = "Slider"
+    Slider.Parent = Page
+    Slider.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    Slider.Position = UDim2.new(0, 0, 0.515021443, 0)
+    Slider.Size = UDim2.new(1, -6, 0, 48)
+    
+    UICorner.CornerRadius = UDim.new(0, 6)
+    UICorner.Parent = Slider
+    
+    Title.Name = "Title"
+    Title.Parent = Slider
+    Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Title.BackgroundTransparency = 1.000
+    Title.Position = UDim2.new(0, 8, 0, 0)
+    Title.Size = UDim2.new(1, -6, 0, 34)
+    Title.Font = Enum.Font.Gotham
+    Title.Text = title or "Slider"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 14.000
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    
+    SliderClick.Name = "SliderClick"
+    SliderClick.Parent = Slider
+    SliderClick.AnchorPoint = Vector2.new(0.5, 1)
+    SliderClick.BackgroundColor3 = Color3.fromRGB(52, 52, 52)
+    SliderClick.Position = UDim2.new(0.5, 0, 1, -8)
+    SliderClick.Size = UDim2.new(1, -12, 0, 6)
+    SliderClick.AutoButtonColor = false
+    SliderClick.Text = ''
+    
+    UICorner_2.CornerRadius = UDim.new(0, 6)
+    UICorner_2.Parent = SliderClick
+    
+    SliderDrag.Name = "SliderDrag"
+    SliderDrag.Parent = SliderClick
+    SliderDrag.BackgroundColor3 = Color3.fromRGB(188, 14, 69)
+    SliderDrag.Size = UDim2.new(0, 120, 1, 0)
+    
+    UICorner_3.CornerRadius = UDim.new(0, 6)
+    UICorner_3.Parent = SliderDrag
+    
+    Value.Name = "Value"
+    Value.Parent = Slider
+    Value.AnchorPoint = Vector2.new(1, 0)
+    Value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Value.BackgroundTransparency = 1.000
+    Value.Position = UDim2.new(1, -10, 0, 0)
+    Value.Size = UDim2.new(1, 0, 0, 34)
+    Value.Font = Enum.Font.Gotham
+    Value.Text = tostring(def)
+    Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Value.TextSize = 14.000
+    Value.TextXAlignment = Enum.TextXAlignment.Right
+
+    callback = callback or function() end
+    increment = increment or 1
+
+    -- Improved number formatting function from source code
+    local function formatNumber(value)
+        if math.abs(value) < 0.0001 and value ~= 0 then
+            return string.format("%.2e", value)
+        end
+        
+        if math.abs(value) >= 10000 then
+            local formatted = tostring(math.floor(value))
+            local k = formatted:len() % 3
+            if k == 0 then k = 3 end
+            return formatted:sub(1, k) .. formatted:sub(k+1):gsub("(%d%d%d)", ",%1")
+        end
+        
+        -- Handle decimal places based on increment
+        if increment < 1 then
+            local decimalPlaces = 0
+            local tempIncrement = increment
+            
+            while tempIncrement < 1 do
+                decimalPlaces = decimalPlaces + 1
+                tempIncrement = tempIncrement * 10
+                if tempIncrement >= 1 then break end
+            end
+            
+            decimalPlaces = math.min(decimalPlaces + 1, 6)
+            
+            local formatString = "%." .. decimalPlaces .. "f"
+            local formatted = string.format(formatString, value)
+            
+            formatted = formatted:gsub("%.(%d-)0*$", function(decimal)
+                return decimal == "" and "" or "." .. decimal
+            end)
+            formatted = formatted:gsub("%.$", "")
+            
+            return formatted
+        else
+            return tostring(math.floor(value))
+        end
+    end
+
+    local currentValue = def or min
+    local lastCallbackValue = def or min
+
+    local function updateSlider(value)
+        value = math.clamp(value, min, max)
+        
+        -- Apply increment
+        if increment > 0 then
+            value = math.floor(value / increment) * increment
+        end
+        
+        currentValue = value
+        local normalizedValue = (value - min) / (max - min)
+        local dragSize = UDim2.new(normalizedValue, 0, 1, 0)
+        
+        TweenService:Create(SliderDrag, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = dragSize
+        }):Play()
+        
+        Value.Text = formatNumber(value)
+    end
+
+    local function executeCallback(value)
+        if value ~= lastCallbackValue then
+            pcall(callback, value)
+            lastCallbackValue = value
+        end
+    end
+
+    local function startDrag(input)
+        dragging = true
+        
+        local function update(inputPosition)
+            local sliderAbsolutePos = SliderClick.AbsolutePosition.X
+            local sliderAbsoluteSize = SliderClick.AbsoluteSize.X
+            
+            local x = math.clamp(inputPosition.X - sliderAbsolutePos, 0, sliderAbsoluteSize)
+            local percent = x / sliderAbsoluteSize
+            local value = min + percent * (max - min)
+            
+            updateSlider(value)
+        end
+        
+        update(input.Position)
+        
+        local moveConn
+        moveConn = UserInputService.InputChanged:Connect(function(i)
+            if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                update(i.Position)
+            end
+        end)
+        
+        local endConn
+        endConn = UserInputService.InputEnded:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+                if moveConn then
+                    moveConn:Disconnect()
+                end
+                if endConn then
+                    endConn:Disconnect()
                 end
                 
-                SliderDrag:TweenSize(pos, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
-                local s = math.floor(((pos.X.Scale * max) / max) * (max - min) + min)
-                Value.Text = tostring(s)
-                callback(s)
+                executeCallback(currentValue)
             end
-    
-            SliderClick.InputBegan:Connect(function(input) 
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    slide(input)
-                    dragging = true
-                end
-            end) 
-    
-            SliderClick.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    dragging = false
-                end
-            end)
-    
-            UserInputService.InputChanged:Connect(function(input)
-                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                    slide(input)
-                end
-            end)
+        end)
+    end
+
+    SliderClick.InputBegan:Connect(function(input) 
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            startDrag(input)
         end
-        function TabFunctions:KeyBind(text, keypreset, callback)
-            local binding = false
-            callback = callback or function() end
-            local Key = keypreset.Name
-            local KeyBind = Instance.new("TextButton")
-            local UICorner_7 = Instance.new("UICorner")
-            local Title = Instance.new("TextLabel")
-            local CurrentKey = Instance.new("TextLabel")
-            local UICorner_8 = Instance.new("UICorner")
+    end)
 
-            KeyBind.Name = "KeyBind"
-            KeyBind.Parent = Page
-            KeyBind.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-            KeyBind.Size = UDim2.new(1, -6, 0, 34)
-            KeyBind.AutoButtonColor = false
-            KeyBind.Font = Enum.Font.SourceSans
-            KeyBind.Text = ""
-            KeyBind.TextColor3 = Color3.fromRGB(0, 0, 0)
-            KeyBind.TextSize = 14.000
-            
-            UICorner_7.CornerRadius = UDim.new(0, 6)
-            UICorner_7.Parent = KeyBind
-            
-            Title.Name = "Title"
-            Title.Parent = KeyBind
-            Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            Title.BackgroundTransparency = 1.000
-            Title.Position = UDim2.new(0, 8, 0, 0)
-            Title.Size = UDim2.new(1, -6, 1, 0)
-            Title.Font = Enum.Font.Gotham
-            Title.Text = text or "KeyBind"
-            Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Title.TextSize = 14.000
-            Title.TextXAlignment = Enum.TextXAlignment.Left
-            
-            CurrentKey.Name = "CurrentKey"
-            CurrentKey.Parent = KeyBind
-            CurrentKey.AnchorPoint = Vector2.new(1, 0.5)
-            CurrentKey.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-            CurrentKey.Position = UDim2.new(1, -6, 0.5, 0)
-            CurrentKey.Size = UDim2.new(-0, 46, 0, 24)
-            CurrentKey.Font = Enum.Font.Gotham
-            CurrentKey.Text = Key or ". . ."
-            CurrentKey.TextColor3 = Color3.fromRGB(255, 255, 255)
-            CurrentKey.TextSize = 14.000
-            
-            UICorner_8.CornerRadius = UDim.new(0, 4)
-            UICorner_8.Parent = CurrentKey
-
-            KeyBind.MouseButton1Click:Connect(function()
-            CurrentKey.Text = ". . ."
-            local a, b = game:GetService('UserInputService').InputBegan:wait();
-                if a.KeyCode.Name ~= "Unknown" then
-                    CurrentKey.Text = a.KeyCode.Name
-                    Key = a.KeyCode.Name;
-                end
-            end)
-            
-
-            game:GetService("UserInputService").InputBegan:connect(function(current, ok) 
-                if not ok then 
-                    if current.KeyCode.Name == Key then 
-                        callback(Key)
-                    end
-                end
-            end)
-        end
+    -- Initialize slider
+    updateSlider(currentValue)
+    executeCallback(currentValue)
+end
         function TabFunctions:Dropdown(title, list, callback)
                 list = list or {}
                 callback = callback or function() end
