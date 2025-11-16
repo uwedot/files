@@ -391,19 +391,6 @@ function lib:Window(text, preset, closebind)
                 TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Center
             })
-            
-            -- Return a table with methods to control the label
-            local labelMethods = {}
-            
-            function labelMethods:Set(newText)
-                Label.Text = newText
-            end
-            
-            function labelMethods:Get()
-                return Label.Text
-            end
-            
-            return labelMethods
         end
         
         function tabcontent:Button(text, callback)
@@ -704,7 +691,7 @@ function lib:Window(text, preset, closebind)
                 else
                     return tostring(math.floor(value))
                 end
-            }
+            end
 
             local currentValue = start
             local lastCallbackValue = start
