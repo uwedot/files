@@ -380,35 +380,30 @@ function lib:Window(text, preset, closebind)
         local tabcontent = {}
         
         function tabcontent:Label(text)
-            local LabelFrame = CreateInstance("Frame", {
-                Name = "LabelFrame",
-                Parent = Tab,
-                BackgroundColor3 = Color3.fromRGB(54, 54, 54),
-                Size = UDim2.new(0, 363, 0, 30)
-            })
-
-            CreateInstance("UICorner", {
-                Parent = LabelFrame,
-                CornerRadius = UDim.new(0, 6)
-            })
-
             local Label = CreateInstance("TextLabel", {
                 Name = "Label",
-                Parent = LabelFrame,
+                Parent = Tab,
                 BackgroundTransparency = 1,
-                Size = UDim2.new(1, 0, 1, 0),
+                Size = UDim2.new(0, 363, 0, 30),
                 Font = Enum.Font.Gotham,
                 Text = text,
                 TextColor3 = Color3.fromRGB(200, 200, 200),
                 TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Center
             })
-
-            local labelObject = {}
-            function labelObject:Set(newText)
+            
+            -- Return a table with methods to control the label
+            local labelMethods = {}
+            
+            function labelMethods:Set(newText)
                 Label.Text = newText
             end
-            return labelObject
+            
+            function labelMethods:Get()
+                return Label.Text
+            end
+            
+            return labelMethods
         end
         
         function tabcontent:Button(text, callback)
