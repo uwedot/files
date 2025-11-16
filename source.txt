@@ -8,12 +8,10 @@ local CoreGui = cloneref(game:GetService("CoreGui"))
 local PresetColor = Color3.fromRGB(44, 120, 224)
 local CloseBind = Enum.KeyCode.RightControl
 
--- Cleanup existing instance
 if CoreGui:FindFirstChild("67Library") then
     CoreGui:FindFirstChild("67Library"):Destroy()
 end
 
--- Secure UI creation
 local ui = Instance.new("ScreenGui")
 ui.Name = "67Library"
 ui.Parent = CoreGui
@@ -21,7 +19,87 @@ ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local DeviceType = UserInputService.TouchEnabled and "Mobile" or "PC"
 
--- Optimized instance creation with security
+local MobileToggleButton
+if DeviceType == "Mobile" then
+    MobileToggleButton = Instance.new("TextButton")
+    MobileToggleButton.Name = "MobileToggle"
+    MobileToggleButton.Size = UDim2.new(0, 40, 0, 40)
+    MobileToggleButton.Position = UDim2.new(1, -50, 0, 10)
+    MobileToggleButton.AnchorPoint = Vector2.new(1, 0)
+    MobileToggleButton.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+    MobileToggleButton.Text = "−"
+    MobileToggleButton.TextColor3 = PresetColor
+    MobileToggleButton.Font = Enum.Font.GothamBold
+    MobileToggleButton.TextSize = 20
+    MobileToggleButton.AutoButtonColor = false
+    MobileToggleButton.Parent = ui
+    
+    local corner = Instance.new("UICorner", MobileToggleButton)
+    corner.CornerRadius = UDim.new(0, 8)
+    
+    local Stroke = Instance.new("UIStroke", MobileToggleButton)
+    Stroke.Color = PresetColor
+    Stroke.Thickness = 2
+    Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    
+    local Dragging, DragInput, DragStart, StartPosition
+    
+    local function Update(input)
+        local Delta = input.Position - DragStart
+        local pos = UDim2.new(
+            StartPosition.X.Scale,
+            StartPosition.X.Offset + Delta.X,
+            StartPosition.Y.Scale,
+            StartPosition.Y.Offset + Delta.Y
+        )
+        MobileToggleButton.Position = pos
+    end
+
+    MobileToggleButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            Dragging = true
+            DragStart = input.Position
+            StartPosition = MobileToggleButton.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    Dragging = false
+                end
+            end)
+        end
+    end)
+
+    MobileToggleButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            DragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == DragInput and Dragging then
+            Update(input)
+        end
+    end)
+    
+    MobileToggleButton.MouseEnter:Connect(function()
+        TweenService:Create(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(64, 64, 64)
+        }):Play()
+        TweenService:Create(Stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Thickness = 3
+        }):Play()
+    end)
+
+    MobileToggleButton.MouseLeave:Connect(function()
+        TweenService:Create(MobileToggleButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+        }):Play()
+        TweenService:Create(Stroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Thickness = 2
+        }):Play()
+    end)
+end
+
 local function CreateInstance(className, properties)
     local instance = Instance.new(className)
     for property, value in pairs(properties) do
@@ -30,21 +108,22 @@ local function CreateInstance(className, properties)
     return instance
 end
 
--- Optimized tween creation
 local function TweenCreate(instance, tweenInfo, properties)
     return TweenService:Create(instance, tweenInfo, properties)
 end
 
--- Unified drag functionality
 local function MakeDraggable(topbarobject, object)
     local Dragging, DragInput, DragStart, StartPosition
 
     local function Update(input)
         local Delta = input.Position - DragStart
-        object.Position = UDim2.new(
-            StartPosition.X.Scale, StartPosition.X.Offset + Delta.X,
-            StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y
+        local pos = UDim2.new(
+            StartPosition.X.Scale,
+            StartPosition.X.Offset + Delta.X,
+            StartPosition.Y.Scale,
+            StartPosition.Y.Offset + Delta.Y
         )
+        object.Position = pos
     end
 
     topbarobject.InputBegan:Connect(function(input)
@@ -74,65 +153,11 @@ local function MakeDraggable(topbarobject, object)
     end)
 end
 
--- Mobile toggle button creation
-local MobileToggleButton
-if DeviceType == "Mobile" then
-    MobileToggleButton = CreateInstance("TextButton", {
-        Name = "MobileToggle",
-        Parent = ui,
-        Size = UDim2.new(0, 40, 0, 40),
-        Position = UDim2.new(1, -50, 0, 10),
-        AnchorPoint = Vector2.new(1, 0),
-        BackgroundColor3 = Color3.fromRGB(54, 54, 54),
-        Text = "−",
-        TextColor3 = PresetColor,
-        Font = Enum.Font.GothamBold,
-        TextSize = 20,
-        AutoButtonColor = false
-    })
-    
-    CreateInstance("UICorner", {Parent = MobileToggleButton, CornerRadius = UDim.new(0, 8)})
-    
-    local Stroke = CreateInstance("UIStroke", {
-        Parent = MobileToggleButton,
-        Color = PresetColor,
-        Thickness = 2,
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    })
-    
-    -- Reuse existing drag functionality
-    MakeDraggable(MobileToggleButton, MobileToggleButton)
-    
-    -- Hover effects
-    local hoverTweens = {
-        enter = {
-            MobileToggleButton = {BackgroundColor3 = Color3.fromRGB(64, 64, 64)},
-            Stroke = {Thickness = 3}
-        },
-        leave = {
-            MobileToggleButton = {BackgroundColor3 = Color3.fromRGB(54, 54, 54)},
-            Stroke = {Thickness = 2}
-        }
-    }
-    
-    MobileToggleButton.MouseEnter:Connect(function()
-        TweenCreate(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), hoverTweens.enter.MobileToggleButton):Play()
-        TweenCreate(Stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), hoverTweens.enter.Stroke):Play()
-    end)
-
-    MobileToggleButton.MouseLeave:Connect(function()
-        TweenCreate(MobileToggleButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), hoverTweens.leave.MobileToggleButton):Play()
-        TweenCreate(Stroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), hoverTweens.leave.Stroke):Play()
-    end)
-end
-
--- Window creation function
 function lib:Window(text, preset, closebind)
     CloseBind = closebind or CloseBind
     PresetColor = preset or PresetColor
     local fs = false
     
-    -- Main container
     local Main = CreateInstance("Frame", {
         Name = "Main",
         Parent = ui,
@@ -145,9 +170,11 @@ function lib:Window(text, preset, closebind)
         Visible = true
     })
 
-    CreateInstance("UICorner", {Parent = Main, CornerRadius = UDim.new(0, 8)})
+    CreateInstance("UICorner", {
+        Parent = Main,
+        CornerRadius = UDim.new(0, 8)
+    })
 
-    -- Tab container
     local TabHold = CreateInstance("ScrollingFrame", {
         Name = "TabHold",
         Parent = Main,
@@ -170,7 +197,6 @@ function lib:Window(text, preset, closebind)
         TabHold.CanvasSize = UDim2.new(0, 0, 0, TabHoldLayout.AbsoluteContentSize.Y)
     end)
 
-    -- Header elements
     local Title = CreateInstance("TextLabel", {
         Name = "Title",
         Parent = Main,
@@ -198,27 +224,43 @@ function lib:Window(text, preset, closebind)
 
     MakeDraggable(DragFrame, Main)
 
-    -- UI toggle functionality
     local uitoggled = false
-    local function ToggleUI()
-        uitoggled = not uitoggled
-        Main.Visible = not uitoggled
-        
-        if DeviceType == "Mobile" and MobileToggleButton then
-            MobileToggleButton.Text = uitoggled and "+" or "−"
-            TweenCreate(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                BackgroundColor3 = uitoggled and Color3.fromRGB(44, 120, 224) or Color3.fromRGB(54, 54, 54)
-            }):Play()
-        end
-    end
-
+    
     if DeviceType == "Mobile" and MobileToggleButton then
-        MobileToggleButton.MouseButton1Click:Connect(ToggleUI)
+        MobileToggleButton.MouseButton1Click:Connect(function()
+            uitoggled = not uitoggled
+            
+            if uitoggled then
+                Main.Visible = false
+                MobileToggleButton.Text = "+"
+                TweenService:Create(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    BackgroundColor3 = Color3.fromRGB(44, 120, 224)
+                }):Play()
+            else
+                Main.Visible = true
+                MobileToggleButton.Text = "−"
+                TweenService:Create(MobileToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+                }):Play()
+            end
+        end)
     end
 
     UserInputService.InputBegan:Connect(function(input, processed)
         if not processed and input.KeyCode == CloseBind then
-            ToggleUI()
+            uitoggled = not uitoggled
+            
+            if uitoggled then
+                Main.Visible = false
+                if DeviceType == "Mobile" and MobileToggleButton then
+                    MobileToggleButton.Text = "+"
+                end
+            else
+                Main.Visible = true
+                if DeviceType == "Mobile" and MobileToggleButton then
+                    MobileToggleButton.Text = "−"
+                end
+            end
         end
     end)
 
@@ -283,7 +325,6 @@ function lib:Window(text, preset, closebind)
             Tab.CanvasSize = UDim2.new(0, 0, 0, TabLayout.AbsoluteContentSize.Y)
         end)
 
-        -- Set first tab as active
         if not fs then
             fs = true
             TabBtnIndicator.Size = UDim2.new(0, 13, 0, 2)
@@ -291,10 +332,11 @@ function lib:Window(text, preset, closebind)
             Tab.Visible = true
         end
 
-        -- Tab switching logic
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(TabFolder:GetChildren()) do
-                if v.Name == "Tab" then v.Visible = false end
+                if v.Name == "Tab" then
+                    v.Visible = false
+                end
             end
             Tab.Visible = true
             
@@ -315,9 +357,8 @@ function lib:Window(text, preset, closebind)
 
         local tabcontent = {}
         
-        -- Component creation functions
         function tabcontent:Label(text)
-            CreateInstance("TextLabel", {
+            local Label = CreateInstance("TextLabel", {
                 Name = "Label",
                 Parent = Tab,
                 BackgroundTransparency = 1,
@@ -343,9 +384,12 @@ function lib:Window(text, preset, closebind)
                 TextSize = 14
             })
 
-            CreateInstance("UICorner", {Parent = Button, CornerRadius = UDim.new(0, 6)})
+            CreateInstance("UICorner", {
+                Parent = Button,
+                CornerRadius = UDim.new(0, 6)
+            })
 
-            CreateInstance("TextLabel", {
+            local ButtonTitle = CreateInstance("TextLabel", {
                 Name = "ButtonTitle",
                 Parent = Button,
                 BackgroundTransparency = 1,
@@ -358,18 +402,16 @@ function lib:Window(text, preset, closebind)
                 TextXAlignment = Enum.TextXAlignment.Left
             })
 
-            -- Hover effects
-            local buttonTweens = {
-                enter = {BackgroundColor3 = Color3.fromRGB(64, 64, 64)},
-                leave = {BackgroundColor3 = Color3.fromRGB(54, 54, 54)}
-            }
-
             Button.MouseEnter:Connect(function()
-                TweenCreate(Button, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), buttonTweens.enter):Play()
+                TweenCreate(Button, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    BackgroundColor3 = Color3.fromRGB(64, 64, 64)
+                }):Play()
             end)
 
             Button.MouseLeave:Connect(function()
-                TweenCreate(Button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), buttonTweens.leave):Play()
+                TweenCreate(Button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+                }):Play()
             end)
 
             Button.MouseButton1Click:Connect(function()
@@ -392,9 +434,12 @@ function lib:Window(text, preset, closebind)
                 TextSize = 14
             })
 
-            CreateInstance("UICorner", {Parent = Toggle, CornerRadius = UDim.new(0, 6)})
+            CreateInstance("UICorner", {
+                Parent = Toggle,
+                CornerRadius = UDim.new(0, 6)
+            })
 
-            CreateInstance("TextLabel", {
+            local ToggleTitle = CreateInstance("TextLabel", {
                 Name = "ToggleTitle",
                 Parent = Toggle,
                 BackgroundTransparency = 1,
@@ -407,7 +452,6 @@ function lib:Window(text, preset, closebind)
                 TextXAlignment = Enum.TextXAlignment.Left
             })
 
-            -- Toggle elements
             local FrameToggle1 = CreateInstance("Frame", {
                 Name = "FrameToggle1",
                 Parent = Toggle,
@@ -444,41 +488,51 @@ function lib:Window(text, preset, closebind)
             })
             CreateInstance("UICorner", {Parent = FrameToggleCircle})
 
-            -- Optimized toggle state management
-            local toggleStates = {
-                on = {
-                    Toggle = {BackgroundColor3 = Color3.fromRGB(64, 64, 64)},
-                    FrameToggle1 = {BackgroundTransparency = 1},
-                    FrameToggle2 = {BackgroundTransparency = 1},
-                    FrameToggle3 = {BackgroundTransparency = 0},
-                    FrameToggleCircle = {BackgroundColor3 = Color3.fromRGB(255, 255, 255), Position = UDim2.new(0.587, 0, 0.222, 0)}
-                },
-                off = {
-                    Toggle = {BackgroundColor3 = Color3.fromRGB(54, 54, 54)},
-                    FrameToggle1 = {BackgroundTransparency = 0},
-                    FrameToggle2 = {BackgroundTransparency = 0},
-                    FrameToggle3 = {BackgroundTransparency = 1},
-                    FrameToggleCircle = {BackgroundColor3 = Color3.fromRGB(70, 70, 70), Position = UDim2.new(0.127, 0, 0.222, 0)}
-                }
-            }
-
             local function UpdateToggleState()
-                local state = toggled and toggleStates.on or toggleStates.off
-                
-                TweenCreate(Toggle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), state.Toggle):Play()
-                TweenCreate(FrameToggle1, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), state.FrameToggle1):Play()
-                TweenCreate(FrameToggle2, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), state.FrameToggle2):Play()
-                TweenCreate(FrameToggle3, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), state.FrameToggle3):Play()
-                TweenCreate(FrameToggleCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), state.FrameToggleCircle):Play()
-                
-                FrameToggleCircle:TweenPosition(state.FrameToggleCircle.Position, Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.2, true)
+                if toggled then
+                    TweenCreate(Toggle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(64, 64, 64)
+                    }):Play()
+                    TweenCreate(FrameToggle1, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundTransparency = 1
+                    }):Play()
+                    TweenCreate(FrameToggle2, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundTransparency = 1
+                    }):Play()
+                    TweenCreate(FrameToggle3, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundTransparency = 0
+                    }):Play()
+                    TweenCreate(FrameToggleCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                    }):Play()
+                    FrameToggleCircle:TweenPosition(UDim2.new(0.587, 0, 0.222, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.2, true)
+                else
+                    TweenCreate(Toggle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+                    }):Play()
+                    TweenCreate(FrameToggle1, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundTransparency = 0
+                    }):Play()
+                    TweenCreate(FrameToggle2, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundTransparency = 0
+                    }):Play()
+                    TweenCreate(FrameToggle3, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundTransparency = 1
+                    }):Play()
+                    TweenCreate(FrameToggleCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+                    }):Play()
+                    FrameToggleCircle:TweenPosition(UDim2.new(0.127, 0, 0.222, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.2, true)
+                end
                 pcall(callback, toggled)
             end
 
-            Toggle.MouseButton1Click:Connect(function()
+            local function ToggleState()
                 toggled = not toggled
                 UpdateToggleState()
-            end)
+            end
+
+            Toggle.MouseButton1Click:Connect(ToggleState)
 
             UpdateToggleState()
 
@@ -493,233 +547,253 @@ function lib:Window(text, preset, closebind)
         end
 
         function tabcontent:Slider(text, min, max, increment, callback)
-    local dragging = false
-    increment = increment or 1
-    local currentValue = min
-    local lastCallbackValue = min
-    local moveConn, endConn -- Declare connections outside to ensure they exist
-
-    local Slider = CreateInstance("TextButton", {
-        Name = "Slider",
-        Parent = Tab,
-        BackgroundColor3 = Color3.fromRGB(54, 54, 54),
-        Size = UDim2.new(0, 363, 0, 62),
-        AutoButtonColor = false,
-        Font = Enum.Font.SourceSans,
-        Text = "",
-        TextColor3 = Color3.fromRGB(0, 0, 0),
-        TextSize = 14
-    })
-
-    CreateInstance("UICorner", {Parent = Slider, CornerRadius = UDim.new(0, 6)})
-
-    CreateInstance("TextLabel", {
-        Name = "SliderTitle",
-        Parent = Slider,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0.036, 0, 0.1, 0),
-        Size = UDim2.new(0, 187, 0, 30),
-        Font = Enum.Font.Gotham,
-        Text = text,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-
-    local SliderValue = CreateInstance("TextLabel", {
-        Name = "SliderValue",
-        Parent = Slider,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0.036, 0, 0.1, 0),
-        Size = UDim2.new(0, 335, 0, 30),
-        Font = Enum.Font.Gotham,
-        Text = tostring(currentValue),
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Right
-    })
-
-    local SlideFrame = CreateInstance("Frame", {
-        Name = "SlideFrame",
-        Parent = Slider,
-        BackgroundColor3 = Color3.fromRGB(70, 70, 70),
-        BorderSizePixel = 0,
-        Position = UDim2.new(0.034, 0, 0.645, 0),
-        Size = UDim2.new(0, 335, 0, 5)
-    })
-
-    CreateInstance("UICorner", {Parent = SlideFrame, CornerRadius = UDim.new(1, 0)})
-
-    local CurrentValueFrame = CreateInstance("Frame", {
-        Name = "CurrentValueFrame",
-        Parent = SlideFrame,
-        BackgroundColor3 = PresetColor,
-        BorderSizePixel = 0,
-        Size = UDim2.new((currentValue - min) / (max - min), 0, 1, 0)
-    })
-
-    CreateInstance("UICorner", {Parent = CurrentValueFrame, CornerRadius = UDim.new(1, 0)})
-
-    local SlideCircle = CreateInstance("ImageButton", {
-        Name = "SlideCircle",
-        Parent = SlideFrame,
-        BackgroundTransparency = 1,
-        Position = UDim2.new((currentValue - min) / (max - min), -6, 0.5, -6),
-        Size = UDim2.new(0, 12, 0, 12),
-        Image = "rbxassetid://3570695787",
-        ImageColor3 = PresetColor,
-        ScaleType = Enum.ScaleType.Fit,
-        ZIndex = 2
-    })
-
-    -- Optimized number formatting
-    local function formatNumber(value)
-        if math.abs(value) < 0.0001 and value ~= 0 then
-            return string.format("%.2e", value)
-        end
-        
-        if math.abs(value) >= 10000 then
-            local formatted = tostring(math.floor(value))
-            local k = formatted:len() % 3
-            if k == 0 then k = 3 end
-            return formatted:sub(1, k) .. formatted:sub(k+1):gsub("(%d%d%d)", ",%1")
-        end
-        
-        if increment < 1 then
-            local decimalPlaces = math.min(math.ceil(math.log10(1/increment)) + 1, 6)
-            local formatString = "%." .. decimalPlaces .. "f"
-            local formatted = string.format(formatString, value)
+            local dragging = false
+            increment = increment or 1
+            local start = min
             
-            formatted = formatted:gsub("%.(%d-)0*$", function(decimal)
-                return decimal == "" and "" or "." .. decimal
-            end)
-            return formatted:gsub("%.$", "")
-        else
-            return tostring(math.floor(value))
-        end
-    end
+            local Slider = CreateInstance("TextButton", {
+                Name = "Slider",
+                Parent = Tab,
+                BackgroundColor3 = Color3.fromRGB(54, 54, 54),
+                Size = UDim2.new(0, 363, 0, 62),
+                AutoButtonColor = false,
+                Font = Enum.Font.SourceSans,
+                Text = "",
+                TextColor3 = Color3.fromRGB(0, 0, 0),
+                TextSize = 14
+            })
 
-    local function updateSlider(value)
-        value = math.clamp(value, min, max)
-        currentValue = value
-        local normalizedValue = (value - min) / (max - min)
-        
-        TweenService:Create(CurrentValueFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(normalizedValue, 0, 1, 0)
-        }):Play()
-        TweenService:Create(SlideCircle, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Position = UDim2.new(normalizedValue, -6, 0.5, -6)
-        }):Play()
-        
-        SliderValue.Text = formatNumber(value)
-    end
+            CreateInstance("UICorner", {
+                Parent = Slider,
+                CornerRadius = UDim.new(0, 6)
+            })
 
-    local function executeCallback(value)
-        if value ~= lastCallbackValue then
-            pcall(callback, value)
-            lastCallbackValue = value
-        end
-    end
+            local SliderTitle = CreateInstance("TextLabel", {
+                Name = "SliderTitle",
+                Parent = Slider,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0.036, 0, 0.1, 0),
+                Size = UDim2.new(0, 187, 0, 30),
+                Font = Enum.Font.Gotham,
+                Text = text,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
 
-    -- Fixed drag handling with proper connection management
-    local function startDrag(input)
-        dragging = true
-        
-        TweenCreate(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            BackgroundColor3 = Color3.fromRGB(64, 64, 64)
-        }):Play()
-        
-        local function updateDrag(input)
-            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                local slideFrameAbsolutePos = SlideFrame.AbsolutePosition.X
-                local slideFrameAbsoluteSize = SlideFrame.AbsoluteSize.X
-                
-                local x = math.clamp(input.Position.X - slideFrameAbsolutePos, 0, slideFrameAbsoluteSize)
-                local percent = x / slideFrameAbsoluteSize
-                local value = min + percent * (max - min)
-                
-                if increment > 0 then
-                    value = math.floor(value / increment) * increment
+            local SliderValue = CreateInstance("TextLabel", {
+                Name = "SliderValue",
+                Parent = Slider,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0.036, 0, 0.1, 0),
+                Size = UDim2.new(0, 335, 0, 30),
+                Font = Enum.Font.Gotham,
+                Text = tostring(start),
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Right
+            })
+
+            local SlideFrame = CreateInstance("Frame", {
+                Name = "SlideFrame",
+                Parent = Slider,
+                BackgroundColor3 = Color3.fromRGB(70, 70, 70),
+                BorderSizePixel = 0,
+                Position = UDim2.new(0.034, 0, 0.645, 0),
+                Size = UDim2.new(0, 335, 0, 5)
+            })
+
+            CreateInstance("UICorner", {
+                Parent = SlideFrame,
+                CornerRadius = UDim.new(1, 0)
+            })
+
+            local CurrentValueFrame = CreateInstance("Frame", {
+                Name = "CurrentValueFrame",
+                Parent = SlideFrame,
+                BackgroundColor3 = PresetColor,
+                BorderSizePixel = 0,
+                Size = UDim2.new((start - min) / (max - min), 0, 1, 0)
+            })
+
+            CreateInstance("UICorner", {
+                Parent = CurrentValueFrame,
+                CornerRadius = UDim.new(1, 0)
+            })
+
+            local SlideCircle = CreateInstance("ImageButton", {
+                Name = "SlideCircle",
+                Parent = SlideFrame,
+                BackgroundTransparency = 1,
+                Position = UDim2.new((start - min) / (max - min), -6, 0.5, -6),
+                Size = UDim2.new(0, 12, 0, 12),
+                Image = "rbxassetid://3570695787",
+                ImageColor3 = PresetColor,
+                ScaleType = Enum.ScaleType.Fit,
+                ZIndex = 2
+            })
+
+            local function formatNumber(value)
+                if math.abs(value) < 0.0001 and value ~= 0 then
+                    return string.format("%.2e", value)
                 end
                 
-                updateSlider(value)
+                if math.abs(value) >= 10000 then
+                    local formatted = tostring(math.floor(value))
+                    local k = formatted:len() % 3
+                    if k == 0 then k = 3 end
+                    return formatted:sub(1, k) .. formatted:sub(k+1):gsub("(%d%d%d)", ",%1")
+                end
+                
+                if increment < 1 then
+                    local decimalPlaces = 0
+                    local tempIncrement = increment
+                    
+                    while tempIncrement < 1 do
+                        decimalPlaces = decimalPlaces + 1
+                        tempIncrement = tempIncrement * 10
+                        if tempIncrement >= 1 then break end
+                    end
+                    
+                    decimalPlaces = math.min(decimalPlaces + 1, 6)
+                    
+                    local formatString = "%." .. decimalPlaces .. "f"
+                    local formatted = string.format(formatString, value)
+                    
+                    formatted = formatted:gsub("%.(%d-)0*$", function(decimal)
+                        return decimal == "" and "" or "." .. decimal
+                    end)
+                    formatted = formatted:gsub("%.$", "")
+                    
+                    return formatted
+                else
+                    return tostring(math.floor(value))
+                end
             end
-        end
-        
-        local function endDrag(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = false
-                if moveConn then
-                    moveConn:Disconnect()
-                    moveConn = nil
-                end
-                if endConn then
-                    endConn:Disconnect()
-                    endConn = nil
-                end
-                executeCallback(currentValue)
+
+            local currentValue = start
+            local lastCallbackValue = start
+
+            local function updateSlider(value)
+                value = math.clamp(value, min, max)
+                currentValue = value
+                local normalizedValue = (value - min) / (max - min)
+                local circlePos = UDim2.new(normalizedValue, -6, 0.5, -6)
+                local frameSize = UDim2.new(normalizedValue, 0, 1, 0)
                 
-                TweenCreate(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+                TweenService:Create(CurrentValueFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = frameSize
                 }):Play()
+                TweenService:Create(SlideCircle, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Position = circlePos
+                }):Play()
+                
+                SliderValue.Text = formatNumber(value)
             end
-        end
-        
-        -- Create new connections
-        moveConn = UserInputService.InputChanged:Connect(updateDrag)
-        endConn = UserInputService.InputEnded:Connect(endDrag)
-        
-        -- Initial update
-        updateDrag(input)
-    end
 
-    SlideCircle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            startDrag(input)
-        end
-    end)
-    
-    SlideFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            startDrag(input)
-        end
-    end)
-
-    -- Hover effects
-    local sliderTweens = {
-        enter = {BackgroundColor3 = Color3.fromRGB(64, 64, 64)},
-        leave = {BackgroundColor3 = Color3.fromRGB(54, 54, 54)}
-    }
-
-    Slider.MouseEnter:Connect(function()
-        if not dragging then
-            TweenCreate(Slider, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), sliderTweens.enter):Play()
-        end
-    end)
-
-    Slider.MouseLeave:Connect(function()
-        if not dragging then
-            TweenCreate(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), sliderTweens.leave):Play()
-        end
-    end)
-
-    updateSlider(currentValue)
-    executeCallback(currentValue)
-    
-    return {
-        Set = function(self, value)
-            value = math.clamp(value, min, max)
-            if increment > 0 then
-                value = math.floor(value / increment) * increment
+            local function executeCallback(value)
+                if value ~= lastCallbackValue then
+                    pcall(callback, value)
+                    lastCallbackValue = value
+                end
             end
-            updateSlider(value)
-            executeCallback(value)
-        end,
-        Get = function(self)
-            return currentValue
+
+            local function startDrag(input)
+                dragging = true
+                
+                TweenService:Create(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    BackgroundColor3 = Color3.fromRGB(64, 64, 64)
+                }):Play()
+                
+                local function update(inputPosition)
+                    local slideFrameAbsolutePos = SlideFrame.AbsolutePosition.X
+                    local slideFrameAbsoluteSize = SlideFrame.AbsoluteSize.X
+                    
+                    local x = math.clamp(inputPosition.X - slideFrameAbsolutePos, 0, slideFrameAbsoluteSize)
+                    local percent = x / slideFrameAbsoluteSize
+                    local value = min + percent * (max - min)
+                    
+                    if increment > 0 then
+                        value = math.floor(value / increment) * increment
+                    end
+                    
+                    updateSlider(value)
+                end
+                
+                update(input.Position)
+                
+                local moveConn
+                moveConn = UserInputService.InputChanged:Connect(function(i)
+                    if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                        update(i.Position)
+                    end
+                end)
+                
+                local endConn
+                endConn = UserInputService.InputEnded:Connect(function(i)
+                    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                        dragging = false
+                        if moveConn then
+                            moveConn:Disconnect()
+                        end
+                        if endConn then
+                            endConn:Disconnect()
+                        end
+                        
+                        executeCallback(currentValue)
+                        
+                        TweenService:Create(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                            BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+                        }):Play()
+                    end
+                end)
+            end
+
+            SlideCircle.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    startDrag(input)
+                end
+            end)
+            
+            SlideFrame.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    startDrag(input)
+                end
+            end)
+
+            Slider.MouseEnter:Connect(function()
+                if not dragging then
+                    TweenService:Create(Slider, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(64, 64, 64)
+                    }):Play()
+                end
+            end)
+
+            Slider.MouseLeave:Connect(function()
+                if not dragging then
+                    TweenService:Create(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+                    }):Play()
+                end
+            end)
+
+            updateSlider(start)
+            executeCallback(start)
+            
+            return {
+                Set = function(self, value)
+                    value = math.clamp(value, min, max)
+                    if increment > 0 then
+                        value = math.floor(value / increment) * increment
+                    end
+                    updateSlider(value)
+                    executeCallback(value)
+                end,
+                Get = function(self)
+                    return currentValue
+                end
+            }
         end
-    }
-end
 
         function tabcontent:Dropdown(text, list, callback)
             local droptog = false
@@ -734,7 +808,10 @@ end
                 Size = UDim2.new(0, 363, 0, 42)
             })
 
-            CreateInstance("UICorner", {Parent = Dropdown, CornerRadius = UDim.new(0, 6)})
+            CreateInstance("UICorner", {
+                Parent = Dropdown,
+                CornerRadius = UDim.new(0, 6)
+            })
 
             local DropdownBtn = CreateInstance("TextButton", {
                 Name = "DropdownBtn",
@@ -803,7 +880,6 @@ end
                 end
             end)
 
-            -- Create dropdown items
             for _, v in pairs(list) do
                 itemcount = itemcount + 1
                 if itemcount <= 3 then
@@ -824,20 +900,21 @@ end
                     TextSize = 15
                 })
 
-                CreateInstance("UICorner", {Parent = Item, CornerRadius = UDim.new(0, 4)})
-
-                -- Item hover effects
-                local itemTweens = {
-                    enter = {BackgroundColor3 = Color3.fromRGB(64, 64, 64)},
-                    leave = {BackgroundColor3 = Color3.fromRGB(54, 54, 54)}
-                }
+                CreateInstance("UICorner", {
+                    Parent = Item,
+                    CornerRadius = UDim.new(0, 4)
+                })
 
                 Item.MouseEnter:Connect(function()
-                    TweenCreate(Item, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), itemTweens.enter):Play()
+                    TweenCreate(Item, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(64, 64, 64)
+                    }):Play()
                 end)
 
                 Item.MouseLeave:Connect(function()
-                    TweenCreate(Item, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), itemTweens.leave):Play()
+                    TweenCreate(Item, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+                    }):Play()
                 end)
 
                 Item.MouseButton1Click:Connect(function()
@@ -855,59 +932,65 @@ end
         end
 
         function tabcontent:Textbox(text, callback)
-            local Textbox = CreateInstance("Frame", {
-                Name = "Textbox",
-                Parent = Tab,
-                BackgroundColor3 = Color3.fromRGB(54, 54, 54),
-                ClipsDescendants = true,
-                Size = UDim2.new(0, 363, 0, 42)
-            })
+    local Textbox = CreateInstance("Frame", {
+        Name = "Textbox",
+        Parent = Tab,
+        BackgroundColor3 = Color3.fromRGB(54, 54, 54),
+        ClipsDescendants = true,
+        Size = UDim2.new(0, 363, 0, 42)
+    })
 
-            CreateInstance("UICorner", {Parent = Textbox, CornerRadius = UDim.new(0, 6)})
+    CreateInstance("UICorner", {
+        Parent = Textbox,
+        CornerRadius = UDim.new(0, 6)
+    })
 
-            CreateInstance("TextLabel", {
-                Name = "TextboxTitle",
-                Parent = Textbox,
-                BackgroundTransparency = 1,
-                Position = UDim2.new(0.036, 0, 0, 0),
-                Size = UDim2.new(0, 187, 0, 42),
-                Font = Enum.Font.Gotham,
-                Text = text,
-                TextColor3 = Color3.fromRGB(255, 255, 255),
-                TextSize = 14,
-                TextXAlignment = Enum.TextXAlignment.Left
-            })
+    local TextboxTitle = CreateInstance("TextLabel", {
+        Name = "TextboxTitle",
+        Parent = Textbox,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.036, 0, 0, 0),
+        Size = UDim2.new(0, 187, 0, 42),
+        Font = Enum.Font.Gotham,
+        Text = text,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
 
-            local TextboxFrame = CreateInstance("Frame", {
-                Name = "TextboxFrame",
-                Parent = Textbox,
-                BackgroundColor3 = Color3.fromRGB(64, 64, 64),
-                Position = UDim2.new(0.689, 0, 0.214, 0),
-                Size = UDim2.new(0, 100, 0, 23)
-            })
+    local TextboxFrame = CreateInstance("Frame", {
+        Name = "TextboxFrame",
+        Parent = TextboxTitle,
+        BackgroundColor3 = Color3.fromRGB(64, 64, 64),
+        Position = UDim2.new(1.289, 0, 0.214, 0),
+        Size = UDim2.new(0, 100, 0, 23)
+    })
 
-            CreateInstance("UICorner", {Parent = TextboxFrame, CornerRadius = UDim.new(0, 5)})
+    CreateInstance("UICorner", {
+        Parent = TextboxFrame,
+        CornerRadius = UDim.new(0, 5)
+    })
 
-            local TextBox = CreateInstance("TextBox", {
-                Parent = TextboxFrame,
-                BackgroundTransparency = 1,
-                Size = UDim2.new(0, 100, 0, 23),
-                Font = Enum.Font.Gotham,
-                Text = "",
-                TextColor3 = Color3.fromRGB(255, 255, 255),
-                TextSize = 14,
-                TextWrapped = true,
-                TextXAlignment = Enum.TextXAlignment.Center,
-                TextYAlignment = Enum.TextYAlignment.Center,
-                ClearTextOnFocus = false
-            })
+    local TextBox = CreateInstance("TextBox", {
+        Parent = TextboxFrame,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0, 100, 0, 23),
+        Font = Enum.Font.Gotham,
+        Text = "",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        TextWrapped = true,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        ClearTextOnFocus = false
+    })
 
-            TextBox.FocusLost:Connect(function(enterPressed)
-                if enterPressed and #TextBox.Text > 0 then
-                    pcall(callback, TextBox.Text)
-                end
-            end)
+    TextBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed and #TextBox.Text > 0 then
+            pcall(callback, TextBox.Text)
         end
+    end)
+end
 
         return tabcontent
     end
