@@ -222,7 +222,8 @@ function Library:Window(title)
         ClipsDescendants = true
     })
 
-    createInstance("UIListLayout", {
+    -- Store the UIListLayout reference directly to avoid the error
+    local TabsListLayout = createInstance("UIListLayout", {
         Name = "TabsList",
         Parent = TabsContainer,
         HorizontalAlignment = Enum.HorizontalAlignment.Center,
@@ -236,18 +237,24 @@ function Library:Window(title)
         PaddingBottom = UDim.new(0, 5)
     })
 
-    -- Optimized canvas size updater
+    -- FIXED: Optimized canvas size updater - use the stored layout reference
     local function updateTabsCanvasSize()
-        local absoluteSize = TabsContainer.TabsList.AbsoluteContentSize
-        TabsContainer.CanvasSize = UDim2_new(0, 0, 0, absoluteSize.Y + 15)
+        if TabsListLayout and TabsContainer then
+            local absoluteSize = TabsListLayout.AbsoluteContentSize
+            TabsContainer.CanvasSize = UDim2_new(0, 0, 0, absoluteSize.Y + 15)
+        end
     end
 
-    -- Connect events once
-    local tabsLayoutChanged = TabsContainer.TabsList:GetPropertyChangedSignal("AbsoluteContentSize")
-    tabsLayoutChanged:Connect(updateTabsCanvasSize)
+    -- FIXED: Connect events using the stored layout reference
+    TabsListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabsCanvasSize)
     TabsContainer.ChildAdded:Connect(updateTabsCanvasSize)
     TabsContainer.ChildRemoved:Connect(updateTabsCanvasSize)
-    updateTabsCanvasSize()
+    
+    -- Wait a frame then update canvas size
+    task.spawn(function()
+        task.wait()
+        updateTabsCanvasSize()
+    end)
 
     -- Mobile support
     local DeviceType = UserInputService.TouchEnabled and "Mobile" or "PC"
@@ -370,7 +377,8 @@ function Library:Window(title)
             ClipsDescendants = true
         })
 
-        local UIListLayout = createInstance("UIListLayout", {
+        -- Store the Page UIListLayout reference to avoid similar issues
+        local PageListLayout = createInstance("UIListLayout", {
             Parent = Page,
             HorizontalAlignment = Enum.HorizontalAlignment.Center,
             SortOrder = Enum.SortOrder.LayoutOrder,
@@ -383,15 +391,22 @@ function Library:Window(title)
             PaddingBottom = UDim.new(0, 5)
         })
 
-        -- Optimized page canvas size updater
+        -- FIXED: Optimized page canvas size updater using stored layout reference
         local function updatePageCanvasSize()
-            Page.CanvasSize = UDim2_new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 15)
+            if PageListLayout and Page then
+                Page.CanvasSize = UDim2_new(0, 0, 0, PageListLayout.AbsoluteContentSize.Y + 15)
+            end
         end
 
-        UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvasSize)
+        PageListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatePageCanvasSize)
         Page.ChildAdded:Connect(updatePageCanvasSize)
         Page.ChildRemoved:Connect(updatePageCanvasSize)
-        updatePageCanvasSize()
+        
+        -- Wait a frame then update canvas size
+        task.spawn(function()
+            task.wait()
+            updatePageCanvasSize()
+        end)
 
         -- Set first tab as active
         if firstTab then
@@ -746,7 +761,7 @@ function Library:Window(title)
                 Size = UDim2_new(1, -6, 0, 34)
             })
 
-            local UIListLayout = createInstance("UIListLayout", {
+            local DropdownListLayout = createInstance("UIListLayout", {
                 Parent = Dropdown,
                 HorizontalAlignment = Enum.HorizontalAlignment.Center,
                 SortOrder = Enum.SortOrder.LayoutOrder,
@@ -818,7 +833,7 @@ function Library:Window(title)
 
             local function toggleDropdown()
                 if not dropped then
-                    Dropdown:TweenSize(UDim2_new(1, -7, 0, UIListLayout.AbsoluteContentSize.Y), Enum_EasingDirection_Out, Enum_EasingStyle_Quad, 0.15, true)
+                    Dropdown:TweenSize(UDim2_new(1, -7, 0, DropdownListLayout.AbsoluteContentSize.Y), Enum_EasingDirection_Out, Enum_EasingStyle_Quad, 0.15, true)
                     TweenService:Create(arrow, TWEEN_INFO.Normal, {Rotation = 180}):Play()
                     dropped = true
                 else
