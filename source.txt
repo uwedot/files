@@ -703,7 +703,6 @@ function lib:Window(text, preset, closebind)
                 local circlePos = UDim2.new(normalizedValue, -6, 0.5, -6)
                 local frameSize = UDim2.new(normalizedValue, 0, 1, 0)
                 
-                -- Always use tween for smooth animation
                 TweenService:Create(CurrentValueFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                     Size = frameSize
                 }):Play()
@@ -763,7 +762,6 @@ function lib:Window(text, preset, closebind)
                             endConn:Disconnect()
                         end
                         
-                        -- Execute callback only when sliding stops
                         executeCallback(currentValue)
                         
                         TweenService:Create(Slider, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -801,7 +799,6 @@ function lib:Window(text, preset, closebind)
                 end
             end)
 
-            -- Initialize with tween
             updateSlider(start)
             executeCallback(start)
             
@@ -1005,13 +1002,10 @@ function lib:Window(text, preset, closebind)
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 14,
         TextWrapped = true,
-        TextXAlignment = Enum.TextXAlignment.Center,  -- Changed from Left to Center
+        TextXAlignment = Enum.TextXAlignment.Center,
         TextYAlignment = Enum.TextYAlignment.Center,
         ClearTextOnFocus = false
     })
-
-    -- Remove the UIPadding since we're centering the text
-    -- The padding would offset the centering
 
     TextBox.FocusLost:Connect(function(enterPressed)
         if enterPressed and #TextBox.Text > 0 then
