@@ -716,7 +716,7 @@ function lib:Window(text, preset, closebind)
 
             local function executeCallback(value)
                 if value ~= lastCallbackValue then
-                    pcall(callback, formatNumber(value))
+                    pcall(callback, value)
                     lastCallbackValue = value
                 end
             end
@@ -804,6 +804,20 @@ function lib:Window(text, preset, closebind)
             -- Initialize with tween
             updateSlider(start)
             executeCallback(start)
+            
+            return {
+                Set = function(self, value)
+                    value = math.clamp(value, min, max)
+                    if increment > 0 then
+                        value = math.floor(value / increment) * increment
+                    end
+                    updateSlider(value)
+                    executeCallback(value)
+                end,
+                Get = function(self)
+                    return currentValue
+                end
+            }
         end
 
         function tabcontent:Dropdown(text, list, callback)
@@ -942,7 +956,7 @@ function lib:Window(text, preset, closebind)
             end
         end
 
-        function tabcontent:Textbox(text, disappear, callback)
+        function tabcontent:Textbox(text, callback)
             local Textbox = CreateInstance("Frame", {
                 Name = "Textbox",
                 Parent = Tab,
@@ -990,30 +1004,22 @@ function lib:Window(text, preset, closebind)
                 Text = "",
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
-                TextTruncate = Enum.TextTruncate.AtEnd,  -- Ensure text stays inside
-                ClipsDescendants = true  -- Clip text that goes outside
+                TextWrapped = true,  -- Ensure text wraps to stay inside
+                TextXAlignment = Enum.TextXAlignment.Left,
+                TextYAlignment = Enum.TextYAlignment.Center,
+                ClearTextOnFocus = false
             })
 
-            -- Function to truncate text if it's too long
-            local function updateTextBoxText()
-                local textSize = game:GetService("TextService"):GetTextSize(TextBox.Text, TextBox.TextSize, TextBox.Font, Vector2.new(math.huge, math.huge))
-                if textSize.X > TextBox.AbsoluteSize.X then
-                    -- Text is too long, we'll let TextTruncate handle it visually
-                    -- but we can also limit the input length
-                    if #TextBox.Text > 20 then  -- Arbitrary limit to prevent extremely long text
-                        TextBox.Text = string.sub(TextBox.Text, 1, 20)
-                    end
-                end
-            end
-
-            TextBox:GetPropertyChangedSignal("Text"):Connect(updateTextBoxText)
+            -- Add padding to keep text visible
+            local TextPadding = CreateInstance("UIPadding", {
+                Parent = TextBox,
+                PaddingLeft = UDim.new(0, 5),
+                PaddingRight = UDim.new(0, 5)
+            })
 
             TextBox.FocusLost:Connect(function(enterPressed)
                 if enterPressed and #TextBox.Text > 0 then
                     pcall(callback, TextBox.Text)
-                    if disappear then
-                        TextBox.Text = ""
-                    end
                 end
             end)
         end
