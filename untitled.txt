@@ -1,4 +1,3 @@
--- Remove any existing Sentinel GUI
 pcall(function()
     local existingGui = game:GetService('CoreGui'):FindFirstChild('Sentinel')
     if existingGui then
@@ -535,10 +534,10 @@ function Library:Window(title)
                 BorderSizePixel = 0,
                 Size = UDim2.new(1, -6, 0, 34),
                 Font = Enum.Font.Gotham,
-                Text = "  " .. (labeltext or "Label"),
+                Text = labeltext or "Label",
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
-                TextXAlignment = Enum.TextXAlignment.Left
+                TextXAlignment = Enum.TextXAlignment.Center
             })
 
             createInstance("UICorner", {
