@@ -380,21 +380,21 @@ function lib:Window(text, preset, closebind)
         local tabcontent = {}
         
         function tabcontent:Label(text)
-            local Label = CreateInstance("Frame", {
-                Name = "Label",
+            local LabelFrame = CreateInstance("Frame", {
+                Name = "LabelFrame",
                 Parent = Tab,
                 BackgroundColor3 = Color3.fromRGB(54, 54, 54),
                 Size = UDim2.new(0, 363, 0, 30)
             })
 
             CreateInstance("UICorner", {
-                Parent = Label,
+                Parent = LabelFrame,
                 CornerRadius = UDim.new(0, 6)
             })
 
-            local LabelText = CreateInstance("TextLabel", {
-                Name = "LabelText",
-                Parent = Label,
+            local Label = CreateInstance("TextLabel", {
+                Name = "Label",
+                Parent = LabelFrame,
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 1, 0),
                 Font = Enum.Font.Gotham,
@@ -404,11 +404,11 @@ function lib:Window(text, preset, closebind)
                 TextXAlignment = Enum.TextXAlignment.Center
             })
 
-            return {
-                Set = function(self, newText)
-                    LabelText.Text = newText
-                end
-            }
+            local labelObject = {}
+            function labelObject:Set(newText)
+                Label.Text = newText
+            end
+            return labelObject
         end
         
         function tabcontent:Button(text, callback)
@@ -972,65 +972,65 @@ function lib:Window(text, preset, closebind)
         end
 
         function tabcontent:Textbox(text, callback)
-            local Textbox = CreateInstance("Frame", {
-                Name = "Textbox",
-                Parent = Tab,
-                BackgroundColor3 = Color3.fromRGB(54, 54, 54),
-                ClipsDescendants = true,
-                Size = UDim2.new(0, 363, 0, 42)
-            })
+    local Textbox = CreateInstance("Frame", {
+        Name = "Textbox",
+        Parent = Tab,
+        BackgroundColor3 = Color3.fromRGB(54, 54, 54),
+        ClipsDescendants = true,
+        Size = UDim2.new(0, 363, 0, 42)
+    })
 
-            CreateInstance("UICorner", {
-                Parent = Textbox,
-                CornerRadius = UDim.new(0, 6)
-            })
+    CreateInstance("UICorner", {
+        Parent = Textbox,
+        CornerRadius = UDim.new(0, 6)
+    })
 
-            local TextboxTitle = CreateInstance("TextLabel", {
-                Name = "TextboxTitle",
-                Parent = Textbox,
-                BackgroundTransparency = 1,
-                Position = UDim2.new(0.036, 0, 0, 0),
-                Size = UDim2.new(0, 187, 0, 42),
-                Font = Enum.Font.Gotham,
-                Text = text,
-                TextColor3 = Color3.fromRGB(255, 255, 255),
-                TextSize = 14,
-                TextXAlignment = Enum.TextXAlignment.Left
-            })
+    local TextboxTitle = CreateInstance("TextLabel", {
+        Name = "TextboxTitle",
+        Parent = Textbox,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.036, 0, 0, 0),
+        Size = UDim2.new(0, 187, 0, 42),
+        Font = Enum.Font.Gotham,
+        Text = text,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
 
-            local TextboxFrame = CreateInstance("Frame", {
-                Name = "TextboxFrame",
-                Parent = TextboxTitle,
-                BackgroundColor3 = Color3.fromRGB(64, 64, 64),
-                Position = UDim2.new(1.289, 0, 0.214, 0),
-                Size = UDim2.new(0, 100, 0, 23)
-            })
+    local TextboxFrame = CreateInstance("Frame", {
+        Name = "TextboxFrame",
+        Parent = TextboxTitle,
+        BackgroundColor3 = Color3.fromRGB(64, 64, 64),
+        Position = UDim2.new(1.289, 0, 0.214, 0),
+        Size = UDim2.new(0, 100, 0, 23)
+    })
 
-            CreateInstance("UICorner", {
-                Parent = TextboxFrame,
-                CornerRadius = UDim.new(0, 5)
-            })
+    CreateInstance("UICorner", {
+        Parent = TextboxFrame,
+        CornerRadius = UDim.new(0, 5)
+    })
 
-            local TextBox = CreateInstance("TextBox", {
-                Parent = TextboxFrame,
-                BackgroundTransparency = 1,
-                Size = UDim2.new(0, 100, 0, 23),
-                Font = Enum.Font.Gotham,
-                Text = "",
-                TextColor3 = Color3.fromRGB(255, 255, 255),
-                TextSize = 14,
-                TextWrapped = true,
-                TextXAlignment = Enum.TextXAlignment.Center,
-                TextYAlignment = Enum.TextYAlignment.Center,
-                ClearTextOnFocus = false
-            })
+    local TextBox = CreateInstance("TextBox", {
+        Parent = TextboxFrame,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0, 100, 0, 23),
+        Font = Enum.Font.Gotham,
+        Text = "",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        TextWrapped = true,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        ClearTextOnFocus = false
+    })
 
-            TextBox.FocusLost:Connect(function(enterPressed)
-                if enterPressed and #TextBox.Text > 0 then
-                    pcall(callback, TextBox.Text)
-                end
-            end)
+    TextBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed and #TextBox.Text > 0 then
+            pcall(callback, TextBox.Text)
         end
+    end)
+end
 
         return tabcontent
     end
