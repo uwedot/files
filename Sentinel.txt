@@ -941,7 +941,7 @@ function Library:Window(title)
             return DropdownFunc
         end
 
-        -- NEW: Textbox function
+        -- NEW: Simple Textbox function
         function TabFunctions:Textbox(title, placeholder, callback)
             callback = callback or function() end
 
@@ -985,7 +985,9 @@ function Library:Window(title)
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                ClearTextOnFocus = false
+                ClearTextOnFocus = false,
+                TextTruncate = Enum.TextTruncate.AtEnd, -- Ensures text stays inside
+                ClipsDescendants = true -- Prevents text from overflowing
             })
 
             createInstance("UICorner", {
@@ -995,7 +997,8 @@ function Library:Window(title)
 
             createInstance("UIPadding", {
                 Parent = InputBox,
-                PaddingLeft = UDim.new(0, 6)
+                PaddingLeft = UDim.new(0, 6),
+                PaddingRight = UDim.new(0, 6) -- Added right padding to keep text inside
             })
 
             -- Hover effects
@@ -1041,22 +1044,6 @@ function Library:Window(title)
                     pcall(callback, InputBox.Text)
                 end
             end)
-
-            local TextboxFunc = {}
-
-            function TextboxFunc:SetText(text)
-                InputBox.Text = text or ""
-            end
-
-            function TextboxFunc:GetText()
-                return InputBox.Text
-            end
-
-            function TextboxFunc:Clear()
-                InputBox.Text = ""
-            end
-
-            return TextboxFunc
         end
 
         return TabFunctions
