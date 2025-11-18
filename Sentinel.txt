@@ -757,7 +757,7 @@ function Library:Window(title)
                 Parent = Choose,
                 BackgroundTransparency = 1,
                 Position = UDim2_new(0, 8, 0, 0),
-                Size = UDim2_new(1, -6, 1, 0),
+                Size = UDim2_new(1, -40, 1, 0), -- Make space for the arrow
                 Font = Enum_Font_Gotham,
                 Text = title or "Dropdown",
                 TextColor3 = COLORS.White,
@@ -770,14 +770,15 @@ function Library:Window(title)
                 Parent = Choose,
                 AnchorPoint = Vector2_new(1, 0.5),
                 BackgroundTransparency = 1,
-                Position = UDim2_new(1, -2, 0.5, 0),
-                Size = UDim2_new(0, 28, 0, 28),
+                Position = UDim2_new(1, -8, 0.5, 0),
+                Size = UDim2_new(0, 20, 0, 20),
                 ZIndex = 2,
                 Image = "rbxassetid://3926307971",
                 ImageColor3 = COLORS.ButtonHover,
                 ImageRectOffset = Vector2_new(324, 524),
                 ImageRectSize = Vector2_new(36, 36),
-                ScaleType = Enum.ScaleType.Crop
+                ScaleType = Enum.ScaleType.Fit,
+                AutoButtonColor = false
             })
 
             local OptionHolder = createInstance("Frame", {
@@ -800,26 +801,36 @@ function Library:Window(title)
 
             createInstance("UIPadding", {
                 Parent = OptionHolder,
-                PaddingTop = UDim.new(0, 8)
+                PaddingTop = UDim.new(0, 8),
+                PaddingBottom = UDim.new(0, 8)
             })
 
             local function toggleDropdown()
                 if not dropped then
-                    Dropdown:TweenSize(UDim2_new(1, -7, 0, DropdownListLayout.AbsoluteContentSize.Y), Enum_EasingDirection_Out, Enum_EasingStyle_Quad, 0.15, true)
+                    Dropdown:TweenSize(UDim2_new(1, -6, 0, DropdownListLayout.AbsoluteContentSize.Y), Enum_EasingDirection_Out, Enum_EasingStyle_Quad, 0.15, true)
                     TweenService:Create(arrow, TWEEN_INFO.Normal, {Rotation = 180}):Play()
                     dropped = true
                 else
                     TweenService:Create(arrow, TWEEN_INFO.Normal, {Rotation = 0}):Play()
-                    Dropdown:TweenSize(UDim2_new(1, -7, 0, 34), Enum_EasingDirection_Out, Enum_EasingStyle_Quad, 0.12)
+                    Dropdown:TweenSize(UDim2_new(1, -6, 0, 34), Enum_EasingDirection_Out, Enum_EasingStyle_Quad, 0.12)
                     dropped = false
                 end
             end
 
-            -- FIXED: Only the arrow button toggles the dropdown
+            -- Only the arrow button toggles the dropdown now
             arrow.InputBegan:Connect(function(inp)
                 if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
                     toggleDropdown()
                 end
+            end)
+
+            -- Make arrow interactive
+            arrow.MouseEnter:Connect(function()
+                createHoverTween(arrow, {ImageColor3 = COLORS.Accent}):Play()
+            end)
+
+            arrow.MouseLeave:Connect(function()
+                createHoverTween(arrow, {ImageColor3 = COLORS.ButtonHover}):Play()
             end)
 
             for _, v in next, list do
@@ -842,13 +853,27 @@ function Library:Window(title)
                     pcall(callback, v)
                     dropped = false
                     TweenService:Create(arrow, TWEEN_INFO.Normal, {Rotation = 0}):Play()
-                    Dropdown:TweenSize(UDim2_new(1, -5, 0, 34), Enum_EasingDirection_Out, Enum.EasingStyle.Quart, 0.15, true)
+                    Dropdown:TweenSize(UDim2_new(1, -6, 0, 34), Enum_EasingDirection_Out, Enum.EasingStyle.Quart, 0.15, true)
                     TitleLabel.Text = title .. ": " .. v
+                end)
+
+                Option.MouseEnter:Connect(function()
+                    createHoverTween(Option, {BackgroundColor3 = COLORS.Button}):Play()
+                end)
+
+                Option.MouseLeave:Connect(function()
+                    createHoverTween(Option, {BackgroundColor3 = COLORS.ButtonHover}):Play()
                 end)
             end
 
             OptionList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                OptionHolder.Size = UDim2_new(1, 0, 0, OptionList.AbsoluteContentSize.Y + 15)
+                OptionHolder.Size = UDim2_new(1, 0, 0, OptionList.AbsoluteContentSize.Y + 16)
+            end)
+
+            DropdownListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if dropped then
+                    Dropdown.Size = UDim2_new(1, -6, 0, DropdownListLayout.AbsoluteContentSize.Y)
+                end
             end)
 
             local DropdownFunc = {}
@@ -856,7 +881,7 @@ function Library:Window(title)
             function DropdownFunc:RefreshDropdown(newlist)
                 dropped = false
                 TweenService:Create(arrow, TWEEN_INFO.Normal, {Rotation = 0}):Play()
-                Dropdown:TweenSize(UDim2_new(1, -5, 0, 34), Enum_EasingDirection_Out, Enum.EasingStyle.Quart, 0.15, true)
+                Dropdown:TweenSize(UDim2_new(1, -6, 0, 34), Enum_EasingDirection_Out, Enum.EasingStyle.Quart, 0.15, true)
 
                 newlist = newlist or {}
                 
@@ -886,8 +911,16 @@ function Library:Window(title)
                         pcall(callback, v)
                         dropped = false
                         TweenService:Create(arrow, TWEEN_INFO.Normal, {Rotation = 0}):Play()
-                        Dropdown:TweenSize(UDim2_new(1, -5, 0, 34), Enum_EasingDirection_Out, Enum.EasingStyle.Quart, 0.2, true)
+                        Dropdown:TweenSize(UDim2_new(1, -6, 0, 34), Enum_EasingDirection_Out, Enum.EasingStyle.Quart, 0.15, true)
                         TitleLabel.Text = title .. ": " .. v
+                    end)
+
+                    Option.MouseEnter:Connect(function()
+                        createHoverTween(Option, {BackgroundColor3 = COLORS.Button}):Play()
+                    end)
+
+                    Option.MouseLeave:Connect(function()
+                        createHoverTween(Option, {BackgroundColor3 = COLORS.ButtonHover}):Play()
                     end)
                 end
             end
