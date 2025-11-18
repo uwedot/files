@@ -1,7 +1,6 @@
-local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
-local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/iaineverseen/files/refs/heads/main/source.txt"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/iaineverseen/files/refs/heads/main/Sentinel.txt"))()
 
 local ESPStore = {
     Highlights = {},
@@ -10,43 +9,36 @@ local ESPStore = {
 }
 
 local FNAF_ESP_CONFIG = {
-    -- FNAF 1
     Freddy = {Path = {"Animatronics", "Freddy", "FreddyNPC"}, Color = Color3.fromRGB(139, 69, 19), Type = "FNAF1"},
     Bonnie = {Path = {"Animatronics", "Bonnie", "BonnieNPC"}, Color = Color3.new(0, 0, 1), Type = "FNAF1"},
     Chica = {Path = {"Animatronics", "Chica", "ChicaNPC"}, Color = Color3.new(1, 1, 0), Type = "FNAF1"},
     Foxy = {Path = {"Animatronics", "Foxy", "FoxyNPC"}, Color = Color3.new(1, 0, 0), Type = "FNAF1"},
     
-    -- FNAF 2 Withered
     ["Withered Freddy"] = {Path = {"Animatronics", "Freddy", "FreddyNPC"}, Color = Color3.new(0.3, 0.2, 0.1), Type = "Withered"},
     ["Withered Bonnie"] = {Path = {"Animatronics", "Bonnie", "BonnieNPC"}, Color = Color3.new(0, 0, 0.4), Type = "Withered"},
     ["Withered Chica"] = {Path = {"Animatronics", "Chica", "ChicaNPC"}, Color = Color3.new(0.8, 0.5, 0.1), Type = "Withered"},
     ["Withered Foxy"] = {Path = {"Animatronics", "Foxy", "FoxyNPC"}, Color = Color3.new(0.5, 0, 0), Type = "Withered"},
     
-    -- FNAF 2 Toy
     ["Toy Freddy"] = {Path = {"Animatronics", "ToyFreddy", "ToyFreddyNPC"}, Color = Color3.new(0.4, 0.3, 0.2), Type = "Toy"},
     ["Toy Bonnie"] = {Path = {"Animatronics", "ToyBonnie", "ToyBonnieNPC"}, Color = Color3.new(0.1, 0.7, 1), Type = "Toy"},
     ["Toy Chica"] = {Path = {"Animatronics", "ToyChica", "ToyChicaNPC"}, Color = Color3.new(1, 1, 0), Type = "Toy"},
     
-    -- FNAF 2 Other
     ["The Puppet"] = {Path = {"Animatronics", "Puppet", "PuppetNPC"}, Color = Color3.new(0, 0, 0), Type = "Other"},
     Mangle = {Path = {"Animatronics", "Mangle", "MangleNPC"}, Color = Color3.new(0.7, 0.2, 0.5), Type = "Other"},
     ["Balloon Boy"] = {Path = {"Animatronics", "BalloonBoy", "BalloonBoyNPC"}, Color = Color3.new(0.1, 0.8, 0.8), Type = "Other"},
     
-    -- FNAF 3
     Springtrap = {Path = {"Animatronics", "Springtrap", "SpringtrapNPC"}, Color = Color3.new(0.1, 0.1, 0.05), Type = "FNAF3"},
     
-    -- FNAF 4
     ["Nightmare Bonnie"] = {Path = {"Animatronics", "Bonnie", "BonnieNPC"}, Color = Color3.fromRGB(0, 0, 255), Type = "FNAF4"},
     ["Nightmare Chica"] = {Path = {"Animatronics", "Chica", "ChicaNPC"}, Color = Color3.fromRGB(255, 255, 0), Type = "FNAF4"},
     ["Nightmare Foxy"] = {Path = {"Animatronics", "Foxy", "FoxyNPC"}, Color = Color3.fromRGB(255, 0, 0), Type = "FNAF4"},
     ["Nightmare Fredbear"] = {Path = {"Animatronics", "Fredbear", "FredbearNPC"}, Color = Color3.fromRGB(255, 165, 0), Type = "FNAF4"},
     
-    -- FNAF 5
     Ballora = {Path = {"Animatronics", "BalloraNPC", "BalloraNPC", "Ballora"}, Color = Color3.new(0.6, 0, 1), Type = "FNAF5"},
     ["Foxy (SL)"] = {Path = {"FoxyNight1", "Foxy"}, Color = Color3.new(1, 0.2, 0.8), Type = "FNAF5"}
 }
 
-local Window = lib:Window("FNAF COOP", Color3.fromRGB(44, 120, 224), Enum.KeyCode.RightControl)
+local Window = Library:Window("FNAF COOP ESP")
 
 local Tabs = {
     FNAF1 = Window:Tab("FNAF 1"),
@@ -167,7 +159,6 @@ local function RefreshESP()
 end
 
 local function CreateToggleGroup(tab, title, filter)
-    -- Add spacing between groups using labels
     tab:Label(title)
     
     for name, config in pairs(FNAF_ESP_CONFIG) do
@@ -183,16 +174,18 @@ local function CreateToggleGroup(tab, title, filter)
     end
 end
 
--- FNAF 1 Tab
 CreateToggleGroup(Tabs.FNAF1, "FNAF 1 Animatronics", "FNAF1")
 
--- FNAF 2 Tab
-CreateToggleGroup(Tabs.FNAF2, "Withered Animatronics", "Withered")
-CreateToggleGroup(Tabs.FNAF2, "Toy Animatronics", "Toy") 
-CreateToggleGroup(Tabs.FNAF2, "Other Animatronics", "Other")
+Tabs.FNAF2:Label("Withered Animatronics")
+CreateToggleGroup(Tabs.FNAF2, "", "Withered")
 
--- FNAF 3 Tab
-Tabs.FNAF3:Label("Springtrap") -- Section header
+Tabs.FNAF2:Label("Toy Animatronics")
+CreateToggleGroup(Tabs.FNAF2, "", "Toy")
+
+Tabs.FNAF2:Label("Other Animatronics")
+CreateToggleGroup(Tabs.FNAF2, "", "Other")
+
+Tabs.FNAF3:Label("Springtrap")
 Tabs.FNAF3:Toggle("Springtrap Highlight", false, function(state)
     ToggleESP("Springtrap", FNAF_ESP_CONFIG.Springtrap, state, "Highlight")
 end)
@@ -200,14 +193,11 @@ Tabs.FNAF3:Toggle("Springtrap Name Tag", false, function(state)
     ToggleESP("Springtrap", FNAF_ESP_CONFIG.Springtrap, state, "NameTag")
 end)
 
--- FNAF 4 Tab
 CreateToggleGroup(Tabs.FNAF4, "Nightmare Animatronics", "FNAF4")
 
--- FNAF 5 Tab
 CreateToggleGroup(Tabs.FNAF5, "Sister Location", "FNAF5")
 
--- Misc Tab
-Tabs.Misc:Label("Utilities") -- Section header
+Tabs.Misc:Label("Utilities")
 Tabs.Misc:Button("Refresh All ESP", function()
     RefreshESP()
 end)
@@ -215,7 +205,6 @@ Tabs.Misc:Button("Clear All ESP", function()
     ClearAllESP()
 end)
 
--- Initialize available models
 task.spawn(function()
     for name, config in pairs(FNAF_ESP_CONFIG) do
         config.Model = GetModel(config.Path)
