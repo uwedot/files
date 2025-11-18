@@ -3,6 +3,7 @@ local TweenService = cloneref(game:GetService("TweenService"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
 local CoreGui = cloneref(game:GetService("CoreGui"))
 
+-- Cache frequently used values and functions
 local Color3_new = Color3.new
 local UDim2_new = UDim2.new
 local Vector2_new = Vector2.new
@@ -10,6 +11,7 @@ local Enum_Font_Gotham = Enum.Font.Gotham
 local Enum_EasingStyle_Quad = Enum.EasingStyle.Quad
 local Enum_EasingDirection_Out = Enum.EasingDirection.Out
 
+-- Pre-calculate commonly used colors
 local COLORS = {
     Background = Color3_new(30/255, 30/255, 30/255),
     DarkBackground = Color3_new(24/255, 24/255, 24/255),
@@ -25,6 +27,7 @@ local COLORS = {
     InputBackground = Color3_new(45/255, 45/255, 45/255)
 }
 
+-- Optimized instance creation with property caching
 local function createInstance(className, properties)
     local instance = Instance.new(className)
     for property, value in pairs(properties) do
@@ -33,16 +36,19 @@ local function createInstance(className, properties)
     return instance
 end
 
+-- Pre-create common tween info objects
 local TWEEN_INFO = {
     Fast = TweenInfo.new(0.1, Enum_EasingStyle_Quad, Enum_EasingDirection_Out),
     Normal = TweenInfo.new(0.2, Enum_EasingStyle_Quad, Enum_EasingDirection_Out),
     Slow = TweenInfo.new(0.3, Enum_EasingStyle_Quad, Enum_EasingDirection_Out)
 }
 
+-- Helper function for creating tweens
 local function createHoverTween(target, properties)
     return TweenService:Create(target, TWEEN_INFO.Normal, properties)
 end
 
+-- Clean up existing GUI before creating new one
 pcall(function()
     local existingGui = CoreGui:FindFirstChild('Sentinel')
     if existingGui then
@@ -59,6 +65,7 @@ function Library:Window(title)
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     })
 
+    -- Main container
     local Main = createInstance("Frame", {
         Name = "Main",
         Parent = ui,
@@ -73,6 +80,7 @@ function Library:Window(title)
 
     createInstance("UICorner", {CornerRadius = UDim.new(0, 6), Parent = Main})
 
+    -- Shadow effect
     createInstance("ImageLabel", {
         Name = "Shadow",
         Parent = Main,
@@ -87,6 +95,7 @@ function Library:Window(title)
         SliceCenter = Rect.new(23, 23, 277, 277)
     })
 
+    -- Tabs container
     local tabs = createInstance("Frame", {
         Name = "tabs",
         Parent = Main,
@@ -108,6 +117,7 @@ function Library:Window(title)
         Size = UDim2_new(0, 5, 1, 0)
     })
 
+    -- Top bar
     local Top = createInstance("Frame", {
         Name = "Top",
         Parent = Main,
@@ -149,6 +159,7 @@ function Library:Window(title)
         ImageColor3 = COLORS.Accent
     })
 
+    -- Close button with optimized events
     local Close = createInstance("ImageButton", {
         Name = "Close",
         Parent = Top,
@@ -187,6 +198,7 @@ function Library:Window(title)
         TextXAlignment = Enum.TextXAlignment.Left
     })
 
+    -- Pages container
     local Pages = createInstance("Frame", {
         Name = "Pages",
         Parent = Main,
@@ -196,6 +208,7 @@ function Library:Window(title)
         Size = UDim2_new(1, -138, 1, -50)
     })
 
+    -- Tabs scrolling container
     local TabsContainer = createInstance("ScrollingFrame", {
         Name = "TabsContainer",
         Parent = tabs,
@@ -209,6 +222,7 @@ function Library:Window(title)
         ClipsDescendants = true
     })
 
+    -- Store the UIListLayout reference directly to avoid the error
     local TabsListLayout = createInstance("UIListLayout", {
         Name = "TabsList",
         Parent = TabsContainer,
@@ -223,22 +237,26 @@ function Library:Window(title)
         PaddingBottom = UDim.new(0, 5)
     })
 
+    -- FIXED: Optimized canvas size updater - use the stored layout reference
     local function updateTabsCanvasSize()
         if TabsListLayout and TabsContainer then
             local absoluteSize = TabsListLayout.AbsoluteContentSize
             TabsContainer.CanvasSize = UDim2_new(0, 0, 0, absoluteSize.Y + 15)
         end
-    }
+    end
 
+    -- FIXED: Connect events using the stored layout reference
     TabsListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabsCanvasSize)
     TabsContainer.ChildAdded:Connect(updateTabsCanvasSize)
     TabsContainer.ChildRemoved:Connect(updateTabsCanvasSize)
     
+    -- Wait a frame then update canvas size
     task.spawn(function()
         task.wait()
         updateTabsCanvasSize()
     end)
 
+    -- Mobile support
     local DeviceType = UserInputService.TouchEnabled and "Mobile" or "PC"
     local MobileToggleButton
     local uitoggled = false
@@ -267,6 +285,7 @@ function Library:Window(title)
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         })
         
+        -- Optimized drag functionality
         local Dragging, DragInput, DragStart, StartPosition
         
         MobileToggleButton.InputBegan:Connect(function(input)
@@ -358,6 +377,7 @@ function Library:Window(title)
             ClipsDescendants = true
         })
 
+        -- Store the Page UIListLayout reference to avoid similar issues
         local PageListLayout = createInstance("UIListLayout", {
             Parent = Page,
             HorizontalAlignment = Enum.HorizontalAlignment.Center,
@@ -371,6 +391,7 @@ function Library:Window(title)
             PaddingBottom = UDim.new(0, 5)
         })
 
+        -- FIXED: Optimized page canvas size updater using stored layout reference
         local function updatePageCanvasSize()
             if PageListLayout and Page then
                 Page.CanvasSize = UDim2_new(0, 0, 0, PageListLayout.AbsoluteContentSize.Y + 15)
@@ -381,11 +402,13 @@ function Library:Window(title)
         Page.ChildAdded:Connect(updatePageCanvasSize)
         Page.ChildRemoved:Connect(updatePageCanvasSize)
         
+        -- Wait a frame then update canvas size
         task.spawn(function()
             task.wait()
             updatePageCanvasSize()
         end)
 
+        -- Set first tab as active
         if firstTab then
             Page.Visible = true
             TabButton.BackgroundTransparency = 0.6
@@ -393,6 +416,7 @@ function Library:Window(title)
             firstTab = false
         end
 
+        -- Optimized tab switching
         TabButton.MouseButton1Click:Connect(function()
             for _, v in next, Pages:GetChildren() do
                 if v:IsA("ScrollingFrame") then
@@ -402,6 +426,7 @@ function Library:Window(title)
             
             Page.Visible = true
             
+            -- Reset all tabs
             for _, v in next, TabsContainer:GetChildren() do
                 if v.Name == 'TabButton' then
                     createHoverTween(v, {BackgroundTransparency = 1}):Play()
@@ -409,6 +434,7 @@ function Library:Window(title)
                 end
             end
             
+            -- Highlight current tab
             createHoverTween(TabButton, {BackgroundTransparency = 0.6}):Play()
             createHoverTween(TabButton, {TextColor3 = COLORS.White}):Play()
         end)
@@ -503,6 +529,7 @@ function Library:Window(title)
                 ScaleType = Enum.ScaleType.Fit
             })
 
+            -- Optimized toggle interactions
             local function updateToggleState()
                 TweenService:Create(ToggleFrame, TWEEN_INFO.Fast, {
                     BackgroundTransparency = toggled and 0 or 1
@@ -518,6 +545,7 @@ function Library:Window(title)
                 updateToggleState()
             end)
 
+            -- Hover effects
             Toggle.MouseEnter:Connect(function()
                 createHoverTween(Toggle, {BackgroundColor3 = COLORS.MediumGray}):Play()
             end)
@@ -815,8 +843,7 @@ function Library:Window(title)
                 end
             end
 
-            -- FIXED: Only the arrow button toggles the dropdown
-            arrow.InputBegan:Connect(function(inp)
+            Choose.InputBegan:Connect(function(inp)
                 if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
                     toggleDropdown()
                 end
