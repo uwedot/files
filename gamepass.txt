@@ -12,7 +12,7 @@ local State = {
     passes = {},
     selected = nil,
     looping = false,
-    speed = 0.1
+    speed = 0.01
 }
 
 local GamePassDropdown
@@ -130,3 +130,4 @@ MainTab:Button("Refresh Game Pass List", function()
     end
 
 end)
+
