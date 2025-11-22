@@ -1,1 +1,803 @@
-local cloneref=cloneref or function(a)return a end;local b=cloneref(game:GetService("TweenService"))local c=cloneref(game:GetService("UserInputService"))local d=cloneref(game:GetService("CoreGui"))local e,f,g=Color3.new,UDim2.new,Vector2.new;local h=Enum.Font.Gotham;local i=Enum.EasingStyle;local j=Enum.EasingDirection;local k={Background=e(30/255,30/255,30/255),DarkBackground=e(24/255,24/255,24/255),TabBackground=e(33/255,33/255,33/255),Button=e(185/255,13/255,68/255),ButtonHover=e(134/255,10/255,49/255),Accent=e(232/255,17/255,85/255),White=e(1,1,1),Gray=e(72/255,72/255,72/255),LightGray=e(199/255,199/255,199/255),DarkGray=e(35/255,35/255,35/255),MediumGray=e(40/255,40/255,40/255),InputBackground=e(45/255,45/255,45/255)}local function l(m,n)local o=Instance.new(m)for p,q in pairs(n)do o[p]=q end;return o end;local function r(s,t)return l("UICorner",{CornerRadius=UDim.new(0,t or 6),Parent=s})end;local u={Fast=TweenInfo.new(0.10,i.Quad,j.Out),Normal=TweenInfo.new(0.20,i.Quad,j.Out),Slow=TweenInfo.new(0.30,i.Quad,j.Out)}local function v(w,x,n)return b:Create(w,u[x or"Normal"],n or{})end;local function y(w,x,n)v(w,x,n):Play()end;local function z(A,B,C,x)A.MouseEnter:Connect(function()y(A,x or"Normal",B)end)A.MouseLeave:Connect(function()y(A,x or"Normal",C)end)end;local function D(E,F,G)G=G or 15;local function H()local I=(F.AbsoluteContentSize and F.AbsoluteContentSize.Y or 0)+G;if E:IsA("ScrollingFrame")then E.CanvasSize=f(0,0,0,I)else E.Size=f(1,0,0,I)end end;F:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(H)if E.ChildAdded then E.ChildAdded:Connect(H)end;if E.ChildRemoved then E.ChildRemoved:Connect(H)end;task.defer(H)end;pcall(function()local J=d:FindFirstChild("Sentinel")if J then J:Destroy()end end)local K={}function K:Window(L)local M=l("ScreenGui",{Name="Sentinel",Parent=d,ZIndexBehavior=Enum.ZIndexBehavior.Sibling,ResetOnSpawn=false})local N=l("Frame",{Name="Main",Parent=M,BackgroundColor3=k.Background,BorderSizePixel=0,Position=f(0.5,-235,0.5,-141),Size=f(0,470,0,283),Active=true,Selectable=true,Draggable=true})r(N,6)l("ImageLabel",{Name="Shadow",Parent=N,AnchorPoint=g(0.5,0.5),BackgroundTransparency=1,Position=f(0.5,0,0.5,0),Size=f(1,30,1,30),ZIndex=0,Image="rbxassetid://5554236805",ImageColor3=e(0,0,0),ScaleType=Enum.ScaleType.Slice,SliceCenter=Rect.new(23,23,277,277)})local O=l("Frame",{Name="tabs",Parent=N,BackgroundColor3=k.TabBackground,BorderSizePixel=0,Position=f(0,0,0,35),Size=f(0,122,1,-35)})r(O,6)l("Frame",{Name="Cover",Parent=O,AnchorPoint=g(1,0.5),BackgroundColor3=k.TabBackground,BorderSizePixel=0,Position=f(1,0,0.5,0),Size=f(0,5,1,0)})local P=l("Frame",{Name="Top",Parent=N,BackgroundColor3=k.DarkBackground,BorderSizePixel=0,Size=f(1,0,0,34)})r(P,6)l("Frame",{Name="Cover",Parent=P,AnchorPoint=g(0.5,1),BackgroundColor3=k.DarkBackground,BorderSizePixel=0,Position=f(0.5,0,1,0),Size=f(1,0,0,4)})l("Frame",{Name="Line",Parent=P,AnchorPoint=g(0.5,1),BackgroundColor3=k.White,BackgroundTransparency=0.92,Position=f(0.5,0,1,1),Size=f(1,0,0,1)})l("ImageLabel",{Name="Logo",Parent=P,AnchorPoint=g(0,0.5),BackgroundTransparency=1,Position=f(0,4,0.5,0),Size=f(0,26,0,30),Image="http://www.roblox.com/asset/?id=7803241868",ImageColor3=k.Accent})local Q=l("ImageButton",{Name="Close",Parent=P,AnchorPoint=g(1,0.5),BackgroundTransparency=1,Position=f(1,-6,0.5,0),Size=f(0,20,0,20),Image="http://www.roblox.com/asset/?id=7755372427",ImageColor3=k.LightGray,ScaleType=Enum.ScaleType.Crop,AutoButtonColor=false})Q.MouseButton1Click:Connect(function()M:Destroy()end)z(Q,{ImageColor3=k.White},{ImageColor3=e(166/255,166/255,166/255)})l("TextLabel",{Name="GameName",Parent=P,AnchorPoint=g(0,0.5),BackgroundTransparency=1,Position=f(0,32,0.5,0),Size=f(0,165,0,22),Font=h,Text=L or"Game Name",TextColor3=k.Accent,TextSize=14,TextXAlignment=Enum.TextXAlignment.Left})local R=l("Frame",{Name="Pages",Parent=N,BackgroundColor3=k.Background,BorderSizePixel=0,Position=f(0,130,0,42),Size=f(1,-138,1,-50),ClipsDescendants=true})local S=l("ScrollingFrame",{Name="TabsContainer",Parent=O,BackgroundTransparency=1,Size=f(1,0,1,0),CanvasSize=f(0,0,0,0),ScrollBarThickness=0,ScrollBarImageTransparency=1,BorderSizePixel=0,ScrollingEnabled=true,ClipsDescendants=true})local T=l("UIListLayout",{Name="TabsList",Parent=S,HorizontalAlignment=Enum.HorizontalAlignment.Center,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,5)})l("UIPadding",{Parent=S,PaddingTop=UDim.new(0,5),PaddingBottom=UDim.new(0,5)})D(S,T,15)local U=c.TouchEnabled and"Mobile"or"PC"local V;local W=false;if U=="Mobile"then V=l("TextButton",{Name="MobileToggle",Parent=M,Size=f(0,40,0,40),Position=f(1,-50,0,10),AnchorPoint=g(1,0),BackgroundColor3=k.TabBackground,Text="−",TextColor3=k.Accent,Font=Enum.Font.GothamBold,TextSize=20,AutoButtonColor=false})r(V,6)local X=l("UIStroke",{Parent=V,Color=k.Accent,Thickness=2,ApplyStrokeMode=Enum.ApplyStrokeMode.Border})do local Y,Z,_,a0;V.InputBegan:Connect(function(a1)if a1.UserInputType==Enum.UserInputType.Touch then Y,_,a0=true,a1.Position,V.Position;a1.Changed:Connect(function()if a1.UserInputState==Enum.UserInputState.End then Y=false end end)end end)V.InputChanged:Connect(function(a1)if a1.UserInputType==Enum.UserInputType.Touch then Z=a1 end end)c.InputChanged:Connect(function(a1)if a1==Z and Y then local a2=a1.Position-_;V.Position=f(a0.X.Scale,a0.X.Offset+a2.X,a0.Y.Scale,a0.Y.Offset+a2.Y)end end)end;z(V,{BackgroundColor3=k.MediumGray},{BackgroundColor3=k.TabBackground})V.MouseEnter:Connect(function()y(X,"Normal",{Thickness=3})end)V.MouseLeave:Connect(function()y(X,"Normal",{Thickness=2})end)V.MouseButton1Click:Connect(function()W=not W;N.Visible=not W;V.Text=W and"+"or"−"y(V,"Normal",{BackgroundColor3=W and k.Accent or k.TabBackground})end)end;local a3={}local a4=true;function a3:Tab(a5)local a6=l("TextButton",{Name="TabButton",Parent=S,BackgroundColor3=k.Accent,BackgroundTransparency=1,Size=f(1,-12,0,30),AutoButtonColor=false,Font=h,Text=a5 or"Home",TextColor3=k.Gray,TextSize=14})r(a6,6)local a7=l("ScrollingFrame",{Name="Page",Parent=R,Visible=false,Active=true,BackgroundTransparency=1,BorderSizePixel=0,Size=f(1,0,1,0),CanvasPosition=g(0,0),ScrollBarThickness=0,ScrollBarImageTransparency=1,ScrollingEnabled=true,ClipsDescendants=true})local a8=l("UIListLayout",{Parent=a7,HorizontalAlignment=Enum.HorizontalAlignment.Center,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,6)})l("UIPadding",{Parent=a7,PaddingTop=UDim.new(0,5),PaddingBottom=UDim.new(0,5)})D(a7,a8,15)if a4 then a7.Visible=true;a6.BackgroundTransparency=0.6;a6.TextColor3=k.White;a4=false end;a6.MouseButton1Click:Connect(function()for a9,q in ipairs(R:GetChildren())do if q:IsA("ScrollingFrame")then q.Visible=false end end;a7.Visible=true;for a9,q in ipairs(S:GetChildren())do if q.Name=="TabButton"then y(q,"Normal",{BackgroundTransparency=1,TextColor3=k.Gray})end end;y(a6,"Normal",{BackgroundTransparency=0.6,TextColor3=k.White})end)local aa={}function aa:Button(ab,ac)ac=ac or function()end;local ad=l("TextButton",{Name="Button",Text=ab or"Button",Parent=a7,BackgroundColor3=k.Button,BorderSizePixel=0,Size=f(1,-6,0,34),AutoButtonColor=false,Font=h,TextColor3=k.White,TextSize=14})r(ad,6)z(ad,{BackgroundColor3=k.ButtonHover},{BackgroundColor3=k.Button})ad.MouseButton1Click:Connect(function()pcall(ac)end)end;function aa:Toggle(ab,ae,ac)local af=not not ae;ac=ac or function()end;local ag=l("TextButton",{Name="Toggle",Parent=a7,BackgroundColor3=k.DarkGray,Size=f(1,-6,0,34),AutoButtonColor=false,Text=""})r(ag,6)l("TextLabel",{Name="Title",Parent=ag,BackgroundTransparency=1,Position=f(0,8,0,0),Size=f(1,-6,1,0),Font=h,Text=ab or"Toggle",TextColor3=k.White,TextSize=14,TextXAlignment=Enum.TextXAlignment.Left})local ah=l("Frame",{Name="Toggle",Parent=ag,AnchorPoint=g(1,0.5),BackgroundColor3=k.ButtonHover,BackgroundTransparency=af and 0 or 1,BorderSizePixel=0,Position=f(1,-8,0.5,0),Size=f(0,14,0,14)})l("UIStroke",{Parent=ah,LineJoinMode=Enum.LineJoinMode.Round,Thickness=2,Color=k.ButtonHover})local ai=l("ImageLabel",{Name="Checked",Parent=ah,BackgroundTransparency=1,Position=f(-0.214285731,0,-0.214285731,0),Size=f(0,20,0,20),Image="http://www.roblox.com/asset/?id=7812909048",ImageTransparency=af and 0 or 1,ScaleType=Enum.ScaleType.Fit})local function aj()y(ah,"Fast",{BackgroundTransparency=af and 0 or 1})y(ai,"Fast",{ImageTransparency=af and 0 or 1})pcall(ac,af)end;ag.MouseButton1Click:Connect(function()af=not af;aj()end)z(ag,{BackgroundColor3=k.MediumGray},{BackgroundColor3=k.DarkGray})aj()end;function aa:Label(ab)local ak=l("TextLabel",{Parent=a7,BackgroundColor3=k.DarkGray,BorderSizePixel=0,Size=f(1,-6,0,34),Font=h,Text=ab or"Label",TextColor3=k.White,TextSize=14,TextXAlignment=Enum.TextXAlignment.Center})r(ak,6)end;function aa:Slider(ab,al,am,an,ac)al,am=tonumber(al)or 0,tonumber(am)or 100;an=tonumber(an)or 1;ac=ac or function()end;local ao,ap,aq,ar,as,at,au=math.abs,math.clamp,math.floor,math.log10,math.ceil,math.max,math.min;local av=string.format;local aw,ax=al,nil;local ay=l("Frame",{Name="Slider",Parent=a7,BackgroundColor3=k.DarkGray,Size=f(1,-6,0,48)})r(ay,6)l("TextLabel",{Name="Title",Parent=ay,BackgroundTransparency=1,Position=f(0,8,0,0),Size=f(1,-6,0,34),Font=h,Text=ab or"Slider",TextColor3=k.White,TextSize=14,TextXAlignment=Enum.TextXAlignment.Left})local az=l("TextButton",{Name="SliderClick",Parent=ay,AnchorPoint=g(0.5,1),BackgroundColor3=e(52/255,52/255,52/255),Position=f(0.5,0,1,-8),Size=f(1,-12,0,6),AutoButtonColor=false,Text=""})r(az,6)local aA=l("Frame",{Name="SliderDrag",Parent=az,BackgroundColor3=k.Button,Size=f(0,0,1,0)})r(aA,6)local aB=l("TextLabel",{Name="Value",Parent=ay,AnchorPoint=g(1,0),BackgroundTransparency=1,Position=f(1,-10,0,0),Size=f(1,0,0,34),Font=h,Text=tostring(aw),TextColor3=k.White,TextSize=14,TextXAlignment=Enum.TextXAlignment.Right})local function aC(aD)if ao(aD)<0.0001 and aD~=0 then return av("%.2e",aD)end;if ao(aD)>=10000 then local aE=tostring(aq(aD))local p=#aE%3;if p==0 then p=3 end;return aE:sub(1,p)..aE:sub(p+1):gsub("(%d%d%d)",",%1")end;if an<1 then local aF=at(1,as(-ar(an)))aF=au(aF,6)local aG=av("%."..aF.."f",aD)aG=aG:gsub("%.(%d-)0*$",function(aH)return aH==""and""or"."..aH end)return aG:gsub("%.$","")end;return tostring(aq(aD))end;local function aI(q,aJ)q=ap(q,al,am)if an>0 then q=aq(q/an)*an end;aw=q;local aK=(q-al)/(am-al)y(aA,"Fast",{Size=f(aK,0,1,0)})aB.Text=aC(q)if aJ and q~=ax then pcall(ac,q)ax=q end end;local function aL(a1)local function H(aM)local aN=az.AbsolutePosition.X;local aO=az.AbsoluteSize.X;local a=ap(aM.X-aN,0,aO)local aP=a/aO;aI(al+aP*(am-al),false)end;H(a1.Position)local aQ,aR;aQ=c.InputChanged:Connect(function(aS)if aS.UserInputType==Enum.UserInputType.MouseMovement or aS.UserInputType==Enum.UserInputType.Touch then H(aS.Position)end end)aR=c.InputEnded:Connect(function(aS)if aS.UserInputType==Enum.UserInputType.MouseButton1 or aS.UserInputType==Enum.UserInputType.Touch then if aQ then aQ:Disconnect()end;if aR then aR:Disconnect()end;aI(aw,true)end end)end;az.InputBegan:Connect(function(a1)if a1.UserInputType==Enum.UserInputType.MouseButton1 or a1.UserInputType==Enum.UserInputType.Touch then aL(a1)end end)aI(aw,true)end;function aa:Dropdown(ab,F,ac)F=F or{}ac=ac or function()end;local aT=l("Frame",{Name="Dropdown",Parent=a7,BackgroundTransparency=1,ClipsDescendants=true,Size=f(1,-6,0,34)})local aU=l("UIListLayout",{Parent=aT,HorizontalAlignment=Enum.HorizontalAlignment.Center,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,5)})local aV=false;local aW=l("Frame",{Name="Choose",Parent=aT,BackgroundColor3=k.DarkGray,BorderSizePixel=0,Size=f(1,0,0,34)})r(aW,6)local aX=l("TextLabel",{Name="Title",Parent=aW,BackgroundTransparency=1,Position=f(0,8,0,0),Size=f(1,-40,1,0),Font=h,Text=ab or"Dropdown",TextColor3=k.White,TextSize=14,TextXAlignment=Enum.TextXAlignment.Left})local aY=l("ImageButton",{Name="arrow",Parent=aW,AnchorPoint=g(1,0.5),BackgroundColor3=k.DarkGray,BackgroundTransparency=0.5,Position=f(1,-6,0.5,0),Size=f(0,28,0,28),ZIndex=2,Image="rbxassetid://3926307971",ImageColor3=k.ButtonHover,ImageRectOffset=g(324,524),ImageRectSize=g(36,36),ScaleType=Enum.ScaleType.Crop,AutoButtonColor=false})r(aY,6)local aZ=l("Frame",{Name="OptionHolder",Parent=aT,BackgroundColor3=k.DarkGray,BorderSizePixel=0,Size=f(1,0,0,0)})r(aZ,6)local a_=l("UIListLayout",{Name="OptionList",Parent=aZ,HorizontalAlignment=Enum.HorizontalAlignment.Center,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,5)})l("UIPadding",{Parent=aZ,PaddingTop=UDim.new(0,8)})D(aZ,a_,15)local function b0(b1)aV=b1;if aV then aT:TweenSize(f(1,-7,0,aU.AbsoluteContentSize.Y),j.Out,i.Quad,0.15,true)y(aY,"Normal",{Rotation=180,BackgroundTransparency=0.2})else y(aY,"Normal",{Rotation=0,BackgroundTransparency=0.5})aT:TweenSize(f(1,-7,0,34),j.Out,i.Quad,0.12,true)end end;aY.InputBegan:Connect(function(b2)if b2.UserInputType==Enum.UserInputType.MouseButton1 or b2.UserInputType==Enum.UserInputType.Touch then b0(not aV)end end)z(aY,{BackgroundTransparency=0.3},{BackgroundTransparency=0.5})local function b3(b4)local b5=l("TextButton",{Name="Option",Parent=aZ,BackgroundColor3=k.ButtonHover,BorderSizePixel=0,Size=f(1,-16,0,30),AutoButtonColor=false,Font=h,Text=b4,TextColor3=k.White,TextSize=14})r(b5,6)b5.MouseButton1Click:Connect(function()pcall(ac,b4)b0(false)aX.Text=(ab or"Dropdown")..": "..b4 end)end;for a9,q in ipairs(F)do b3(q)end;local b6={}function b6:RefreshDropdown(b7)b0(false)for a9,q in ipairs(aZ:GetChildren())do if q:IsA("TextButton")then q:Destroy()end end;for a9,q in ipairs(b7 or{})do b3(q)end end;return b6 end;function aa:Textbox(ab,b8,ac)ac=ac or function()end;local b9=l("Frame",{Name="Textbox",Parent=a7,BackgroundColor3=k.DarkGray,Size=f(1,-6,0,34)})r(b9,6)l("TextLabel",{Name="Title",Parent=b9,BackgroundTransparency=1,Position=f(0,8,0,0),Size=f(0.4,-8,1,0),Font=h,Text=ab or"Textbox",TextColor3=k.White,TextSize=14,TextXAlignment=Enum.TextXAlignment.Left})local ba=l("TextBox",{Name="InputBox",Parent=b9,AnchorPoint=g(1,0),BackgroundColor3=k.InputBackground,BackgroundTransparency=0.5,Position=f(1,-8,0,4),Size=f(0.6,-12,1,-8),Font=h,PlaceholderColor3=e(178/255,178/255,178/255),PlaceholderText=b8 or"Type here...",Text="",TextColor3=k.White,TextSize=14,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,TextTruncate=Enum.TextTruncate.AtEnd,ClipsDescendants=true})r(ba,4)l("UIPadding",{Parent=ba,PaddingLeft=UDim.new(0,6),PaddingRight=UDim.new(0,6)})z(b9,{BackgroundColor3=k.MediumGray},{BackgroundColor3=k.DarkGray})z(ba,{BackgroundTransparency=0.3},{BackgroundTransparency=0.5})ba.Focused:Connect(function()y(ba,"Normal",{BackgroundColor3=e(50/255,50/255,50/255),BackgroundTransparency=0.2})end)ba.FocusLost:Connect(function(bb)y(ba,"Normal",{BackgroundColor3=k.InputBackground,BackgroundTransparency=0.5})if bb then pcall(ac,ba.Text)end end)end;return aa end;return a3 end;return K
+local cloneref = (cloneref or function(x) return x end)
+
+local TS  = cloneref(game:GetService("TweenService"))
+local UIS = cloneref(game:GetService("UserInputService"))
+local CG  = cloneref(game:GetService("CoreGui"))
+
+local C3new, U2new, V2new = Color3.new, UDim2.new, Vector2.new
+local EFG = Enum.Font.Gotham
+local EES = Enum.EasingStyle
+local EED = Enum.EasingDirection
+
+local COLORS = {
+    Background     = C3new(30/255, 30/255, 30/255),
+    DarkBackground = C3new(24/255, 24/255, 24/255),
+    TabBackground  = C3new(33/255, 33/255, 33/255),
+    Button         = C3new(185/255, 13/255, 68/255),
+    ButtonHover    = C3new(134/255, 10/255, 49/255),
+    Accent         = C3new(232/255, 17/255, 85/255),
+    White          = C3new(1, 1, 1),
+    Gray           = C3new(72/255, 72/255, 72/255),
+    LightGray      = C3new(199/255, 199/255, 199/255),
+    DarkGray       = C3new(35/255, 35/255, 35/255),
+    MediumGray     = C3new(40/255, 40/255, 40/255),
+    InputBackground= C3new(45/255, 45/255, 45/255),
+}
+
+local function create(className, props)
+    local inst = Instance.new(className)
+    for k, v in pairs(props) do inst[k] = v end
+    return inst
+end
+
+local function rounded(parent, r)
+    return create("UICorner", { CornerRadius = UDim.new(0, r or 6), Parent = parent })
+end
+
+local TWEEN = {
+    Fast   = TweenInfo.new(0.10, EES.Quad, EED.Out),
+    Normal = TweenInfo.new(0.20, EES.Quad, EED.Out),
+    Slow   = TweenInfo.new(0.30, EES.Quad, EED.Out),
+}
+
+local function tween(target, speed, props)
+    return TS:Create(target, TWEEN[speed or "Normal"], props or {})
+end
+
+local function tweenPlay(target, speed, props)
+    tween(target, speed, props):Play()
+end
+
+local function onHover(gui, overProps, outProps, speed)
+    gui.MouseEnter:Connect(function() tweenPlay(gui, speed or "Normal", overProps) end)
+    gui.MouseLeave:Connect(function() tweenPlay(gui, speed or "Normal", outProps) end)
+end
+
+local function bindListAutoSize(holder, list, extraY)
+    extraY = extraY or 15
+    local function update()
+        local y = (list.AbsoluteContentSize and list.AbsoluteContentSize.Y or 0) + extraY
+        if holder:IsA("ScrollingFrame") then
+            holder.CanvasSize = U2new(0, 0, 0, y)
+        else
+            holder.Size = U2new(1, 0, 0, y)
+        end
+    end
+    list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(update)
+    if holder.ChildAdded then holder.ChildAdded:Connect(update) end
+    if holder.ChildRemoved then holder.ChildRemoved:Connect(update) end
+    task.defer(update)
+end
+
+pcall(function()
+    local existing = CG:FindFirstChild("Sentinel")
+    if existing then existing:Destroy() end
+end)
+
+local Library = {}
+
+function Library:Window(title)
+    local ui = create("ScreenGui", {
+        Name = "Sentinel",
+        Parent = CG,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false,
+    })
+
+    local Main = create("Frame", {
+        Name = "Main",
+        Parent = ui,
+        BackgroundColor3 = COLORS.Background,
+        BorderSizePixel = 0,
+        Position = U2new(0.5, -235, 0.5, -141),
+        Size = U2new(0, 470, 0, 283),
+        Active = true, Selectable = true, Draggable = true,
+    })
+    rounded(Main, 6)
+
+    create("ImageLabel", {
+        Name = "Shadow",
+        Parent = Main,
+        AnchorPoint = V2new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Position = U2new(0.5, 0, 0.5, 0),
+        Size = U2new(1, 30, 1, 30),
+        ZIndex = 0,
+        Image = "rbxassetid://5554236805",
+        ImageColor3 = C3new(0,0,0),
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(23, 23, 277, 277),
+    })
+
+    local tabs = create("Frame", {
+        Name = "tabs",
+        Parent = Main,
+        BackgroundColor3 = COLORS.TabBackground,
+        BorderSizePixel = 0,
+        Position = U2new(0, 0, 0, 35),
+        Size = U2new(0, 122, 1, -35),
+    })
+    rounded(tabs, 6)
+    create("Frame", {
+        Name = "Cover",
+        Parent = tabs,
+        AnchorPoint = V2new(1, 0.5),
+        BackgroundColor3 = COLORS.TabBackground,
+        BorderSizePixel = 0,
+        Position = U2new(1, 0, 0.5, 0),
+        Size = U2new(0, 5, 1, 0),
+    })
+
+    local Top = create("Frame", {
+        Name = "Top",
+        Parent = Main,
+        BackgroundColor3 = COLORS.DarkBackground,
+        BorderSizePixel = 0,
+        Size = U2new(1, 0, 0, 34),
+    })
+    rounded(Top, 6)
+    create("Frame", {
+        Name = "Cover",
+        Parent = Top,
+        AnchorPoint = V2new(0.5, 1),
+        BackgroundColor3 = COLORS.DarkBackground,
+        BorderSizePixel = 0,
+        Position = U2new(0.5, 0, 1, 0),
+        Size = U2new(1, 0, 0, 4),
+    })
+    create("Frame", {
+        Name = "Line",
+        Parent = Top,
+        AnchorPoint = V2new(0.5, 1),
+        BackgroundColor3 = COLORS.White,
+        BackgroundTransparency = 0.92,
+        Position = U2new(0.5, 0, 1, 1),
+        Size = U2new(1, 0, 0, 1),
+    })
+    create("ImageLabel", {
+        Name = "Logo",
+        Parent = Top,
+        AnchorPoint = V2new(0, 0.5),
+        BackgroundTransparency = 1,
+        Position = U2new(0, 4, 0.5, 0),
+        Size = U2new(0, 26, 0, 30),
+        Image = "http://www.roblox.com/asset/?id=7803241868",
+        ImageColor3 = COLORS.Accent,
+    })
+
+    local Close = create("ImageButton", {
+        Name = "Close",
+        Parent = Top,
+        AnchorPoint = V2new(1, 0.5),
+        BackgroundTransparency = 1,
+        Position = U2new(1, -6, 0.5, 0),
+        Size = U2new(0, 20, 0, 20),
+        Image = "http://www.roblox.com/asset/?id=7755372427",
+        ImageColor3 = COLORS.LightGray,
+        ScaleType = Enum.ScaleType.Crop,
+        AutoButtonColor = false,
+    })
+    Close.MouseButton1Click:Connect(function() ui:Destroy() end)
+    onHover(Close, { ImageColor3 = COLORS.White }, { ImageColor3 = C3new(166/255,166/255,166/255) })
+
+    create("TextLabel", {
+        Name = "GameName",
+        Parent = Top,
+        AnchorPoint = V2new(0, 0.5),
+        BackgroundTransparency = 1,
+        Position = U2new(0, 32, 0.5, 0),
+        Size = U2new(0, 165, 0, 22),
+        Font = EFG,
+        Text = title or "Game Name",
+        TextColor3 = COLORS.Accent,
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left,
+    })
+
+    local Pages = create("Frame", {
+        Name = "Pages",
+        Parent = Main,
+        BackgroundColor3 = COLORS.Background,
+        BorderSizePixel = 0,
+        Position = U2new(0, 130, 0, 42),
+        Size = U2new(1, -138, 1, -50),
+        ClipsDescendants = true,
+    })
+
+    local TabsContainer = create("ScrollingFrame", {
+        Name = "TabsContainer",
+        Parent = tabs,
+        BackgroundTransparency = 1,
+        Size = U2new(1, 0, 1, 0),
+        CanvasSize = U2new(0,0,0,0),
+        ScrollBarThickness = 0,
+        ScrollBarImageTransparency = 1,
+        BorderSizePixel = 0,
+        ScrollingEnabled = true,
+        ClipsDescendants = true,
+    })
+    local TabsListLayout = create("UIListLayout", {
+        Name = "TabsList",
+        Parent = TabsContainer,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 5),
+    })
+    create("UIPadding", {
+        Parent = TabsContainer,
+        PaddingTop = UDim.new(0, 5),
+        PaddingBottom = UDim.new(0, 5),
+    })
+    bindListAutoSize(TabsContainer, TabsListLayout, 15)
+
+    local DeviceType = UIS.TouchEnabled and "Mobile" or "PC"
+    local MobileToggleButton
+    local uitoggled = false
+    if DeviceType == "Mobile" then
+        MobileToggleButton = create("TextButton", {
+            Name = "MobileToggle",
+            Parent = ui,
+            Size = U2new(0, 40, 0, 40),
+            Position = U2new(1, -50, 0, 10),
+            AnchorPoint = V2new(1, 0),
+            BackgroundColor3 = COLORS.TabBackground,
+            Text = "−",
+            TextColor3 = COLORS.Accent,
+            Font = Enum.Font.GothamBold,
+            TextSize = 20,
+            AutoButtonColor = false,
+        })
+        rounded(MobileToggleButton, 6)
+        local Stroke = create("UIStroke", {
+            Parent = MobileToggleButton,
+            Color = COLORS.Accent,
+            Thickness = 2,
+            ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        })
+
+        do
+            local dragging, dragInput, dragStart, startPos
+            MobileToggleButton.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.Touch then
+                    dragging, dragStart, startPos = true, input.Position, MobileToggleButton.Position
+                    input.Changed:Connect(function()
+                        if input.UserInputState == Enum.UserInputState.End then dragging = false end
+                    end)
+                end
+            end)
+            MobileToggleButton.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+            end)
+            UIS.InputChanged:Connect(function(input)
+                if input == dragInput and dragging then
+                    local delta = input.Position - dragStart
+                    MobileToggleButton.Position = U2new(
+                        startPos.X.Scale, startPos.X.Offset + delta.X,
+                        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+                    )
+                end
+            end)
+        end
+
+        onHover(MobileToggleButton, { BackgroundColor3 = COLORS.MediumGray }, { BackgroundColor3 = COLORS.TabBackground })
+        MobileToggleButton.MouseEnter:Connect(function() tweenPlay(Stroke, "Normal", { Thickness = 3 }) end)
+        MobileToggleButton.MouseLeave:Connect(function() tweenPlay(Stroke, "Normal", { Thickness = 2 }) end)
+
+        MobileToggleButton.MouseButton1Click:Connect(function()
+            uitoggled = not uitoggled
+            Main.Visible = not uitoggled
+            MobileToggleButton.Text = uitoggled and "+" or "−"
+            tweenPlay(MobileToggleButton, "Normal", {
+                BackgroundColor3 = uitoggled and COLORS.Accent or COLORS.TabBackground
+            })
+        end)
+    end
+
+    local Tabs = {}
+    local firstTab = true
+
+    function Tabs:Tab(tabTitle)
+        local TabButton = create("TextButton", {
+            Name = "TabButton",
+            Parent = TabsContainer,
+            BackgroundColor3 = COLORS.Accent,
+            BackgroundTransparency = 1,
+            Size = U2new(1, -12, 0, 30),
+            AutoButtonColor = false,
+            Font = EFG,
+            Text = tabTitle or "Home",
+            TextColor3 = COLORS.Gray,
+            TextSize = 14,
+        })
+        rounded(TabButton, 6)
+
+        local Page = create("ScrollingFrame", {
+            Name = "Page",
+            Parent = Pages,
+            Visible = false,
+            Active = true,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Size = U2new(1, 0, 1, 0),
+            CanvasPosition = V2new(0, 0),
+            ScrollBarThickness = 0,
+            ScrollBarImageTransparency = 1,
+            ScrollingEnabled = true,
+            ClipsDescendants = true,
+        })
+        local PageListLayout = create("UIListLayout", {
+            Parent = Page,
+            HorizontalAlignment = Enum.HorizontalAlignment.Center,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 6),
+        })
+        create("UIPadding", {
+            Parent = Page,
+            PaddingTop = UDim.new(0, 5),
+            PaddingBottom = UDim.new(0, 5),
+        })
+        bindListAutoSize(Page, PageListLayout, 15)
+
+        if firstTab then
+            Page.Visible = true
+            TabButton.BackgroundTransparency = 0.6
+            TabButton.TextColor3 = COLORS.White
+            firstTab = false
+        end
+
+        TabButton.MouseButton1Click:Connect(function()
+            for _, v in ipairs(Pages:GetChildren()) do
+                if v:IsA("ScrollingFrame") then v.Visible = false end
+            end
+            Page.Visible = true
+            for _, v in ipairs(TabsContainer:GetChildren()) do
+                if v.Name == "TabButton" then
+                    tweenPlay(v, "Normal", { BackgroundTransparency = 1, TextColor3 = COLORS.Gray })
+                end
+            end
+            tweenPlay(TabButton, "Normal", { BackgroundTransparency = 0.6, TextColor3 = COLORS.White })
+        end)
+
+        local TabFunctions = {}
+
+        function TabFunctions:Button(text, callback)
+            callback = callback or function() end
+            local Button = create("TextButton", {
+                Name = "Button",
+                Text = text or "Button",
+                Parent = Page,
+                BackgroundColor3 = COLORS.Button,
+                BorderSizePixel = 0,
+                Size = U2new(1, -6, 0, 34),
+                AutoButtonColor = false,
+                Font = EFG,
+                TextColor3 = COLORS.White,
+                TextSize = 14,
+            })
+            rounded(Button, 6)
+            onHover(Button, { BackgroundColor3 = COLORS.ButtonHover }, { BackgroundColor3 = COLORS.Button })
+            Button.MouseButton1Click:Connect(function() pcall(callback) end)
+        end
+
+        function TabFunctions:Toggle(text, value, callback)
+            local toggled = not not value
+            callback = callback or function() end
+
+            local Toggle = create("TextButton", {
+                Name = "Toggle",
+                Parent = Page,
+                BackgroundColor3 = COLORS.DarkGray,
+                Size = U2new(1, -6, 0, 34),
+                AutoButtonColor = false,
+                Text = "",
+            })
+            rounded(Toggle, 6)
+
+            create("TextLabel", {
+                Name = "Title",
+                Parent = Toggle,
+                BackgroundTransparency = 1,
+                Position = U2new(0, 8, 0, 0),
+                Size = U2new(1, -6, 1, 0),
+                Font = EFG,
+                Text = text or "Toggle",
+                TextColor3 = COLORS.White,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+            })
+
+            local ToggleFrame = create("Frame", {
+                Name = "Toggle",
+                Parent = Toggle,
+                AnchorPoint = V2new(1, 0.5),
+                BackgroundColor3 = COLORS.ButtonHover,
+                BackgroundTransparency = toggled and 0 or 1,
+                BorderSizePixel = 0,
+                Position = U2new(1, -8, 0.5, 0),
+                Size = U2new(0, 14, 0, 14),
+            })
+            create("UIStroke", {
+                Parent = ToggleFrame,
+                LineJoinMode = Enum.LineJoinMode.Round,
+                Thickness = 2,
+                Color = COLORS.ButtonHover,
+            })
+            local Checked = create("ImageLabel", {
+                Name = "Checked",
+                Parent = ToggleFrame,
+                BackgroundTransparency = 1,
+                Position = U2new(-0.214285731, 0, -0.214285731, 0),
+                Size = U2new(0, 20, 0, 20),
+                Image = "http://www.roblox.com/asset/?id=7812909048",
+                ImageTransparency = toggled and 0 or 1,
+                ScaleType = Enum.ScaleType.Fit,
+            })
+
+            local function render()
+                tweenPlay(ToggleFrame, "Fast", { BackgroundTransparency = toggled and 0 or 1 })
+                tweenPlay(Checked,     "Fast", { ImageTransparency      = toggled and 0 or 1 })
+                pcall(callback, toggled)
+            end
+
+            Toggle.MouseButton1Click:Connect(function()
+                toggled = not toggled
+                render()
+            end)
+
+            onHover(Toggle, { BackgroundColor3 = COLORS.MediumGray }, { BackgroundColor3 = COLORS.DarkGray })
+            
+            local ToggleFunctions = {}
+            
+            function ToggleFunctions:Set(state)
+                if toggled ~= state then
+                    toggled = state
+                    render()
+                end
+            end
+            
+            render()
+            
+            return ToggleFunctions
+        end
+
+        function TabFunctions:Label(text)
+            local lbl = create("TextLabel", {
+                Parent = Page,
+                BackgroundColor3 = COLORS.DarkGray,
+                BorderSizePixel = 0,
+                Size = U2new(1, -6, 0, 34),
+                Font = EFG,
+                Text = text or "Label",
+                TextColor3 = COLORS.White,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Center,
+            })
+            rounded(lbl, 6)
+        end
+
+        function TabFunctions:Slider(text, min, max, increment, callback)
+            min, max = tonumber(min) or 0, tonumber(max) or 100
+            increment = tonumber(increment) or 1
+            callback = callback or function() end
+
+            local m_abs, m_clamp, m_floor, m_log10, m_ceil, m_max, m_min = math.abs, math.clamp, math.floor, math.log10, math.ceil, math.max, math.min
+            local fmt = string.format
+
+            local current, lastFired = min, nil
+
+            local Slider = create("Frame", {
+                Name = "Slider",
+                Parent = Page,
+                BackgroundColor3 = COLORS.DarkGray,
+                Size = U2new(1, -6, 0, 48),
+            })
+            rounded(Slider, 6)
+
+            create("TextLabel", {
+                Name = "Title",
+                Parent = Slider,
+                BackgroundTransparency = 1,
+                Position = U2new(0, 8, 0, 0),
+                Size = U2new(1, -6, 0, 34),
+                Font = EFG,
+                Text = text or "Slider",
+                TextColor3 = COLORS.White,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+            })
+
+            local SliderClick = create("TextButton", {
+                Name = "SliderClick",
+                Parent = Slider,
+                AnchorPoint = V2new(0.5, 1),
+                BackgroundColor3 = C3new(52/255, 52/255, 52/255),
+                Position = U2new(0.5, 0, 1, -8),
+                Size = U2new(1, -12, 0, 6),
+                AutoButtonColor = false,
+                Text = "",
+            })
+            rounded(SliderClick, 6)
+
+            local SliderDrag = create("Frame", {
+                Name = "SliderDrag",
+                Parent = SliderClick,
+                BackgroundColor3 = COLORS.Button,
+                Size = U2new(0, 0, 1, 0),
+            })
+            rounded(SliderDrag, 6)
+
+            local Value = create("TextLabel", {
+                Name = "Value",
+                Parent = Slider,
+                AnchorPoint = V2new(1, 0),
+                BackgroundTransparency = 1,
+                Position = U2new(1, -10, 0, 0),
+                Size = U2new(1, 0, 0, 34),
+                Font = EFG,
+                Text = tostring(current),
+                TextColor3 = COLORS.White,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Right,
+            })
+
+            local function formatNumber(val)
+                if m_abs(val) < 0.0001 and val ~= 0 then
+                    return fmt("%.2e", val)
+                end
+                if m_abs(val) >= 10000 then
+                    local s = tostring(m_floor(val))
+                    local k = #s % 3; if k == 0 then k = 3 end
+                    return s:sub(1, k) .. s:sub(k+1):gsub("(%d%d%d)", ",%1")
+                end
+                if increment < 1 then
+                    local dp = m_max(1, m_ceil(-m_log10(increment))); dp = m_min(dp, 6)
+                    local out = fmt("%." .. dp .. "f", val)
+                    out = out:gsub("%.(%d-)0*$", function(dec) return dec == "" and "" or "." .. dec end)
+                    return out:gsub("%.$", "")
+                end
+                return tostring(m_floor(val))
+            end
+
+            local function setValue(v, fire)
+                v = m_clamp(v, min, max)
+                if increment > 0 then v = m_floor(v / increment) * increment end
+                current = v
+                local t = (v - min) / (max - min)
+                tweenPlay(SliderDrag, "Fast", { Size = U2new(t, 0, 1, 0) })
+                Value.Text = formatNumber(v)
+                if fire and v ~= lastFired then
+                    pcall(callback, v)
+                    lastFired = v
+                end
+            end
+
+            local function startDrag(input)
+                local function update(pos)
+                    local x0 = SliderClick.AbsolutePosition.X
+                    local w  = SliderClick.AbsoluteSize.X
+                    local x  = m_clamp(pos.X - x0, 0, w)
+                    local pct = x / w
+                    setValue(min + pct * (max - min), false)
+                end
+                update(input.Position)
+                local moveConn, endConn
+                moveConn = UIS.InputChanged:Connect(function(i)
+                    if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
+                        update(i.Position)
+                    end
+                end)
+                endConn = UIS.InputEnded:Connect(function(i)
+                    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                        if moveConn then moveConn:Disconnect() end
+                        if endConn then endConn:Disconnect() end
+                        setValue(current, true)
+                    end
+                end)
+            end
+
+            SliderClick.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    startDrag(input)
+                end
+            end)
+
+            setValue(current, true)
+        end
+
+        function TabFunctions:Dropdown(text, list, callback)
+            list = list or {}
+            callback = callback or function() end
+
+            local Dropdown = create("Frame", {
+                Name = "Dropdown",
+                Parent = Page,
+                BackgroundTransparency = 1,
+                ClipsDescendants = true,
+                Size = U2new(1, -6, 0, 34),
+            })
+            local DropdownListLayout = create("UIListLayout", {
+                Parent = Dropdown,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Padding = UDim.new(0, 5),
+            })
+
+            local dropped = false
+
+            local Choose = create("Frame", {
+                Name = "Choose",
+                Parent = Dropdown,
+                BackgroundColor3 = COLORS.DarkGray,
+                BorderSizePixel = 0,
+                Size = U2new(1, 0, 0, 34),
+            })
+            rounded(Choose, 6)
+
+            local TitleLabel = create("TextLabel", {
+                Name = "Title",
+                Parent = Choose,
+                BackgroundTransparency = 1,
+                Position = U2new(0, 8, 0, 0),
+                Size = U2new(1, -40, 1, 0),
+                Font = EFG,
+                Text = text or "Dropdown",
+                TextColor3 = COLORS.White,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+            })
+
+            local arrow = create("ImageButton", {
+                Name = "arrow",
+                Parent = Choose,
+                AnchorPoint = V2new(1, 0.5),
+                BackgroundColor3 = COLORS.DarkGray,
+                BackgroundTransparency = 0.5,
+                Position = U2new(1, -6, 0.5, 0),
+                Size = U2new(0, 28, 0, 28),
+                ZIndex = 2,
+                Image = "rbxassetid://3926307971",
+                ImageColor3 = COLORS.ButtonHover,
+                ImageRectOffset = V2new(324, 524),
+                ImageRectSize = V2new(36, 36),
+                ScaleType = Enum.ScaleType.Crop,
+                AutoButtonColor = false,
+            })
+            rounded(arrow, 6)
+
+            local OptionHolder = create("Frame", {
+                Name = "OptionHolder",
+                Parent = Dropdown,
+                BackgroundColor3 = COLORS.DarkGray,
+                BorderSizePixel = 0,
+                Size = U2new(1, 0, 0, 0),
+            })
+            rounded(OptionHolder, 6)
+            local OptionList = create("UIListLayout", {
+                Name = "OptionList",
+                Parent = OptionHolder,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Padding = UDim.new(0, 5),
+            })
+            create("UIPadding", { Parent = OptionHolder, PaddingTop = UDim.new(0, 8) })
+            bindListAutoSize(OptionHolder, OptionList, 15)
+
+            local function setDropped(state)
+                dropped = state
+                if dropped then
+                    Dropdown:TweenSize(U2new(1, -7, 0, DropdownListLayout.AbsoluteContentSize.Y), EED.Out, EES.Quad, 0.15, true)
+                    tweenPlay(arrow, "Normal", { Rotation = 180, BackgroundTransparency = 0.2 })
+                else
+                    tweenPlay(arrow, "Normal", { Rotation = 0, BackgroundTransparency = 0.5 })
+                    Dropdown:TweenSize(U2new(1, -7, 0, 34), EED.Out, EES.Quad, 0.12, true)
+                end
+            end
+
+            arrow.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    setDropped(not dropped)
+                end
+            end)
+            onHover(arrow, { BackgroundTransparency = 0.3 }, { BackgroundTransparency = 0.5 })
+
+            local function addOption(txt)
+                local Option = create("TextButton", {
+                    Name = "Option",
+                    Parent = OptionHolder,
+                    BackgroundColor3 = COLORS.ButtonHover,
+                    BorderSizePixel = 0,
+                    Size = U2new(1, -16, 0, 30),
+                    AutoButtonColor = false,
+                    Font = EFG,
+                    Text = txt,
+                    TextColor3 = COLORS.White,
+                    TextSize = 14,
+                })
+                rounded(Option, 6)
+                Option.MouseButton1Click:Connect(function()
+                    pcall(callback, txt)
+                    setDropped(false)
+                    TitleLabel.Text = (text or "Dropdown") .. ": " .. txt
+                end)
+            end
+
+            for _, v in ipairs(list) do addOption(v) end
+
+            local DropdownFunc = {}
+
+            function DropdownFunc:RefreshDropdown(newlist)
+                setDropped(false)
+                for _, v in ipairs(OptionHolder:GetChildren()) do
+                    if v:IsA("TextButton") then v:Destroy() end
+                end
+                for _, v in ipairs(newlist or {}) do addOption(v) end
+            end
+
+            return DropdownFunc
+        end
+
+        function TabFunctions:Textbox(text, placeholder, callback)
+            callback = callback or function() end
+
+            local Textbox = create("Frame", {
+                Name = "Textbox",
+                Parent = Page,
+                BackgroundColor3 = COLORS.DarkGray,
+                Size = U2new(1, -6, 0, 34),
+            })
+            rounded(Textbox, 6)
+
+            create("TextLabel", {
+                Name = "Title",
+                Parent = Textbox,
+                BackgroundTransparency = 1,
+                Position = U2new(0, 8, 0, 0),
+                Size = U2new(0.4, -8, 1, 0),
+                Font = EFG,
+                Text = text or "Textbox",
+                TextColor3 = COLORS.White,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+            })
+
+            local InputBox = create("TextBox", {
+                Name = "InputBox",
+                Parent = Textbox,
+                AnchorPoint = V2new(1, 0),
+                BackgroundColor3 = COLORS.InputBackground,
+                BackgroundTransparency = 0.5,
+                Position = U2new(1, -8, 0, 4),
+                Size = U2new(0.6, -12, 1, -8),
+                Font = EFG,
+                PlaceholderColor3 = C3new(178/255, 178/255, 178/255),
+                PlaceholderText = placeholder or "Type here...",
+                Text = "",
+                TextColor3 = COLORS.White,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ClearTextOnFocus = false,
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                ClipsDescendants = true,
+            })
+            rounded(InputBox, 4)
+            create("UIPadding", { Parent = InputBox, PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) })
+
+            onHover(Textbox, { BackgroundColor3 = COLORS.MediumGray }, { BackgroundColor3 = COLORS.DarkGray })
+            onHover(InputBox, { BackgroundTransparency = 0.3 }, { BackgroundTransparency = 0.5 })
+
+            InputBox.Focused:Connect(function()
+                tweenPlay(InputBox, "Normal", { BackgroundColor3 = C3new(50/255, 50/255, 50/255), BackgroundTransparency = 0.2 })
+            end)
+            InputBox.FocusLost:Connect(function(enterPressed)
+                tweenPlay(InputBox, "Normal", { BackgroundColor3 = COLORS.InputBackground, BackgroundTransparency = 0.5 })
+                if enterPressed then pcall(callback, InputBox.Text) end
+            end)
+        end
+
+        return TabFunctions
+    end
+
+    return Tabs
+end
+
+return Library
