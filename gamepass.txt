@@ -24,44 +24,42 @@ end
 
 local function FetchProducts()
     State.passes = {}
-    local ok, page = pcall(MarketplaceService.GetDeveloperProductsAsync, MarketplaceService)
-    if ok and page then
-        local cur = page:GetCurrentPage()
-        if cur then
-            for _, info in ipairs(cur) do
-                if info and info.ProductId then
-                    table.insert(State.passes, {
-                        Name = info.Name or "Unnamed",
-                        ID = info.ProductId,
-                        Description = info.Description or "",
-                        Price = info.PriceInRobux or 0
-                    })
-                end
+    local success, page = pcall(MarketplaceService.GetDeveloperProductsAsync, MarketplaceService)
+    
+    if success and page then
+        for _, info in ipairs(page:GetCurrentPage()) do
+            if info and info.ProductId then
+                table.insert(State.passes, {
+                    Name = info.Name or "Unnamed",
+                    ID = info.ProductId,
+                    Description = info.Description or "",
+                    Price = info.PriceInRobux or 0
+                })
             end
         end
     end
+    
     local names = {}
     for _, pass in ipairs(State.passes) do
         table.insert(names, pass.Name)
     end
-    return (#names > 0) and names or {"No GamePasses Found"}
+    
+    return #names > 0 and names or {"No GamePasses Found"}
 end
 
 local function SelectPass(name)
-    State.selected = nil
     for _, pass in ipairs(State.passes) do
         if pass.Name == name then
             State.selected = pass
-            break
+            return
         end
     end
+    State.selected = nil
 end
 
 local function Purchase(id)
     if not id then return end
-    pcall(function()
-        MarketplaceService:SignalPromptProductPurchaseFinished(LocalPlayer.UserId, id, true)
-    end)
+    pcall(MarketplaceService.SignalPromptProductPurchaseFinished, MarketplaceService, LocalPlayer.UserId, id, true)
 end
 
 local function LoopStart()
@@ -69,6 +67,7 @@ local function LoopStart()
     LoopToken += 1
     local token = LoopToken
     State.looping = true
+    
     task.spawn(function()
         while State.looping and token == LoopToken and HasSelected() do
             Purchase(State.selected.ID)
@@ -88,9 +87,27 @@ local function Refresh()
     return FetchProducts()
 end
 
-local initial = FetchProducts()
+local function CopyBuyScript()
+    if not HasSelected() then return end
+    
+    local scriptTemplate = 
+[[
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local function Purchase(productId)
+    pcall(function()
+        MarketplaceService:SignalPromptProductPurchaseFinished(LocalPlayer.UserId, productId, true)
+    end)
+end
+Purchase(%d)
+]]
+    
+    local scriptCode = string.format(scriptTemplate, State.selected.ID)
+    setclipboard(scriptCode)
+end
 
-GamePassDropdown = MainTab:Dropdown("Select Game Pass", initial, function(name)
+GamePassDropdown = MainTab:Dropdown("Select Game Pass", FetchProducts(), function(name)
     SelectPass(name)
     LoopStop()
 end)
@@ -108,12 +125,8 @@ MainTab:Button("Buy All Game Passes", function()
 end)
 
 MainTab:Toggle("Loop Buy Selected Game Pass", false, function(on)
-    if on then
-        if HasSelected() then
-            LoopStart()
-        else
-            LoopStop()
-        end
+    if on and HasSelected() then
+        LoopStart()
     else
         LoopStop()
     end
@@ -123,11 +136,16 @@ MainTab:Slider("Loop Buy Speed", 0.01, 1, 0.01, function(v)
     State.speed = v
 end)
 
-MainTab:Button("Refresh Game Pass List", function()
-    local new = Refresh()
-    if GamePassDropdown and GamePassDropdown.RefreshDropdown then
-        GamePassDropdown:RefreshDropdown(new)
+MainTab:Button("Copy Selected Game Pass ID", function()
+    if HasSelected() then
+        setclipboard(tostring(State.selected.ID))
     end
-
 end)
 
+MainTab:Button("Copy Buy Script (Standalone)", function()
+    CopyBuyScript()
+end)
+
+MainTab:Button("Refresh Game Pass List", function()
+    GamePassDropdown:RefreshDropdown(Refresh())
+end)
