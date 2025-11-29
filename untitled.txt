@@ -439,12 +439,19 @@ function UILibrary.Load(GUITitle)
 				DropdownArray = NewArray or {}
 				DropdownFrame:ClearAllChildren()
 				
+				-- Store current level and increment for dropdown items
+				local currentLevel = Level
+				Level = Level + 1
+				
 				for OptionIndex, Option in next, DropdownArray do
 					PageLibrary.AddButton(Option, function()
 						Callback(Option)
 						DropdownLabel.Text = Text..": "..Option
 					end, DropdownFrame, OptionIndex < #DropdownArray)
 				end
+				
+				-- Restore original level
+				Level = currentLevel
 				
 				DropdownFrame.Size = UDim2.new(1,0,0,math.min(#DropdownArray*20, 100))
 				DropdownFrame.CanvasSize = UDim2.new(0,0,0,#DropdownArray*20)
