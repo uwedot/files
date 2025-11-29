@@ -387,110 +387,122 @@ function UILibrary.Load(GUITitle)
 		end
 		
 		function PageLibrary.AddDropdown(Text, ConfigurationArray, Callback)
-			local DropdownArray = ConfigurationArray or {}
-			
-			local DropdownToggle = false
-			
-			local DropdownContainer = Frame()
-			DropdownContainer.Size = UDim2.new(1,0,0,20)
-			DropdownContainer.Name = Text.."DROPDOWN"
-			DropdownContainer.BackgroundTransparency = 1
-			DropdownContainer.Parent = DisplayPage
-			
-			local DropdownForeground = RoundBox(5)
-			DropdownForeground.ClipsDescendants = true
-			DropdownForeground.ImageColor3 = Color3.fromRGB(35,35,35)
-			DropdownForeground.Size = UDim2.new(1,0,1,0)
-			DropdownForeground.Parent = DropdownContainer
-			
-			local DropdownExpander = DropdownIcon(true)
-			DropdownExpander.Parent = DropdownForeground
-			
-			local DropdownLabel = TextLabel(Text, 12)
-			DropdownLabel.Size = UDim2.new(1,0,0,20)
-			DropdownLabel.Parent = DropdownForeground
-			
-			local DropdownFrame = ScrollingFrame()
-			DropdownFrame.Position = UDim2.new(0,0,0,20)
-			DropdownFrame.BackgroundTransparency = 1
-			DropdownFrame.Size = UDim2.new(1,0,0,math.min(#DropdownArray*20, 100))
-			DropdownFrame.CanvasSize = UDim2.new(0,0,0,#DropdownArray*20)
-			DropdownFrame.Parent = DropdownForeground
-			
-			local DropdownList = Instance.new("UIListLayout")
-			DropdownList.Parent = DropdownFrame
-			
-			-- Create dropdown buttons with proper level management
-			local function CreateDropdownButtons()
-				for OptionIndex, Option in next, DropdownArray do
-					local currentLevel = Level
-					Level = Level + 1
-					
-					local ButtonContainer = Frame()
-					ButtonContainer.Name = Option.."BUTTON"
-					ButtonContainer.Size = UDim2.new(1,0,0,20)
-					ButtonContainer.BackgroundTransparency = 1
-					ButtonContainer.Parent = DropdownFrame
-					
-					local ButtonForeground = RoundBox(5)
-					ButtonForeground.Name = "ButtonForeground"
-					ButtonForeground.Size = UDim2.new(1,0,1,0)
-					ButtonForeground.ImageColor3 = Color3.fromRGB(35,35,35)
-					ButtonForeground.Parent = ButtonContainer
-					
-					if OptionIndex < #DropdownArray then
-						local TextSize = TextService:GetTextSize(Option, 12, Enum.Font.Gotham, Vector2.new(0,0))
-					
-						local BottomEffect = Frame()
-						BottomEffect.Size = UDim2.new(0,TextSize.X,0,1)
-						BottomEffect.Position = UDim2.new(0.5,(-TextSize.X/2)-1,1,-1)
-						BottomEffect.BackgroundColor3 = Color3.fromRGB(255,255,255)
-						BottomEffect.BackgroundTransparency = 0.5
-						BottomEffect.Parent = ButtonForeground
-					end
-					
-					local HiddenButton = TextButton(Option, 12)
-					HiddenButton.Parent = ButtonForeground
-					
-					HiddenButton.MouseButton1Down:Connect(function()
-						Callback(Option)
-						DropdownLabel.Text = Text..": "..Option
-						Tween(ButtonForeground, {ImageColor3 = Color3.fromRGB(45,45,45)})
-						Tween(HiddenButton, {TextTransparency = 0.5})
-						wait(TweenTime)
-						Tween(ButtonForeground, {ImageColor3 = Color3.fromRGB(35,35,35)})
-						Tween(HiddenButton, {TextTransparency = 0})
-					end)
-					
-					Level = currentLevel
-				end
-			end
-			
-			CreateDropdownButtons()
-			
-			DropdownExpander.MouseButton1Down:Connect(function()
-				DropdownToggle = not DropdownToggle
-				Tween(DropdownContainer, {Size = DropdownToggle and UDim2.new(1,0,0,20+math.min(#DropdownArray*20, 100)) or UDim2.new(1,0,0,20)})
-				Tween(DropdownExpander, {Rotation = DropdownToggle and 135 or 0})
-			end)
-			
-			local DropdownLibrary = {}
-			
-			function DropdownLibrary.Refresh(NewArray)
-				DropdownArray = NewArray or {}
-				DropdownFrame:ClearAllChildren()
-				
-				CreateDropdownButtons()
-				
-				DropdownFrame.Size = UDim2.new(1,0,0,math.min(#DropdownArray*20, 100))
-				DropdownFrame.CanvasSize = UDim2.new(0,0,0,#DropdownArray*20)
-				if DropdownToggle then
-					Tween(DropdownContainer, {Size = UDim2.new(1,0,0,20+math.min(#DropdownArray*20, 100))})
-				end
-			end
-			
-			return DropdownLibrary
-		end
+    local DropdownArray = ConfigurationArray or {}
+    local DropdownToggle = false
+
+    local DropdownContainer = Frame()
+    DropdownContainer.Size = UDim2.new(1,0,0,20)
+    DropdownContainer.Name = Text.."DROPDOWN"
+    DropdownContainer.BackgroundTransparency = 1
+    DropdownContainer.Parent = DisplayPage
+
+    local DropdownForeground = RoundBox(5)
+    DropdownForeground.ClipsDescendants = true
+    DropdownForeground.ImageColor3 = Color3.fromRGB(35,35,35)
+    DropdownForeground.Size = UDim2.new(1,0,1,0)
+    DropdownForeground.Parent = DropdownContainer
+
+    local DropdownExpander = DropdownIcon(true)
+    DropdownExpander.Parent = DropdownForeground
+
+    local DropdownLabel = TextLabel(Text, 12)
+    DropdownLabel.Size = UDim2.new(1,0,0,20)
+    DropdownLabel.Parent = DropdownForeground
+
+    local DropdownFrame = ScrollingFrame()
+    DropdownFrame.Position = UDim2.new(0,0,0,20)
+    DropdownFrame.BackgroundTransparency = 1
+    DropdownFrame.Size = UDim2.new(1,0,0,math.min(#DropdownArray*20, 100))
+    DropdownFrame.CanvasSize = UDim2.new(0,0,0,#DropdownArray*20)
+    DropdownFrame.Parent = DropdownForeground
+
+    local DropdownList = Instance.new("UIListLayout")
+    DropdownList.Parent = DropdownFrame
+
+    -- Create dropdown buttons with proper level management
+    local function CreateDropdownButtons()
+        for OptionIndex, Option in next, DropdownArray do
+            local currentLevel = Level
+            Level = Level + 1
+
+            local ButtonContainer = Frame()
+            ButtonContainer.Name = Option.."BUTTON"
+            ButtonContainer.Size = UDim2.new(1,0,0,20)
+            ButtonContainer.BackgroundTransparency = 1
+            ButtonContainer.Parent = DropdownFrame
+
+            local ButtonForeground = RoundBox(5)
+            ButtonForeground.Name = "ButtonForeground"
+            ButtonForeground.Size = UDim2.new(1,0,1,0)
+            ButtonForeground.ImageColor3 = Color3.fromRGB(35,35,35)
+            ButtonForeground.Parent = ButtonContainer
+
+            if OptionIndex < #DropdownArray then
+                local TextSize = TextService:GetTextSize(Option, 12, Enum.Font.Gotham, Vector2.new(0,0))
+
+                local BottomEffect = Frame()
+                BottomEffect.Size = UDim2.new(0,TextSize.X,0,1)
+                BottomEffect.Position = UDim2.new(0.5,(-TextSize.X/2)-1,1,-1)
+                BottomEffect.BackgroundColor3 = Color3.fromRGB(255,255,255)
+                BottomEffect.BackgroundTransparency = 0.5
+                BottomEffect.Parent = ButtonForeground
+            end
+
+            local HiddenButton = TextButton(Option, 12)
+            HiddenButton.Parent = ButtonForeground
+
+            HiddenButton.MouseButton1Down:Connect(function()
+                Callback(Option)
+                DropdownLabel.Text = Text..": "..Option
+                Tween(ButtonForeground, {ImageColor3 = Color3.fromRGB(45,45,45)})
+                Tween(HiddenButton, {TextTransparency = 0.5})
+                wait(TweenTime)
+                Tween(ButtonForeground, {ImageColor3 = Color3.fromRGB(35,35,35)})
+                Tween(HiddenButton, {TextTransparency = 0})
+            end)
+
+            Level = currentLevel
+        end
+    end
+
+    CreateDropdownButtons()
+
+    DropdownExpander.MouseButton1Down:Connect(function()
+        DropdownToggle = not DropdownToggle
+        Tween(DropdownContainer, {
+            Size = DropdownToggle
+                and UDim2.new(1,0,0,20 + math.min(#DropdownArray*20, 100))
+                or  UDim2.new(1,0,0,20)
+        })
+        Tween(DropdownExpander, {Rotation = DropdownToggle and 135 or 0})
+    end)
+
+    local DropdownLibrary = {}
+
+    function DropdownLibrary.Refresh(NewArray)
+        DropdownArray = NewArray or {}
+
+        -- Remove only option buttons, keep the UIListLayout
+        for _, child in ipairs(DropdownFrame:GetChildren()) do
+            if not child:IsA("UIListLayout") then
+                child:Destroy()
+            end
+        end
+
+        CreateDropdownButtons()
+
+        DropdownFrame.Size = UDim2.new(1,0,0,math.min(#DropdownArray*20, 100))
+        DropdownFrame.CanvasSize = UDim2.new(0,0,0,#DropdownArray*20)
+
+        if DropdownToggle then
+            Tween(DropdownContainer, {
+                Size = UDim2.new(1,0,0,20 + math.min(#DropdownArray*20, 100))
+            })
+        end
+    end
+
+    return DropdownLibrary
+end
 		
 		function PageLibrary.AddSlider(Text, ConfigurationDictionary, Callback, Parent)
 			local Configuration = ConfigurationDictionary
