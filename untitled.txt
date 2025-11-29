@@ -13,9 +13,6 @@ local Level = 1
 local GlobalTweenInfo = TweenInfo.new(TweenTime)
 local AlteredTweenInfo = TweenInfo.new(TweenTime, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 
-local DropShadowID = "rbxassetid://297774371"
-local DropShadowTransparency = 0.3
-
 local IconLibraryID = "rbxassetid://3926305904"
 local IconLibraryID2 = "rbxassetid://3926307971"
 
@@ -92,17 +89,6 @@ local function RoundBox(CornerRadius, ButtonOrNot)
 	return NewRoundBox
 end
 
-local function DropShadow()
-	local NewDropShadow = Instance.new("ImageLabel")
-	NewDropShadow.Name = "DropShadow"
-	NewDropShadow.BackgroundTransparency = 1
-	NewDropShadow.Image = DropShadowID
-	NewDropShadow.ImageTransparency = DropShadowTransparency
-	NewDropShadow.Size = UDim2.new(1,0,1,0)
-	NewDropShadow.ZIndex = Level
-	return NewDropShadow
-end
-
 local function Frame()
 	local NewFrame = Instance.new("Frame")
 	NewFrame.BorderSizePixel = 0
@@ -173,7 +159,7 @@ function UILibrary.Load(GUITitle)
 		FindOldInstance:Destroy()
 	end
 	
-	local NewInstance, ContainerFrame, ContainerShadow, MainFrame
+	local NewInstance, ContainerFrame, MainFrame
 	
 	NewInstance = Instance.new("ScreenGui")
 	NewInstance.Name = GUITitle
@@ -185,10 +171,6 @@ function UILibrary.Load(GUITitle)
 	ContainerFrame.Position = UDim2.new(0.5,-250,0.5,-150)
 	ContainerFrame.BackgroundTransparency = 1
 	ContainerFrame.Parent = NewInstance
-	
-	ContainerShadow = DropShadow()
-	ContainerShadow.Name = "Shadow"
-	ContainerShadow.Parent = ContainerFrame
 	
 	Level += 1
 	
@@ -244,11 +226,9 @@ function UILibrary.Load(GUITitle)
 		if not MinimiseToggle then
 			Tween(MainFrame, {Size = UDim2.new(1,-50,0,30)})
 			Tween(MinimiseButton, {Rotation = 0})
-			Tween(ContainerShadow, {ImageTransparency = 1})
 		else
 			Tween(MainFrame, {Size = UDim2.new(1,-50,1,-30)})
 			Tween(MinimiseButton, {Rotation = 180})
-			Tween(ContainerShadow, {ImageTransparency = DropShadowTransparency})
 		end
 	end)
 	
