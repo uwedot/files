@@ -394,6 +394,23 @@ function Library:Window(title)
                 end
                 callback(toggled)
             end)
+            
+            -- Add Set method
+            local ToggleFunc = {}
+            
+            function ToggleFunc:Set(value)
+                toggled = value
+                if toggled then
+                    TweenService:Create(Toggle_2, TweenInfo.new(.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{BackgroundTransparency = 0}, true):Play()
+                    TweenService:Create(Checked, TweenInfo.new(.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{ImageTransparency = 0}, true):Play()
+                else
+                    TweenService:Create(Toggle_2, TweenInfo.new(.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{BackgroundTransparency = 1}, true):Play()
+                    TweenService:Create(Checked, TweenInfo.new(.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{ImageTransparency = 1}, true):Play()
+                end
+                callback(toggled)
+            end
+            
+            return ToggleFunc
         end
         
         function TabFunctions:Label(labeltext)
@@ -413,6 +430,15 @@ function Library:Window(title)
             
             UICorner_6.CornerRadius = UDim.new(0, 6)
             UICorner_6.Parent = TextLabel
+            
+            -- Add Set method
+            local LabelFunc = {}
+            
+            function LabelFunc:Set(text)
+                TextLabel.Text = "  "..(text or "")
+            end
+            
+            return LabelFunc
         end
         
         function TabFunctions:Slider(title, min, max, def, callback)
@@ -556,6 +582,10 @@ function Library:Window(title)
         function TabFunctions:Dropdown(title, list, callback)
             list = list or {}
             callback = callback or function() end
+            
+            -- Check if list is empty
+            local hasOptions = #list > 0
+            
             local Dropdown = Instance.new("Frame")
             local UIListLayout_69 = Instance.new("UIListLayout")
             local Choose = Instance.new("Frame")
@@ -612,7 +642,7 @@ function Library:Window(title)
             arrow.Size = UDim2.new(0, 28, 0, 28)
             arrow.ZIndex = 2
             arrow.Image = "rbxassetid://3926307971"
-            arrow.ImageColor3 = Color3.fromRGB(161, 12, 59)
+            arrow.ImageColor3 = hasOptions and Color3.fromRGB(161, 12, 59) or Color3.fromRGB(72, 72, 72) -- Gray when no options
             arrow.ImageRectOffset = Vector2.new(324, 524)
             arrow.ImageRectSize = Vector2.new(36, 36)
             arrow.ScaleType = Enum.ScaleType.Crop
@@ -635,64 +665,49 @@ function Library:Window(title)
             UIPadding.Parent = OptionHolder
             UIPadding.PaddingTop = UDim.new(0, 8)
             
-            -- Make ONLY the arrow clickable for dropdown
-            arrow.InputBegan:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                    if not dropped then
-                        Dropdown:TweenSize(UDim2.new(1, 0, 0, UIListLayout_69.AbsoluteContentSize.Y), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, .15, true)
-                        TweenService:Create(arrow, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 180}, true):Play()
-                        dropped = true
-                    else
-                        TweenService:Create(arrow, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 0}, true):Play()
-                        Dropdown:TweenSize(UDim2.new(1, 0, 0, 34), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, .12)
-                        dropped = false 
+            -- Make arrow non-interactive when no options
+            if hasOptions then
+                -- Make ONLY the arrow clickable for dropdown when options exist
+                arrow.InputBegan:Connect(function(inp)
+                    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                        if not dropped then
+                            Dropdown:TweenSize(UDim2.new(1, 0, 0, UIListLayout_69.AbsoluteContentSize.Y), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, .15, true)
+                            TweenService:Create(arrow, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 180}):Play()
+                            dropped = true
+                        else
+                            TweenService:Create(arrow, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 0}):Play()
+                            Dropdown:TweenSize(UDim2.new(1, 0, 0, 34), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, .12)
+                            dropped = false 
+                        end
                     end
-                end
-            end)
-            
-            for i,v in next, list do
-                local Option = Instance.new("TextButton")
+                end)
+            else
+                -- Disable arrow interaction when no options
+                arrow.ImageColor3 = Color3.fromRGB(72, 72, 72) -- Gray color
+                TitleLabel.Text = title or "Dropdown" .. " (No Options)"
+                
+                -- Add "No Options" message
+                local NoOption = Instance.new("TextButton")
                 local UICorner = Instance.new("UICorner")
 
-                Option.Name = "Option"
-                Option.Parent = OptionHolder
-                Option.BackgroundColor3 = Color3.fromRGB(134, 10, 49)
-                Option.BorderSizePixel = 0
-                Option.Size = UDim2.new(1, -16, 0, 30)
-                Option.AutoButtonColor = false
-                Option.Font = Enum.Font.Gotham
-                Option.Text = v
-                Option.TextColor3 = Color3.fromRGB(255, 255, 255)
-                Option.TextSize = 14.000
+                NoOption.Name = "NoOption"
+                NoOption.Parent = OptionHolder
+                NoOption.BackgroundColor3 = Color3.fromRGB(72, 72, 72) -- Gray background
+                NoOption.BorderSizePixel = 0
+                NoOption.Size = UDim2.new(1, -16, 0, 30)
+                NoOption.AutoButtonColor = false
+                NoOption.Font = Enum.Font.Gotham
+                NoOption.Text = "No Options"
+                NoOption.TextColor3 = Color3.fromRGB(150, 150, 150) -- Gray text
+                NoOption.TextSize = 14.000
+                NoOption.Active = false -- Make it non-interactive
 
                 UICorner.CornerRadius = UDim.new(0, 6)
-                UICorner.Parent = Option
-
-                Option.MouseButton1Click:Connect(function()
-                    callback(v)
-                    dropped = false
-                    TweenService:Create(arrow, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Rotation = 0}):Play()
-                    Dropdown:TweenSize(UDim2.new(1, 0, 0, 34), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .15, true)
-                    TitleLabel.Text = title..": "..v
-                end)
+                UICorner.Parent = NoOption
             end
             
-            OptionHolder:TweenSize(UDim2.new(1, 0, 0, OptionList.AbsoluteContentSize.Y + 15), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .15, true)
-            
-            local DropdownFunc = {}
-            function DropdownFunc:RefreshDropdown(newlist)
-                dropped = false
-                TweenService:Create(arrow, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Rotation = 0}):Play()
-                Dropdown:TweenSize(UDim2.new(1, 0, 0, 34), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.15, true)
-
-                local newlist = newlist or {}
-                for i,v in next, OptionHolder:GetChildren() do
-                    if v:IsA("TextButton") then
-                        v:Destroy()
-                    end
-                end
-                
-                for i,v in next, newlist do
+            if hasOptions then
+                for i,v in next, list do
                     local Option = Instance.new("TextButton")
                     local UICorner = Instance.new("UICorner")
 
@@ -713,10 +728,84 @@ function Library:Window(title)
                     Option.MouseButton1Click:Connect(function()
                         callback(v)
                         dropped = false
-                        TweenService:Create(arrow, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Rotation = 0}):Play()
-                        Dropdown:TweenSize(UDim2.new(1, 0, 0, 34), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.2, true)
+                        TweenService:Create(arrow, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Rotation = 0}):Play()
+                        Dropdown:TweenSize(UDim2.new(1, 0, 0, 34), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .15, true)
                         TitleLabel.Text = title..": "..v
-                   end)
+                    end)
+                end
+            end
+            
+            OptionHolder:TweenSize(UDim2.new(1, 0, 0, OptionList.AbsoluteContentSize.Y + 15), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .15, true)
+            
+            local DropdownFunc = {}
+            function DropdownFunc:RefreshDropdown(newlist)
+                dropped = false
+                TweenService:Create(arrow, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Rotation = 0}):Play()
+                Dropdown:TweenSize(UDim2.new(1, 0, 0, 34), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.15, true)
+
+                local newlist = newlist or {}
+                local newHasOptions = #newlist > 0
+                
+                -- Clear existing options
+                for i,v in next, OptionHolder:GetChildren() do
+                    if v:IsA("TextButton") then
+                        v:Destroy()
+                    end
+                end
+                
+                -- Update arrow color based on new list
+                arrow.ImageColor3 = newHasOptions and Color3.fromRGB(161, 12, 59) or Color3.fromRGB(72, 72, 72)
+                
+                if newHasOptions then
+                    TitleLabel.Text = title or "Dropdown"
+                    
+                    for i,v in next, newlist do
+                        local Option = Instance.new("TextButton")
+                        local UICorner = Instance.new("UICorner")
+
+                        Option.Name = "Option"
+                        Option.Parent = OptionHolder
+                        Option.BackgroundColor3 = Color3.fromRGB(134, 10, 49)
+                        Option.BorderSizePixel = 0
+                        Option.Size = UDim2.new(1, -16, 0, 30)
+                        Option.AutoButtonColor = false
+                        Option.Font = Enum.Font.Gotham
+                        Option.Text = v
+                        Option.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        Option.TextSize = 14.000
+
+                        UICorner.CornerRadius = UDim.new(0, 6)
+                        UICorner.Parent = Option
+
+                        Option.MouseButton1Click:Connect(function()
+                            callback(v)
+                            dropped = false
+                            TweenService:Create(arrow, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Rotation = 0}):Play()
+                            Dropdown:TweenSize(UDim2.new(1, 0, 0, 34), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.2, true)
+                            TitleLabel.Text = title..": "..v
+                       end)
+                    end
+                else
+                    -- Add "No Options" message
+                    TitleLabel.Text = title or "Dropdown" .. " (No Options)"
+                    
+                    local NoOption = Instance.new("TextButton")
+                    local UICorner = Instance.new("UICorner")
+
+                    NoOption.Name = "NoOption"
+                    NoOption.Parent = OptionHolder
+                    NoOption.BackgroundColor3 = Color3.fromRGB(72, 72, 72)
+                    NoOption.BorderSizePixel = 0
+                    NoOption.Size = UDim2.new(1, -16, 0, 30)
+                    NoOption.AutoButtonColor = false
+                    NoOption.Font = Enum.Font.Gotham
+                    NoOption.Text = "No Options"
+                    NoOption.TextColor3 = Color3.fromRGB(150, 150, 150)
+                    NoOption.TextSize = 14.000
+                    NoOption.Active = false
+
+                    UICorner.CornerRadius = UDim.new(0, 6)
+                    UICorner.Parent = NoOption
                 end
                 OptionHolder:TweenSize(UDim2.new(1, 0, 0, OptionList.AbsoluteContentSize.Y + 15), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .15, true)
             end
