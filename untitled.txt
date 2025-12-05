@@ -301,7 +301,7 @@ function Library:Window(Title)
         TabButton.TextSize = 14
 
         local TabCorner = Instance.new("UICorner")
-    TabCorner.CornerRadius = UDim.new(0, 6)
+        TabCorner.CornerRadius = UDim.new(0, 6)
         TabCorner.Parent = TabButton
 
         local TextLabel = Instance.new("TextLabel")
@@ -548,7 +548,7 @@ function Library:Window(Title)
             Label.Text = Text or "Label"
             Label.TextColor3 = Color3.fromRGB(255, 255, 255)
             Label.TextSize = 14
-            Label.TextXAlignment = Enum.TextXAlignment.Center  -- Changed from Left to Center
+            Label.TextXAlignment = Enum.TextXAlignment.Center
 
             local LabelCorner = Instance.new("UICorner")
             LabelCorner.CornerRadius = UDim.new(0, 6)
@@ -556,7 +556,7 @@ function Library:Window(Title)
 
             local LabelFunctions = {}
             function LabelFunctions:Set(NewText)
-                Label.Text = NewText or "Label"  -- Removed the leading spaces
+                Label.Text = NewText or "Label"
             end
 
             return LabelFunctions
@@ -980,22 +980,25 @@ function Library:Window(Title)
                 Title.Text = Text or "Dropdown"
                 
                 if #NewOptions == 0 then
-                    local NoOptionText = Instance.new("TextLabel")
-                    NoOptionText.Name = "NoOption"
-                    NoOptionText.Parent = OptionHolder
-                    NoOptionText.BackgroundColor3 = Color3.fromRGB(52, 52, 52)
-                    NoOptionText.BorderSizePixel = 0
-                    NoOptionText.Size = UDim2.new(1, -16, 0, 30)
-                    NoOptionText.Font = Enum.Font.Gotham
-                    NoOptionText.Text = "No Options Available"
-                    NoOptionText.TextColor3 = Color3.fromRGB(150, 150, 150)
-                    NoOptionText.TextSize = 14
-                    NoOptionText.TextXAlignment = Enum.TextXAlignment.Center
-                    NoOptionText.AutoButtonColor = false
+                    -- FIXED: Changed from TextLabel to TextButton but kept it non-interactive
+                    local NoOption = Instance.new("TextButton")  -- Changed from TextLabel
+                    NoOption.Name = "NoOption"
+                    NoOption.Parent = OptionHolder
+                    NoOption.BackgroundColor3 = Color3.fromRGB(52, 52, 52)
+                    NoOption.BorderSizePixel = 0
+                    NoOption.Size = UDim2.new(1, -16, 0, 30)
+                    NoOption.Font = Enum.Font.Gotham
+                    NoOption.Text = "No Options Available"
+                    NoOption.TextColor3 = Color3.fromRGB(150, 150, 150)
+                    NoOption.TextSize = 14
+                    NoOption.TextXAlignment = Enum.TextXAlignment.Center
+                    NoOption.AutoButtonColor = false  -- This is valid for TextButton
+                    NoOption.Selectable = false  -- Make it non-selectable
+                    NoOption.Active = false  -- Make it non-interactive
                     
                     local NoOptionCorner = Instance.new("UICorner")
                     NoOptionCorner.CornerRadius = UDim.new(0, 6)
-                    NoOptionCorner.Parent = NoOptionText
+                    NoOptionCorner.Parent = NoOption
                 else
                     for _, Option in ipairs(NewOptions) do
                         local OptionButton = Instance.new("TextButton")
