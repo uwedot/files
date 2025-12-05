@@ -820,7 +820,6 @@ function Library:Window(Title)
             OptionList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 local ContentHeight = OptionList.AbsoluteContentSize.Y + 16
                 OptionHolder.Size = UDim2.new(1, 0, 0, ContentHeight)
-                Dropdown.Size = UDim2.new(1, -6, 0, 34 + ContentHeight)
             end)
             
             local Dropped = false
@@ -908,6 +907,9 @@ function Library:Window(Title)
                 if Dropped then
                     OptionHolder.Visible = true
                     Arrow.Rotation = 180
+                    OptionList:GetPropertyChangedSignal("AbsoluteContentSize"):Wait()
+                    local ContentHeight = OptionList.AbsoluteContentSize.Y + 16
+                    Dropdown.Size = UDim2.new(1, -6, 0, 34 + ContentHeight)
                 else
                     OptionHolder.Visible = false
                     Arrow.Rotation = 0
