@@ -1,8 +1,20 @@
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
+local function GetService(ServiceName)
+    if cloneref then
+        local success, result = pcall(function()
+            return cloneref(game:GetService(ServiceName))
+        end)
+        if success and result then
+            return result
+        end
+    end
+    return game:GetService(ServiceName)
+end
+
+local TweenService = GetService("TweenService")
+local UserInputService = GetService("UserInputService")
+local RunService = GetService("RunService")
+local Players = GetService("Players")
+local CoreGui = GetService("CoreGui")
 
 local Library = {}
 local Player = Players.LocalPlayer
@@ -933,11 +945,11 @@ function Library:Window(Title)
             
             local OptionHolder = Instance.new("Frame")
             OptionHolder.Name = "OptionHolder"
-            OptionHolder.Parent = Main
+            OptionHolder.Parent = Page
             OptionHolder.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
             OptionHolder.BorderSizePixel = 0
             OptionHolder.Position = UDim2.new(0, 0, 0, 0)
-            OptionHolder.Size = UDim2.new(0, 122, 0, 0)
+            OptionHolder.Size = UDim2.new(1, -6, 0, 0)
             OptionHolder.Visible = false
             OptionHolder.ZIndex = 100
             
@@ -961,7 +973,7 @@ function Library:Window(Title)
             
             OptionList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 local ContentHeight = OptionList.AbsoluteContentSize.Y + 16
-                OptionHolder.Size = UDim2.new(0, 122, 0, ContentHeight)
+                OptionHolder.Size = UDim2.new(1, -6, 0, ContentHeight)
             end)
             
             local Dropped = false
@@ -1049,10 +1061,16 @@ function Library:Window(Title)
                     OptionHolder.Visible = true
                     Arrow.Rotation = 180
                     
+                    task.wait(0.01)
+                    
                     local chooseAbsolutePosition = Choose.AbsolutePosition
                     local chooseAbsoluteSize = Choose.AbsoluteSize
+                    local pageAbsolutePosition = Page.AbsolutePosition
                     
-                    OptionHolder.Position = UDim2.new(0, chooseAbsolutePosition.X, 0, chooseAbsolutePosition.Y + chooseAbsoluteSize.Y + 5)
+                    local xPos = chooseAbsolutePosition.X - pageAbsolutePosition.X
+                    local yPos = (chooseAbsolutePosition.Y - pageAbsolutePosition.Y) + chooseAbsoluteSize.Y + 5
+                    
+                    OptionHolder.Position = UDim2.new(0, xPos, 0, yPos)
                 else
                     OptionHolder.Visible = false
                     Arrow.Rotation = 0
