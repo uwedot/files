@@ -349,7 +349,7 @@ function Library:Window(Title)
         PagePadding.PaddingTop = UDim.new(0, 5)
 
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 15)
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 13)
         end)
 
         TabButton.MouseButton1Click:Connect(function()
