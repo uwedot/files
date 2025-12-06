@@ -347,6 +347,7 @@ function Library:Window(Title)
         local PagePadding = Instance.new("UIPadding")
         PagePadding.Parent = Page
         PagePadding.PaddingTop = UDim.new(0, 5)
+        PagePadding.PaddingBottom = UDim.new(0, 10) -- Added bottom padding for slider visibility
 
         PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y)
