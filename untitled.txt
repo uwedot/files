@@ -383,7 +383,6 @@ function Library:Window(Title)
 			Toggle.Size = UDim2.new(1, -6, 0, 34)
 			Toggle.AutoButtonColor = false
 			Toggle.Text = ""
-			CreateCorner(Toggle, 6)
 
 			local Title = Instance.new("TextLabel")
 			Title.Name = "Title"
