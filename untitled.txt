@@ -40,15 +40,13 @@ function CreateDragHandler(Frame)
     local DragStart
     local StartPosition
 
-    local DragConnection
-    local InputEndedConnection
-
     Frame.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             IsDragging = true
             DragStart = Input.Position
             StartPosition = Frame.Position
 
+            local DragConnection
             DragConnection = Stepped:Connect(function()
                 if IsDragging then
                     local Delta = Vector3.new(Mouse.X, Mouse.Y, 0) - DragStart
@@ -58,18 +56,25 @@ function CreateDragHandler(Frame)
                         StartPosition.Y.Scale,
                         StartPosition.Y.Offset + Delta.Y
                     )
+                else
+                    if DragConnection then
+                        DragConnection:Disconnect()
+                    end
                 end
             end)
-        end
-    end)
 
-    Frame.InputEnded:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-            IsDragging = false
-            if DragConnection then
-                DragConnection:Disconnect()
-                DragConnection = nil
-            end
+            local InputEndedConnection
+            InputEndedConnection = Input.Changed:Connect(function()
+                if Input.UserInputState == Enum.UserInputState.End then
+                    IsDragging = false
+                    if DragConnection then
+                        DragConnection:Disconnect()
+                    end
+                    if InputEndedConnection then
+                        InputEndedConnection:Disconnect()
+                    end
+                end
+            end)
         end
     end)
 end
@@ -166,7 +171,7 @@ function Library:Window(Title)
     ContentWindow.Parent = Header
     ContentWindow.BackgroundColor3 = Color3.fromRGB(47, 54, 64)
     ContentWindow.BorderColor3 = Color3.fromRGB(47, 54, 64)
-    ContentWindow.Position = UDim2.new(0, 0, 0, 0)
+    ContentWindow.Position = UDim2.new(0, 0, 0, 26)
     ContentWindow.Size = UDim2.new(0, 207, 0, 33)
     ContentWindow.ZIndex = 1 + ZIndex
 
@@ -174,8 +179,10 @@ function Library:Window(Title)
         ContentWindow.Visible = not ContentWindow.Visible
         if ContentWindow.Visible then
             MinimizeButton.Text = "_"
+            ContentWindow.Position = UDim2.new(0, 0, 0, 26)
         else
             MinimizeButton.Text = "+"
+            ContentWindow.Position = UDim2.new(0, 0, 0, 26)
         end
     end)
 
@@ -220,6 +227,10 @@ function Library:Window(Title)
             ButtonCallback()
         end)
 
+        Button.TouchTap:Connect(function()
+            ButtonCallback()
+        end)
+
         PastSliders[WindowIndex] = false
     end
 
@@ -237,8 +248,8 @@ function Library:Window(Title)
         Label.BackgroundColor3 = Color3.fromRGB(220, 221, 225)
         Label.BackgroundTransparency = 1.000
         Label.BorderColor3 = Color3.fromRGB(27, 42, 53)
-        Label.Position = UDim2.new(0, 0, 0, ListOffsets[WindowIndex])
-        Label.Size = UDim2.new(0, 206, 0, 29)
+        Label.Position = UDim2.new(0, 12, 0, ListOffsets[WindowIndex])
+        Label.Size = UDim2.new(0, 182, 0, 29)
         Label.Font = Enum.Font.SourceSans
         Label.Text = LabelText
         Label.TextSize = 16.000
@@ -271,7 +282,7 @@ function Library:Window(Title)
         ToggleContainer.Name = "ToggleContainer"
         ToggleContainer.Parent = ContentWindow
         ToggleContainer.BackgroundTransparency = 1
-        ToggleContainer.Position = UDim2.new(0, 14, 0, ListOffsets[WindowIndex])
+        ToggleContainer.Position = UDim2.new(0, 12, 0, ListOffsets[WindowIndex])
         ToggleContainer.Size = UDim2.new(0, 182, 0, 26)
         ToggleContainer.ZIndex = 2 + ZIndex
 
@@ -293,7 +304,7 @@ function Library:Window(Title)
         ToggleButton.Parent = ToggleContainer
         ToggleButton.BackgroundColor3 = Color3.fromRGB(47, 54, 64)
         ToggleButton.BorderColor3 = Color3.fromRGB(113, 128, 147)
-        ToggleButton.Position = UDim2.new(1.2061069, 0, 0.0769230798, 0)
+        ToggleButton.Position = UDim2.new(0.9, 0, 0, 2)
         ToggleButton.Size = UDim2.new(0, 22, 0, 22)
         ToggleButton.Font = Enum.Font.SourceSans
         ToggleButton.Text = ""
@@ -310,11 +321,14 @@ function Library:Window(Title)
         ToggleIndicator.Visible = State
         ToggleIndicator.ZIndex = 2 + ZIndex
 
-        ToggleButton.MouseButton1Click:Connect(function()
+        local function ToggleState()
             State = not State
             ToggleIndicator.Visible = State
             ToggleCallback(State)
-        end)
+        end
+
+        ToggleButton.MouseButton1Click:Connect(ToggleState)
+        ToggleButton.TouchTap:Connect(ToggleState)
 
         PastSliders[WindowIndex] = false
     end
@@ -456,12 +470,24 @@ function Library:Window(Title)
         MaxLabel.ZIndex = 2 + ZIndex
 
         local IsDragging = false
-        local DragStartPosition = 0
 
         local function UpdateSliderFromMouse()
             if not IsDragging then return end
             
-            local MousePosition = UserInputService:GetMouseLocation()
+            local MousePosition
+            if UserInputService.TouchEnabled and UserInputService:GetMouseConnected() == false then
+                local TouchInputs = UserInputService:GetTouches()
+                if #TouchInputs > 0 then
+                    MousePosition = TouchInputs[1].Position
+                else
+                    return
+                end
+            else
+                MousePosition = UserInputService:GetMouseLocation()
+            end
+            
+            if not MousePosition then return end
+            
             local SliderPosition = SliderContainer.AbsolutePosition
             local SliderSize = SliderContainer.AbsoluteSize
             
@@ -476,9 +502,8 @@ function Library:Window(Title)
             SliderCallback(Round(Value))
         end
 
-        local function OnDragStarted()
+        local function OnDragStarted(Input)
             IsDragging = true
-            DragStartPosition = UserInputService:GetMouseLocation().X
             
             local DragConnection
             DragConnection = RunService.RenderStepped:Connect(function()
@@ -489,23 +514,30 @@ function Library:Window(Title)
                 UpdateSliderFromMouse()
             end)
             
-            UserInputService.InputEnded:Connect(function(Input)
-                if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local InputEndedConnection
+            InputEndedConnection = Input.Changed:Connect(function()
+                if Input.UserInputState == Enum.UserInputState.End then
                     IsDragging = false
                     UpdateSliderFromMouse()
+                    if DragConnection then
+                        DragConnection:Disconnect()
+                    end
+                    if InputEndedConnection then
+                        InputEndedConnection:Disconnect()
+                    end
                 end
             end)
         end
 
         SliderContainer.InputBegan:Connect(function(Input)
-            if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-                OnDragStarted()
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                OnDragStarted(Input)
             end
         end)
 
         SliderHandle.InputBegan:Connect(function(Input)
-            if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-                OnDragStarted()
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                OnDragStarted(Input)
             end
         end)
 
@@ -587,7 +619,7 @@ function Library:Window(Title)
 
         table.insert(Dropdowns, DropdownList)
 
-        DropdownButton.MouseButton1Click:Connect(function()
+        local function ToggleDropdown()
             for _, DropdownFrame in ipairs(Dropdowns) do
                 if DropdownFrame ~= DropdownList then
                     DropdownFrame.Visible = false
@@ -600,7 +632,10 @@ function Library:Window(Title)
             else
                 ArrowIcon.Rotation = 0
             end
-        end)
+        end
+
+        DropdownButton.MouseButton1Click:Connect(ToggleDropdown)
+        DropdownButton.TouchTap:Connect(ToggleDropdown)
 
         local DropdownFunctions = {}
         local ListHeight = 0
@@ -631,7 +666,7 @@ function Library:Window(Title)
                 OptionButton.BackgroundColor3 = OriginalColor
             end)
 
-            OptionButton.MouseButton1Click:Connect(function()
+            local function SelectOption()
                 DropdownCallback(OptionName)
                 DropdownList.Visible = false
                 ArrowIcon.Rotation = 0
@@ -639,7 +674,10 @@ function Library:Window(Title)
                 if Selective then
                     DropdownButton.Text = OptionName
                 end
-            end)
+            end
+
+            OptionButton.MouseButton1Click:Connect(SelectOption)
+            OptionButton.TouchTap:Connect(SelectOption)
 
             ListHeight = ListHeight + 27
             DropdownList.CanvasSize = UDim2.new(0, 182, 0, ListHeight + 1)
