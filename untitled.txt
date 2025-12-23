@@ -1,0 +1,697 @@
+local Library = {}
+local WindowCount = 0
+local Sizes = {}
+local ListOffsets = {}
+local PastSliders = {}
+local Dropdowns = {}
+local IsDestroyed = false
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local Stepped = RunService.Stepped
+
+if CoreGui:FindFirstChild("TurtleUiLib") then
+    CoreGui:FindFirstChild("TurtleUiLib"):Destroy()
+    IsDestroyed = true
+end
+
+function Lerp(A, B, C)
+    return A + ((B - A) * C)
+end
+
+function Clamp(Value, Min, Max)
+    return math.max(Min, math.min(Max, Value))
+end
+
+function Round(Number, DecimalPlaces)
+    DecimalPlaces = DecimalPlaces or 0
+    local Multiplier = 10 ^ DecimalPlaces
+    return math.floor(Number * Multiplier + 0.5) / Multiplier
+end
+
+function CreateDragHandler(Frame)
+    local IsDragging = false
+    local DragStart
+    local StartPosition
+
+    local DragConnection
+    local InputEndedConnection
+
+    Frame.InputBegan:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+            IsDragging = true
+            DragStart = Input.Position
+            StartPosition = Frame.Position
+
+            DragConnection = Stepped:Connect(function()
+                if IsDragging then
+                    local Delta = Vector3.new(Mouse.X, Mouse.Y, 0) - DragStart
+                    Frame.Position = UDim2.new(
+                        StartPosition.X.Scale,
+                        StartPosition.X.Offset + Delta.X,
+                        StartPosition.Y.Scale,
+                        StartPosition.Y.Offset + Delta.Y
+                    )
+                end
+            end)
+        end
+    end)
+
+    Frame.InputEnded:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+            IsDragging = false
+            if DragConnection then
+                DragConnection:Disconnect()
+                DragConnection = nil
+            end
+        end
+    end)
+end
+
+local TurtleUiLib = Instance.new("ScreenGui")
+TurtleUiLib.Name = "TurtleUiLib"
+TurtleUiLib.ResetOnSpawn = false
+TurtleUiLib.Parent = CoreGui
+
+local KeybindConnection
+
+function Library:Destroy()
+    TurtleUiLib:Destroy()
+    if KeybindConnection then
+        KeybindConnection:Disconnect()
+        KeybindConnection = nil
+    end
+end
+
+function Library:Hide()
+    TurtleUiLib.Enabled = not TurtleUiLib.Enabled
+end
+
+function Library:Keybind(Key)
+    if KeybindConnection then
+        KeybindConnection:Disconnect()
+        KeybindConnection = nil
+    end
+
+    KeybindConnection = UserInputService.InputBegan:Connect(function(Input, GameProcessed)
+        if not GameProcessed and Input.KeyCode == Enum.KeyCode[Key] then
+            Library:Hide()
+        end
+    end)
+end
+
+function Library:Window(Title)
+    WindowCount = WindowCount + 1
+    local WindowIndex = WindowCount
+    local ZIndex = WindowIndex * 7
+    local XOffset = 20 + ((WindowIndex - 1) * 230)
+
+    local UiWindow = Instance.new("Frame")
+    UiWindow.Name = "UiWindow"
+    UiWindow.Parent = TurtleUiLib
+    UiWindow.BackgroundColor3 = Color3.fromRGB(0, 151, 230)
+    UiWindow.BorderColor3 = Color3.fromRGB(0, 151, 230)
+    UiWindow.Position = UDim2.new(0, XOffset, 0, 20)
+    UiWindow.Size = UDim2.new(0, 207, 0, 33)
+    UiWindow.ZIndex = 4 + ZIndex
+    UiWindow.Active = true
+    CreateDragHandler(UiWindow)
+
+    local Header = Instance.new("Frame")
+    Header.Name = "Header"
+    Header.Parent = UiWindow
+    Header.BackgroundColor3 = Color3.fromRGB(0, 168, 255)
+    Header.BorderColor3 = Color3.fromRGB(0, 168, 255)
+    Header.Position = UDim2.new(0, 0, -0.0202544238, 0)
+    Header.Size = UDim2.new(0, 207, 0, 26)
+    Header.ZIndex = 5 + ZIndex
+
+    local HeaderText = Instance.new("TextLabel")
+    HeaderText.Name = "HeaderText"
+    HeaderText.Parent = Header
+    HeaderText.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    HeaderText.BackgroundTransparency = 1.000
+    HeaderText.Position = UDim2.new(0, 0, -0.0020698905, 0)
+    HeaderText.Size = UDim2.new(0, 206, 0, 33)
+    HeaderText.ZIndex = 6 + ZIndex
+    HeaderText.Font = Enum.Font.SourceSans
+    HeaderText.Text = Title or "Window"
+    HeaderText.TextColor3 = Color3.fromRGB(47, 54, 64)
+    HeaderText.TextSize = 17.000
+    HeaderText.TextXAlignment = Enum.TextXAlignment.Center
+
+    local MinimizeButton = Instance.new("TextButton")
+    local ContentWindow = Instance.new("Frame")
+    
+    MinimizeButton.Name = "MinimizeButton"
+    MinimizeButton.Parent = Header
+    MinimizeButton.BackgroundColor3 = Color3.fromRGB(0, 168, 255)
+    MinimizeButton.BorderColor3 = Color3.fromRGB(0, 168, 255)
+    MinimizeButton.Position = UDim2.new(0, 185, 0, 2)
+    MinimizeButton.Size = UDim2.new(0, 22, 0, 22)
+    MinimizeButton.ZIndex = 7 + ZIndex
+    MinimizeButton.Font = Enum.Font.SourceSansLight
+    MinimizeButton.Text = "_"
+    MinimizeButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+    MinimizeButton.TextSize = 20.000
+    MinimizeButton.AutoButtonColor = false
+
+    ContentWindow.Name = "ContentWindow"
+    ContentWindow.Parent = Header
+    ContentWindow.BackgroundColor3 = Color3.fromRGB(47, 54, 64)
+    ContentWindow.BorderColor3 = Color3.fromRGB(47, 54, 64)
+    ContentWindow.Position = UDim2.new(0, 0, 0, 0)
+    ContentWindow.Size = UDim2.new(0, 207, 0, 33)
+    ContentWindow.ZIndex = 1 + ZIndex
+
+    MinimizeButton.MouseButton1Click:Connect(function()
+        ContentWindow.Visible = not ContentWindow.Visible
+        if ContentWindow.Visible then
+            MinimizeButton.Text = "_"
+        else
+            MinimizeButton.Text = "+"
+        end
+    end)
+
+    local WindowFunctions = {}
+    Sizes[WindowIndex] = 33
+    ListOffsets[WindowIndex] = 10
+
+    function WindowFunctions:Button(Name, Callback)
+        local ButtonName = Name or "Button"
+        local ButtonCallback = Callback or function() end
+        
+        Sizes[WindowIndex] = Sizes[WindowIndex] + 32
+        ContentWindow.Size = UDim2.new(0, 207, 0, Sizes[WindowIndex] + 10)
+        ListOffsets[WindowIndex] = ListOffsets[WindowIndex] + 32
+
+        local Button = Instance.new("TextButton")
+        Button.Name = "Button"
+        Button.Parent = ContentWindow
+        Button.BackgroundColor3 = Color3.fromRGB(53, 59, 72)
+        Button.BorderColor3 = Color3.fromRGB(113, 128, 147)
+        Button.Position = UDim2.new(0, 12, 0, ListOffsets[WindowIndex])
+        Button.Size = UDim2.new(0, 182, 0, 26)
+        Button.ZIndex = 2 + ZIndex
+        Button.Font = Enum.Font.SourceSans
+        Button.TextColor3 = Color3.fromRGB(245, 246, 250)
+        Button.TextSize = 16.000
+        Button.Text = ButtonName
+        Button.AutoButtonColor = false
+
+        local OriginalColor = Button.BackgroundColor3
+        local HoverColor = Color3.fromRGB(63, 69, 82)
+
+        Button.MouseEnter:Connect(function()
+            Button.BackgroundColor3 = HoverColor
+        end)
+
+        Button.MouseLeave:Connect(function()
+            Button.BackgroundColor3 = OriginalColor
+        end)
+
+        Button.MouseButton1Click:Connect(function()
+            ButtonCallback()
+        end)
+
+        PastSliders[WindowIndex] = false
+    end
+
+    function WindowFunctions:Label(Text, TextColor)
+        local LabelText = Text or "Label"
+        local Color = TextColor or Color3.fromRGB(220, 221, 225)
+        
+        Sizes[WindowIndex] = Sizes[WindowIndex] + 32
+        ContentWindow.Size = UDim2.new(0, 207, 0, Sizes[WindowIndex] + 10)
+        ListOffsets[WindowIndex] = ListOffsets[WindowIndex] + 32
+
+        local Label = Instance.new("TextLabel")
+        Label.Name = "Label"
+        Label.Parent = ContentWindow
+        Label.BackgroundColor3 = Color3.fromRGB(220, 221, 225)
+        Label.BackgroundTransparency = 1.000
+        Label.BorderColor3 = Color3.fromRGB(27, 42, 53)
+        Label.Position = UDim2.new(0, 0, 0, ListOffsets[WindowIndex])
+        Label.Size = UDim2.new(0, 206, 0, 29)
+        Label.Font = Enum.Font.SourceSans
+        Label.Text = LabelText
+        Label.TextSize = 16.000
+        Label.ZIndex = 2 + ZIndex
+        Label.TextColor3 = Color
+
+        if type(TextColor) == "boolean" and TextColor then
+            task.spawn(function()
+                while task.wait(0.1) do
+                    local Hue = tick() % 5 / 5
+                    Label.TextColor3 = Color3.fromHSV(Hue, 1, 1)
+                end
+            end)
+        end
+
+        PastSliders[WindowIndex] = false
+        return Label
+    end
+
+    function WindowFunctions:Toggle(Text, DefaultState, Callback)
+        local ToggleText = Text or "Toggle"
+        local State = DefaultState or false
+        local ToggleCallback = Callback or function() end
+        
+        Sizes[WindowIndex] = Sizes[WindowIndex] + 32
+        ContentWindow.Size = UDim2.new(0, 207, 0, Sizes[WindowIndex] + 10)
+        ListOffsets[WindowIndex] = ListOffsets[WindowIndex] + 32
+
+        local ToggleContainer = Instance.new("Frame")
+        ToggleContainer.Name = "ToggleContainer"
+        ToggleContainer.Parent = ContentWindow
+        ToggleContainer.BackgroundTransparency = 1
+        ToggleContainer.Position = UDim2.new(0, 14, 0, ListOffsets[WindowIndex])
+        ToggleContainer.Size = UDim2.new(0, 182, 0, 26)
+        ToggleContainer.ZIndex = 2 + ZIndex
+
+        local ToggleLabel = Instance.new("TextLabel")
+        ToggleLabel.Name = "ToggleLabel"
+        ToggleLabel.Parent = ToggleContainer
+        ToggleLabel.BackgroundTransparency = 1
+        ToggleLabel.Position = UDim2.new(0, 0, 0, 0)
+        ToggleLabel.Size = UDim2.new(0, 131, 0, 26)
+        ToggleLabel.Font = Enum.Font.SourceSans
+        ToggleLabel.Text = ToggleText
+        ToggleLabel.TextColor3 = Color3.fromRGB(245, 246, 250)
+        ToggleLabel.TextSize = 16.000
+        ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        ToggleLabel.ZIndex = 2 + ZIndex
+
+        local ToggleButton = Instance.new("TextButton")
+        ToggleButton.Name = "ToggleButton"
+        ToggleButton.Parent = ToggleContainer
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(47, 54, 64)
+        ToggleButton.BorderColor3 = Color3.fromRGB(113, 128, 147)
+        ToggleButton.Position = UDim2.new(1.2061069, 0, 0.0769230798, 0)
+        ToggleButton.Size = UDim2.new(0, 22, 0, 22)
+        ToggleButton.Font = Enum.Font.SourceSans
+        ToggleButton.Text = ""
+        ToggleButton.AutoButtonColor = false
+        ToggleButton.ZIndex = 2 + ZIndex
+
+        local ToggleIndicator = Instance.new("Frame")
+        ToggleIndicator.Name = "ToggleIndicator"
+        ToggleIndicator.Parent = ToggleButton
+        ToggleIndicator.BackgroundColor3 = Color3.fromRGB(68, 189, 50)
+        ToggleIndicator.BorderColor3 = Color3.fromRGB(47, 54, 64)
+        ToggleIndicator.Position = UDim2.new(0, 5, 0, 5)
+        ToggleIndicator.Size = UDim2.new(0, 12, 0, 12)
+        ToggleIndicator.Visible = State
+        ToggleIndicator.ZIndex = 2 + ZIndex
+
+        ToggleButton.MouseButton1Click:Connect(function()
+            State = not State
+            ToggleIndicator.Visible = State
+            ToggleCallback(State)
+        end)
+
+        PastSliders[WindowIndex] = false
+    end
+
+    function WindowFunctions:TextBox(Label, PlaceholderText, Callback)
+        local TextLabel = Label or "Text Box"
+        local Placeholder = PlaceholderText or "..."
+        local TextCallback = Callback or function() end
+        
+        Sizes[WindowIndex] = Sizes[WindowIndex] + 32
+        ContentWindow.Size = UDim2.new(0, 207, 0, Sizes[WindowIndex] + 10)
+        ListOffsets[WindowIndex] = ListOffsets[WindowIndex] + 32
+
+        local TextBox = Instance.new("TextBox")
+        TextBox.Parent = ContentWindow
+        TextBox.BackgroundColor3 = Color3.fromRGB(53, 59, 72)
+        TextBox.BorderColor3 = Color3.fromRGB(113, 128, 147)
+        TextBox.Position = UDim2.new(0, 99, 0, ListOffsets[WindowIndex])
+        TextBox.Size = UDim2.new(0, 95, 0, 26)
+        TextBox.Font = Enum.Font.SourceSans
+        TextBox.PlaceholderColor3 = Color3.fromRGB(220, 221, 225)
+        TextBox.PlaceholderText = Placeholder
+        TextBox.Text = ""
+        TextBox.TextColor3 = Color3.fromRGB(245, 246, 250)
+        TextBox.TextSize = 16.000
+        TextBox.ZIndex = 2 + ZIndex
+
+        local LabelText = Instance.new("TextLabel")
+        LabelText.Name = "LabelText"
+        LabelText.Parent = TextBox
+        LabelText.BackgroundTransparency = 1
+        LabelText.Position = UDim2.new(-0.894736826, 0, 0, 0)
+        LabelText.Size = UDim2.new(0, 75, 0, 26)
+        LabelText.Font = Enum.Font.SourceSans
+        LabelText.Text = TextLabel
+        LabelText.TextColor3 = Color3.fromRGB(245, 246, 250)
+        LabelText.TextSize = 16.000
+        LabelText.TextXAlignment = Enum.TextXAlignment.Left
+        LabelText.ZIndex = 2 + ZIndex
+
+        TextBox:GetPropertyChangedSignal("Text"):Connect(function()
+            TextCallback(TextBox.Text, false)
+        end)
+
+        TextBox.FocusLost:Connect(function(EnterPressed)
+            TextCallback(TextBox.Text, EnterPressed)
+        end)
+
+        PastSliders[WindowIndex] = false
+    end
+
+    function WindowFunctions:Slider(Label, MinValue, MaxValue, DefaultValue, Callback)
+        local SliderLabel = Label or "Slider"
+        local Min = MinValue or 1
+        local Max = MaxValue or 100
+        local Default = Clamp(DefaultValue or Max / 2, Min, Max)
+        local SliderCallback = Callback or function() end
+        
+        local Offset = PastSliders[WindowIndex] and 60 or 70
+        Sizes[WindowIndex] = Sizes[WindowIndex] + Offset
+        ContentWindow.Size = UDim2.new(0, 207, 0, Sizes[WindowIndex] + 10)
+        ListOffsets[WindowIndex] = ListOffsets[WindowIndex] + Offset
+
+        local SliderContainer = Instance.new("Frame")
+        SliderContainer.Name = "SliderContainer"
+        SliderContainer.Parent = ContentWindow
+        SliderContainer.BackgroundColor3 = Color3.fromRGB(47, 54, 64)
+        SliderContainer.BorderColor3 = Color3.fromRGB(113, 128, 147)
+        SliderContainer.Position = UDim2.new(0, 13, 0, ListOffsets[WindowIndex])
+        SliderContainer.Size = UDim2.new(0, 180, 0, 6)
+        SliderContainer.ZIndex = 2 + ZIndex
+
+        local SliderFill = Instance.new("Frame")
+        SliderFill.Name = "SliderFill"
+        SliderFill.Parent = SliderContainer
+        SliderFill.BackgroundColor3 = Color3.fromRGB(76, 209, 55)
+        SliderFill.BorderColor3 = Color3.fromRGB(47, 54, 64)
+        SliderFill.Size = UDim2.new(0, (SliderContainer.Size.X.Offset - 5) * ((Default - Min) / (Max - Min)), 0, 6)
+        SliderFill.ZIndex = 2 + ZIndex
+        SliderFill.BorderMode = Enum.BorderMode.Inset
+
+        local SliderHandle = Instance.new("Frame")
+        SliderHandle.Name = "SliderHandle"
+        SliderHandle.Parent = SliderContainer
+        SliderHandle.BackgroundColor3 = Color3.fromRGB(53, 59, 72)
+        SliderHandle.BorderColor3 = Color3.fromRGB(113, 128, 147)
+        SliderHandle.Position = UDim2.new(0, (SliderContainer.Size.X.Offset - 5) * ((Default - Min) / (Max - Min)), -1.333337, 0)
+        SliderHandle.Size = UDim2.new(0, 6, 0, 22)
+        SliderHandle.ZIndex = 3 + ZIndex
+
+        local CurrentValueLabel = Instance.new("TextLabel")
+        CurrentValueLabel.Name = "CurrentValueLabel"
+        CurrentValueLabel.Parent = SliderHandle
+        CurrentValueLabel.BackgroundTransparency = 1
+        CurrentValueLabel.Position = UDim2.new(0, 3, 0, 22)
+        CurrentValueLabel.Size = UDim2.new(0, 0, 0, 18)
+        CurrentValueLabel.Font = Enum.Font.SourceSans
+        CurrentValueLabel.Text = tostring(Round(Default))
+        CurrentValueLabel.TextColor3 = Color3.fromRGB(220, 221, 225)
+        CurrentValueLabel.TextSize = 14.000
+        CurrentValueLabel.ZIndex = 2 + ZIndex
+
+        local LabelText = Instance.new("TextLabel")
+        LabelText.Name = "LabelText"
+        LabelText.Parent = SliderContainer
+        LabelText.BackgroundTransparency = 1
+        LabelText.Position = UDim2.new(0, -10, 0, -35)
+        LabelText.Size = UDim2.new(0, 200, 0, 21)
+        LabelText.Font = Enum.Font.SourceSans
+        LabelText.Text = SliderLabel
+        LabelText.TextColor3 = Color3.fromRGB(245, 246, 250)
+        LabelText.TextSize = 16.000
+        LabelText.ZIndex = 2 + ZIndex
+
+        local MinLabel = Instance.new("TextLabel")
+        MinLabel.Name = "MinLabel"
+        MinLabel.Parent = SliderContainer
+        MinLabel.BackgroundTransparency = 1
+        MinLabel.Position = UDim2.new(-0.00555555569, 0, -7.33333397, 0)
+        MinLabel.Size = UDim2.new(0, 77, 0, 50)
+        MinLabel.Font = Enum.Font.SourceSans
+        MinLabel.Text = tostring(Min)
+        MinLabel.TextColor3 = Color3.fromRGB(220, 221, 225)
+        MinLabel.TextSize = 14.000
+        MinLabel.TextXAlignment = Enum.TextXAlignment.Left
+        MinLabel.ZIndex = 2 + ZIndex
+
+        local MaxLabel = Instance.new("TextLabel")
+        MaxLabel.Name = "MaxLabel"
+        MaxLabel.Parent = SliderContainer
+        MaxLabel.BackgroundTransparency = 1
+        MaxLabel.Position = UDim2.new(0.577777743, 0, -7.33333397, 0)
+        MaxLabel.Size = UDim2.new(0, 77, 0, 50)
+        MaxLabel.Font = Enum.Font.SourceSans
+        MaxLabel.Text = tostring(Max)
+        MaxLabel.TextColor3 = Color3.fromRGB(220, 221, 225)
+        MaxLabel.TextSize = 14.000
+        MaxLabel.TextXAlignment = Enum.TextXAlignment.Right
+        MaxLabel.ZIndex = 2 + ZIndex
+
+        local IsDragging = false
+        local DragStartPosition = 0
+
+        local function UpdateSliderFromMouse()
+            if not IsDragging then return end
+            
+            local MousePosition = UserInputService:GetMouseLocation()
+            local SliderPosition = SliderContainer.AbsolutePosition
+            local SliderSize = SliderContainer.AbsoluteSize
+            
+            local RelativeX = Clamp(MousePosition.X - SliderPosition.X, 0, SliderSize.X - 6)
+            local NormalizedValue = RelativeX / (SliderSize.X - 6)
+            local Value = Lerp(Min, Max, NormalizedValue)
+            
+            SliderHandle.Position = UDim2.new(0, RelativeX, -1.33333337, 0)
+            SliderFill.Size = UDim2.new(0, RelativeX, 0, 6)
+            CurrentValueLabel.Text = tostring(Round(Value))
+            
+            SliderCallback(Round(Value))
+        end
+
+        local function OnDragStarted()
+            IsDragging = true
+            DragStartPosition = UserInputService:GetMouseLocation().X
+            
+            local DragConnection
+            DragConnection = RunService.RenderStepped:Connect(function()
+                if not IsDragging then
+                    DragConnection:Disconnect()
+                    return
+                end
+                UpdateSliderFromMouse()
+            end)
+            
+            UserInputService.InputEnded:Connect(function(Input)
+                if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    IsDragging = false
+                    UpdateSliderFromMouse()
+                end
+            end)
+        end
+
+        SliderContainer.InputBegan:Connect(function(Input)
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                OnDragStarted()
+            end
+        end)
+
+        SliderHandle.InputBegan:Connect(function(Input)
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                OnDragStarted()
+            end
+        end)
+
+        PastSliders[WindowIndex] = true
+
+        local SliderObject = {}
+        
+        function SliderObject:SetValue(Value)
+            Value = Clamp(Value, Min, Max)
+            local NormalizedValue = (Value - Min) / (Max - Min)
+            local XPosition = NormalizedValue * (SliderContainer.Size.X.Offset - 6)
+            
+            SliderHandle.Position = UDim2.new(0, XPosition, -1.33333337, 0)
+            SliderFill.Size = UDim2.new(0, XPosition, 0, 6)
+            CurrentValueLabel.Text = tostring(Round(Value))
+            
+            SliderCallback(Round(Value))
+        end
+
+        function SliderObject:GetValue()
+            return tonumber(CurrentValueLabel.Text) or Default
+        end
+
+        return SliderObject
+    end
+
+    function WindowFunctions:Dropdown(Label, Options, Callback, IsSelective)
+        local DropdownLabel = Label or "Dropdown"
+        local OptionList = Options or {}
+        local DropdownCallback = Callback or function() end
+        local Selective = IsSelective or false
+        
+        Sizes[WindowIndex] = Sizes[WindowIndex] + 32
+        ContentWindow.Size = UDim2.new(0, 207, 0, Sizes[WindowIndex] + 10)
+        ListOffsets[WindowIndex] = ListOffsets[WindowIndex] + 32
+
+        local DropdownButton = Instance.new("TextButton")
+        DropdownButton.Name = "DropdownButton"
+        DropdownButton.Parent = ContentWindow
+        DropdownButton.BackgroundColor3 = Color3.fromRGB(53, 59, 72)
+        DropdownButton.BorderColor3 = Color3.fromRGB(113, 128, 147)
+        DropdownButton.Position = UDim2.new(0, 12, 0, ListOffsets[WindowIndex])
+        DropdownButton.Size = UDim2.new(0, 182, 0, 26)
+        DropdownButton.Font = Enum.Font.SourceSans
+        DropdownButton.Text = DropdownLabel
+        DropdownButton.TextColor3 = Color3.fromRGB(245, 246, 250)
+        DropdownButton.TextSize = 16.000
+        DropdownButton.AutoButtonColor = false
+        DropdownButton.ZIndex = 3 + ZIndex
+
+        local ArrowIcon = Instance.new("TextLabel")
+        ArrowIcon.Name = "ArrowIcon"
+        ArrowIcon.Parent = DropdownButton
+        ArrowIcon.BackgroundTransparency = 1
+        ArrowIcon.Position = UDim2.new(0, 155, 0, 2)
+        ArrowIcon.Size = UDim2.new(0, 27, 0, 22)
+        ArrowIcon.Font = Enum.Font.SourceSans
+        ArrowIcon.Text = "^"
+        ArrowIcon.TextColor3 = Color3.fromRGB(220, 221, 225)
+        ArrowIcon.TextSize = 20.000
+        ArrowIcon.TextYAlignment = Enum.TextYAlignment.Bottom
+        ArrowIcon.ZIndex = 4 + ZIndex
+
+        local DropdownList = Instance.new("ScrollingFrame")
+        DropdownList.Name = "DropdownList"
+        DropdownList.Parent = DropdownButton
+        DropdownList.Active = true
+        DropdownList.BackgroundColor3 = Color3.fromRGB(53, 59, 72)
+        DropdownList.BorderColor3 = Color3.fromRGB(53, 59, 72)
+        DropdownList.Position = UDim2.new(0, 0, 0, 28)
+        DropdownList.Size = UDim2.new(0, 182, 0, 0)
+        DropdownList.Visible = false
+        DropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
+        DropdownList.ScrollBarThickness = 4
+        DropdownList.VerticalScrollBarPosition = Enum.VerticalScrollBarPosition.Left
+        DropdownList.ZIndex = 5 + ZIndex
+        DropdownList.ScrollingDirection = Enum.ScrollingDirection.Y
+        DropdownList.ScrollBarImageColor3 = Color3.fromRGB(220, 221, 225)
+
+        table.insert(Dropdowns, DropdownList)
+
+        DropdownButton.MouseButton1Click:Connect(function()
+            for _, DropdownFrame in ipairs(Dropdowns) do
+                if DropdownFrame ~= DropdownList then
+                    DropdownFrame.Visible = false
+                end
+            end
+            
+            DropdownList.Visible = not DropdownList.Visible
+            if DropdownList.Visible then
+                ArrowIcon.Rotation = 180
+            else
+                ArrowIcon.Rotation = 0
+            end
+        end)
+
+        local DropdownFunctions = {}
+        local ListHeight = 0
+
+        function DropdownFunctions:AddOption(OptionName)
+            local OptionButton = Instance.new("TextButton")
+            OptionButton.Name = "OptionButton"
+            OptionButton.Parent = DropdownList
+            OptionButton.BackgroundColor3 = Color3.fromRGB(53, 59, 72)
+            OptionButton.BorderColor3 = Color3.fromRGB(113, 128, 147)
+            OptionButton.Position = UDim2.new(0, 6, 0, ListHeight + 1)
+            OptionButton.Size = UDim2.new(0, 170, 0, 26)
+            OptionButton.Font = Enum.Font.SourceSans
+            OptionButton.TextColor3 = Color3.fromRGB(245, 246, 250)
+            OptionButton.TextSize = 16.000
+            OptionButton.Text = OptionName
+            OptionButton.AutoButtonColor = false
+            OptionButton.ZIndex = 6 + ZIndex
+
+            local OriginalColor = OptionButton.BackgroundColor3
+            local HoverColor = Color3.fromRGB(63, 69, 82)
+
+            OptionButton.MouseEnter:Connect(function()
+                OptionButton.BackgroundColor3 = HoverColor
+            end)
+
+            OptionButton.MouseLeave:Connect(function()
+                OptionButton.BackgroundColor3 = OriginalColor
+            end)
+
+            OptionButton.MouseButton1Click:Connect(function()
+                DropdownCallback(OptionName)
+                DropdownList.Visible = false
+                ArrowIcon.Rotation = 0
+                
+                if Selective then
+                    DropdownButton.Text = OptionName
+                end
+            end)
+
+            ListHeight = ListHeight + 27
+            DropdownList.CanvasSize = UDim2.new(0, 182, 0, ListHeight + 1)
+            
+            if #DropdownList:GetChildren() < 8 then
+                DropdownList.Size = UDim2.new(0, 182, 0, DropdownList.Size.Y.Offset + 27)
+            end
+        end
+
+        function DropdownFunctions:RemoveOption(OptionName)
+            local OptionFound = false
+            
+            for _, Child in ipairs(DropdownList:GetChildren()) do
+                if Child:IsA("TextButton") and Child.Text == OptionName then
+                    Child:Destroy()
+                    OptionFound = true
+                    
+                    ListHeight = ListHeight - 27
+                    DropdownList.CanvasSize = UDim2.new(0, 182, 0, ListHeight + 1)
+                    
+                    if #DropdownList:GetChildren() < 8 then
+                        DropdownList.Size = UDim2.new(0, 182, 0, DropdownList.Size.Y.Offset - 27)
+                    end
+                    break
+                end
+            end
+            
+            if not OptionFound then
+                warn("Option '" .. OptionName .. "' not found in dropdown.")
+            end
+        end
+
+        function DropdownFunctions:ClearOptions()
+            for _, Child in ipairs(DropdownList:GetChildren()) do
+                if Child:IsA("TextButton") then
+                    Child:Destroy()
+                end
+            end
+            
+            ListHeight = 0
+            DropdownList.CanvasSize = UDim2.new(0, 182, 0, 0)
+            DropdownList.Size = UDim2.new(0, 182, 0, 0)
+        end
+
+        for _, Option in ipairs(OptionList) do
+            DropdownFunctions:AddOption(Option)
+        end
+
+        return DropdownFunctions
+    end
+
+    return WindowFunctions
+end
+
+return Library
