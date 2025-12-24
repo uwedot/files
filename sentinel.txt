@@ -23,15 +23,15 @@ local Colors = {
 local Library = {}
 
 function Library:Window(Title)
-    if CoreGui:FindFirstChild("SentinelLib") then
-	       warn("Sentinel already exists! Cannot create another instance.")
-	       return
-    end
+	local ExistingUI = CoreGui:FindFirstChild("SentinelLib")
+	if ExistingUI then
+		warn("Sentinel already exists! Destroying old instance and creating new one.")
+		ExistingUI:Destroy()
+	end
+
 	local Ui = Instance.new("ScreenGui")
 	Ui.Name = "SentinelLib"
 	Ui.Parent = CoreGui
-	Ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	Ui.IgnoreGuiInset = true
 	Ui.ResetOnSpawn = false
 
 	local Main = Instance.new("Frame")
@@ -43,7 +43,6 @@ function Library:Window(Title)
 	Main.AnchorPoint = Vector2.new(0.5, 0.5)
 	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 	Main.Active = true
-	Main.Selectable = true
 
 	local OldPosition = Main.Position
 	local Dragging = false
@@ -578,9 +577,7 @@ function Library:Window(Title)
 			SliderClick.Size = UDim2.new(1, -12, 0, 6)
 			SliderClick.AutoButtonColor = false
 			SliderClick.Text = ""
-			SliderClick.Selectable = false
 			SliderClick.Active = true
-			SliderClick.SelectionImageObject = nil
 
 			local SliderClickCorner = Instance.new("UICorner")
 			SliderClickCorner.CornerRadius = UDim.new(0, 6)
@@ -660,8 +657,6 @@ function Library:Window(Title)
 			TouchArea.Text = ""
 			TouchArea.ZIndex = 2
 			TouchArea.Active = true
-			TouchArea.Selectable = false
-			TouchArea.SelectionImageObject = nil
 			TouchArea.InputBegan:Connect(HandleInputBegan)
 		end
 
@@ -850,8 +845,6 @@ function Library:Window(Title)
 					NoOption.TextSize = 14
 					NoOption.TextXAlignment = Enum.TextXAlignment.Center
 					NoOption.AutoButtonColor = false
-					NoOption.Selectable = false
-					NoOption.Active = false
 
 					local NoOptionCorner = Instance.new("UICorner")
 					NoOptionCorner.CornerRadius = UDim.new(0, 6)
