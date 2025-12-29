@@ -589,6 +589,8 @@ function Library:Window(Title)
             local SliderDragging = false
             local CurrentInput = nil
             local LastValue = Default
+            local PendingCallback = false
+            local LastCallbackValue = Default
 
             local function RoundToIncrement(value)
                 if Increment == 0 then return value end
@@ -602,7 +604,7 @@ function Library:Window(Title)
                 return Formatted
             end
 
-            local function UpdateSlider(Percent)
+            local function UpdateSlider(Percent, CallOnChange)
                 local RawValue = Min + (Percent * (Max - Min))
                 local SliderValue = RoundToIncrement(RawValue)
                 local AdjustedPercent = (SliderValue - Min) / (Max - Min)
@@ -612,8 +614,13 @@ function Library:Window(Title)
                 
                 if SliderValue ~= LastValue then
                     LastValue = SliderValue
-                    if Callback then
-                        Callback(SliderValue)
+                    if CallOnChange then
+                        if Callback then
+                            Callback(SliderValue)
+                        end
+                    else
+                        PendingCallback = true
+                        LastCallbackValue = SliderValue
                     end
                 end
                 
@@ -626,7 +633,7 @@ function Library:Window(Title)
                     0,
                     1
                 )
-                UpdateSlider(Percent)
+                UpdateSlider(Percent, false)
             end
 
             SliderClick.InputBegan:Connect(function(Input)
@@ -637,10 +644,20 @@ function Library:Window(Title)
                     
                     Slide(Input)
                     
-                    Input.Changed:Connect(function()
+                    local Connection
+                    Connection = Input.Changed:Connect(function()
                         if Input.UserInputState == Enum.UserInputState.End then
                             SliderDragging = false
                             CurrentInput = nil
+                            
+                            if PendingCallback and Callback then
+                                Callback(LastCallbackValue)
+                                PendingCallback = false
+                            end
+                            
+                            if Connection then
+                                Connection:Disconnect()
+                            end
                         end
                     end)
                 end
