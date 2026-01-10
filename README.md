@@ -1,2 +1,2 @@
 # files
-files compressed to save size
+files are compressed to save size
