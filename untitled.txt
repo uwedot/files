@@ -58,7 +58,15 @@ function NotificationSystem:Notify(Config)
         error = Color3.fromRGB(231, 76, 60)
     }
     
+    local TypeIcons = {
+        info = "rbxassetid://6022668879",
+        success = "rbxassetid://6023426926",
+        warning = "rbxassetid://6031086176",
+        error = "rbxassetid://6034461619"
+    }
+    
     local AccentColor = TypeColors[Type] or TypeColors.info
+    local IconImage = TypeIcons[Type] or TypeIcons.info
     
     local Notification = Create("Frame", {
         Name = "Notification",
@@ -91,12 +99,22 @@ function NotificationSystem:Notify(Config)
         Size = UDim2.new(0, 2, 1, 0)
     })
     
+    local Icon = Create("ImageLabel", {
+        Name = "Icon",
+        Parent = Notification,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 12, 0, 10),
+        Size = UDim2.new(0, 24, 0, 24),
+        Image = IconImage,
+        ImageColor3 = AccentColor
+    })
+    
     local Content = Create("Frame", {
         Name = "Content",
         Parent = Notification,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 14, 0, 10),
-        Size = UDim2.new(1, -54, 1, -20)
+        Position = UDim2.new(0, 44, 0, 10),
+        Size = UDim2.new(1, -84, 1, -20)
     })
     
     local TitleLabel = Create("TextLabel", {
@@ -127,17 +145,18 @@ function NotificationSystem:Notify(Config)
         TextYAlignment = Enum.TextYAlignment.Top
     })
     
-    local CloseButton = Create("ImageButton", {
+    local CloseButton = Create("TextButton", {
         Name = "Close",
         Parent = Notification,
         AnchorPoint = Vector2.new(1, 0),
         BackgroundTransparency = 1,
-        Position = UDim2.new(1, -10, 0, 10),
-        Size = UDim2.new(0, 16, 0, 16),
-        Image = "rbxassetid://3926307971",
-        ImageColor3 = Color3.fromRGB(166, 166, 166),
-        ImageRectOffset = Vector2.new(284, 4),
-        ImageRectSize = Vector2.new(24, 24)
+        Position = UDim2.new(1, -10, 0, 8),
+        Size = UDim2.new(0, 20, 0, 20),
+        Font = Enum.Font.GothamBold,
+        Text = "×",
+        TextColor3 = Color3.fromRGB(166, 166, 166),
+        TextSize = 20,
+        AutoButtonColor = false
     })
     
     local ProgressBar = Create("Frame", {
@@ -156,7 +175,7 @@ function NotificationSystem:Notify(Config)
         Description,
         12,
         Enum.Font.Gotham,
-        Vector2.new(232, math.huge)
+        Vector2.new(202, math.huge)
     ).Y
     
     local TotalHeight = math.max(60, math.min(150, 40 + DescHeight))
@@ -200,11 +219,11 @@ function NotificationSystem:Notify(Config)
     
     -- Hover effects
     CloseButton.MouseEnter:Connect(function()
-        TweenService:Create(CloseButton, TweenFast, {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+        TweenService:Create(CloseButton, TweenFast, {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
     end)
     
     CloseButton.MouseLeave:Connect(function()
-        TweenService:Create(CloseButton, TweenFast, {ImageColor3 = Color3.fromRGB(166, 166, 166)}):Play()
+        TweenService:Create(CloseButton, TweenFast, {TextColor3 = Color3.fromRGB(166, 166, 166)}):Play()
     end)
 end
 
