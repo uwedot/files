@@ -1,0 +1,245 @@
+local TweenService = cloneref(game:GetService("TweenService"))
+local CoreGui = cloneref(game:GetService("CoreGui"))
+local TextService = game:GetService("TextService")
+
+local NotificationSystem = {}
+
+local Existing = CoreGui:FindFirstChild("SentinelNotifications")
+if Existing then
+    Existing:Destroy()
+end
+
+local TweenFast = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local TweenNormal = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local function Create(ClassName, Properties)
+    local Instance = Instance.new(ClassName)
+    for Prop, Value in pairs(Properties) do
+        Instance[Prop] = Value
+    end
+    return Instance
+end
+
+local ScreenGui = Create("ScreenGui", {
+    Name = "SentinelNotifications",
+    Parent = CoreGui,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    ResetOnSpawn = false
+})
+
+local NotificationHolder = Create("Frame", {
+    Name = "NotificationHolder",
+    Parent = ScreenGui,
+    AnchorPoint = Vector2.new(1, 0),
+    BackgroundTransparency = 1,
+    Position = UDim2.new(1, -20, 0, 20),
+    Size = UDim2.new(0, 300, 0, 0),
+    ZIndex = 1000
+})
+
+Create("UIListLayout", {
+    Parent = NotificationHolder,
+    HorizontalAlignment = Enum.HorizontalAlignment.Right,
+    VerticalAlignment = Enum.VerticalAlignment.Top,
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Padding = UDim.new(0, 10)
+})
+
+function NotificationSystem:Notify(Config)
+    local Title = Config.Title or "Notification"
+    local Description = Config.Description or ""
+    local Duration = Config.Duration or 5
+    local Type = Config.Type or "info" -- info, success, warning, error
+    
+    local TypeColors = {
+        info = Color3.fromRGB(17, 85, 232),
+        success = Color3.fromRGB(46, 204, 113),
+        warning = Color3.fromRGB(241, 196, 15),
+        error = Color3.fromRGB(231, 76, 60)
+    }
+    
+    local AccentColor = TypeColors[Type] or TypeColors.info
+    
+    local Notification = Create("Frame", {
+        Name = "Notification",
+        Parent = NotificationHolder,
+        BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 0),
+        ClipsDescendants = true,
+        ZIndex = 1001
+    })
+    
+    Create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = Notification})
+    
+    local Accent = Create("Frame", {
+        Name = "Accent",
+        Parent = Notification,
+        BackgroundColor3 = AccentColor,
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 4, 1, 0)
+    })
+    
+    Create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = Accent})
+    Create("Frame", {
+        Name = "Cover",
+        Parent = Accent,
+        AnchorPoint = Vector2.new(1, 0.5),
+        BackgroundColor3 = AccentColor,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, 0, 0.5, 0),
+        Size = UDim2.new(0, 2, 1, 0)
+    })
+    
+    local Content = Create("Frame", {
+        Name = "Content",
+        Parent = Notification,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 14, 0, 10),
+        Size = UDim2.new(1, -54, 1, -20)
+    })
+    
+    local TitleLabel = Create("TextLabel", {
+        Name = "Title",
+        Parent = Content,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, 16),
+        Font = Enum.Font.GothamBold,
+        Text = Title,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Top
+    })
+    
+    local DescLabel = Create("TextLabel", {
+        Name = "Description",
+        Parent = Content,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 20),
+        Size = UDim2.new(1, 0, 1, -20),
+        Font = Enum.Font.Gotham,
+        Text = Description,
+        TextColor3 = Color3.fromRGB(200, 200, 200),
+        TextSize = 12,
+        TextWrapped = true,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Top
+    })
+    
+    local CloseButton = Create("ImageButton", {
+        Name = "Close",
+        Parent = Notification,
+        AnchorPoint = Vector2.new(1, 0),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, -10, 0, 10),
+        Size = UDim2.new(0, 16, 0, 16),
+        Image = "rbxassetid://3926307971",
+        ImageColor3 = Color3.fromRGB(166, 166, 166),
+        ImageRectOffset = Vector2.new(284, 4),
+        ImageRectSize = Vector2.new(24, 24)
+    })
+    
+    local ProgressBar = Create("Frame", {
+        Name = "Progress",
+        Parent = Notification,
+        AnchorPoint = Vector2.new(0, 1),
+        BackgroundColor3 = AccentColor,
+        BackgroundTransparency = 0.7,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 3)
+    })
+    
+    -- Calculate height
+    local DescHeight = TextService:GetTextSize(
+        Description,
+        12,
+        Enum.Font.Gotham,
+        Vector2.new(232, math.huge)
+    ).Y
+    
+    local TotalHeight = math.max(60, math.min(150, 40 + DescHeight))
+    
+    -- Animate in
+    Notification.Size = UDim2.new(1, 0, 0, 0)
+    TweenService:Create(Notification, TweenNormal, {Size = UDim2.new(1, 0, 0, TotalHeight)}):Play()
+    
+    -- Progress bar animation
+    local ProgressTween = TweenService:Create(
+        ProgressBar,
+        TweenInfo.new(Duration, Enum.EasingStyle.Linear),
+        {Size = UDim2.new(0, 0, 0, 3)}
+    )
+    ProgressTween:Play()
+    
+    -- Close function
+    local function Close()
+        ProgressTween:Cancel()
+        
+        local CloseTween = TweenService:Create(
+            Notification,
+            TweenFast,
+            {Size = UDim2.new(1, 0, 0, 0)}
+        )
+        CloseTween:Play()
+        
+        CloseTween.Completed:Connect(function()
+            Notification:Destroy()
+        end)
+    end
+    
+    CloseButton.MouseButton1Click:Connect(Close)
+    
+    -- Auto close after duration
+    task.delay(Duration, function()
+        if Notification.Parent then
+            Close()
+        end
+    end)
+    
+    -- Hover effects
+    CloseButton.MouseEnter:Connect(function()
+        TweenService:Create(CloseButton, TweenFast, {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    end)
+    
+    CloseButton.MouseLeave:Connect(function()
+        TweenService:Create(CloseButton, TweenFast, {ImageColor3 = Color3.fromRGB(166, 166, 166)}):Play()
+    end)
+end
+
+return NotificationSystem
+
+--[[
+USAGE EXAMPLE:
+
+local Notify = loadstring(game:HttpGet("your_script_url"))()
+
+Notify:Notify({
+    Title = "Welcome!",
+    Description = "Notification system loaded successfully.",
+    Duration = 5,
+    Type = "success"
+})
+
+Notify:Notify({
+    Title = "Warning",
+    Description = "This is a warning message.",
+    Duration = 4,
+    Type = "warning"
+})
+
+Notify:Notify({
+    Title = "Error",
+    Description = "Something went wrong!",
+    Duration = 6,
+    Type = "error"
+})
+
+Notify:Notify({
+    Title = "Info",
+    Description = "Here's some information for you.",
+    Duration = 3,
+    Type = "info"
+})
+]]
