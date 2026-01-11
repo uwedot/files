@@ -198,108 +198,158 @@ IconScroll.ScrollBarThickness = 3
 IconScroll.BackgroundTransparency = 1
 IconScroll.Parent = Lucide
 
-local UIGrid = Instance.new("UIGridLayout")
-UIGrid.CellSize = UDim2.new(0, 60, 0, 60)
-UIGrid.CellPadding = UDim2.new(0, 6, 0, 6)
-UIGrid.SortOrder = Enum.SortOrder.LayoutOrder
-UIGrid.Parent = IconScroll
+-- Virtualization Setup
+local CELL_SIZE = 60
+local CELL_PADDING = 6
+local ITEMS_PER_ROW = 6
+local BUFFER_ROWS = 4
 
-local IconHolders = {}
-local IconCount = #LucideIcons
+local FilteredIcons = {}
+local IconPool = {}
+local ActiveCells = {}
 
-UIGrid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    IconScroll.CanvasSize = UDim2.new(0, 0, 0, UIGrid.AbsoluteContentSize.Y + 20)
-end)
+local function GetAssetID(Asset)
+    return Asset:match("%d+$") or ""
+end
 
-local BATCH_SIZE = 50
-local CurrentBatch = 1
+local function UpdateFilteredIcons(Query)
+    FilteredIcons = {}
+    
+    if Query == "" then
+        for I = 1, #LucideIcons do
+            table.insert(FilteredIcons, {Index = I, Asset = LucideIcons[I], ID = GetAssetID(LucideIcons[I])})
+        end
+    else
+        Query = Query:lower()
+        for I = 1, #LucideIcons do
+            local Asset = LucideIcons[I]
+            local ID = GetAssetID(Asset)
+            if ID:find(Query, 1, true) then
+                table.insert(FilteredIcons, {Index = I, Asset = Asset, ID = ID})
+            end
+        end
+    end
+    
+    local TotalRows = math.ceil(#FilteredIcons / ITEMS_PER_ROW)
+    local ContentHeight = TotalRows * (CELL_SIZE + CELL_PADDING) + 20
+    IconScroll.CanvasSize = UDim2.new(0, 0, 0, ContentHeight)
+end
 
-local function CreateIconBatch(StartIdx, EndIdx)
-    for I = StartIdx, math.min(EndIdx, IconCount) do
-        local Asset = LucideIcons[I]
-        local AssetID = Asset:match("%d+$") or ""
-        
+local function GetOrCreateCell()
+    local Cell = table.remove(IconPool)
+    
+    if not Cell then
         local Holder = Instance.new("Frame")
         Holder.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-        Holder.Size = UDim2.new(0, 80, 0, 80)
+        Holder.Size = UDim2.new(0, CELL_SIZE, 0, CELL_SIZE)
         Holder.BorderSizePixel = 0
-        Holder.LayoutOrder = I
         Holder.Parent = IconScroll
         AddCorner(Holder, UDim.new(0, 10))
 
         local ImgBtn = Instance.new("ImageButton")
         ImgBtn.Size = UDim2.new(0, 50, 0, 50)
-        ImgBtn.Position = UDim2.new(0.5, -25, 0, 8)
+        ImgBtn.Position = UDim2.new(0.5, -25, 0, 5)
         ImgBtn.BackgroundTransparency = 1
-        ImgBtn.Image = Asset
         ImgBtn.Parent = Holder
         ImgBtn.Name = "IconBtn"
         
-        ImgBtn.MouseButton1Click:Connect(function()
-            PreviewImage.Image = Asset
-            IDLabel.Text = AssetID
-            CopyID.Visible = true
-        end)
-
-        IconHolders[I] = {Holder = Holder, AssetID = AssetID}
+        Cell = {Holder = Holder, Button = ImgBtn}
     end
+    
+    Cell.Holder.Parent = IconScroll
+    return Cell
 end
 
-local function LoadIconsInBatches()
-    local TotalBatches = math.ceil(IconCount / BATCH_SIZE)
+local function RecycleCell(Cell)
+    Cell.Holder.Parent = nil
+    table.insert(IconPool, Cell)
+end
+
+local function UpdateCell(Cell, IconData, Row, Col)
+    local XPos = Col * (CELL_SIZE + CELL_PADDING)
+    local YPos = Row * (CELL_SIZE + CELL_PADDING)
     
-    local function LoadNextBatch()
-        if CurrentBatch > TotalBatches then return end
-        
-        local StartIdx = (CurrentBatch - 1) * BATCH_SIZE + 1
-        local EndIdx = CurrentBatch * BATCH_SIZE
-        
-        CreateIconBatch(StartIdx, EndIdx)
-        CurrentBatch = CurrentBatch + 1
-        
-        if CurrentBatch <= TotalBatches then
-            RunService.Heartbeat:Wait()
-            LoadNextBatch()
+    Cell.Holder.Position = UDim2.new(0, XPos, 0, YPos)
+    Cell.Button.Image = IconData.Asset
+    
+    if Cell.Connection then
+        Cell.Connection:Disconnect()
+    end
+    
+    Cell.Connection = Cell.Button.MouseButton1Click:Connect(function()
+        PreviewImage.Image = IconData.Asset
+        IDLabel.Text = IconData.ID
+        CopyID.Visible = true
+    end)
+end
+
+local function RenderVisibleIcons()
+    local ScrollPos = IconScroll.CanvasPosition.Y
+    local ViewportHeight = IconScroll.AbsoluteSize.Y
+    
+    local StartRow = math.max(0, math.floor(ScrollPos / (CELL_SIZE + CELL_PADDING)) - BUFFER_ROWS)
+    local EndRow = math.ceil((ScrollPos + ViewportHeight) / (CELL_SIZE + CELL_PADDING)) + BUFFER_ROWS
+    
+    local NewActiveCells = {}
+    
+    for Row = StartRow, EndRow do
+        for Col = 0, ITEMS_PER_ROW - 1 do
+            local Index = Row * ITEMS_PER_ROW + Col + 1
+            
+            if Index <= #FilteredIcons then
+                local Key = Row .. "_" .. Col
+                local Cell = ActiveCells[Key]
+                
+                if not Cell then
+                    Cell = GetOrCreateCell()
+                    UpdateCell(Cell, FilteredIcons[Index], Row, Col)
+                end
+                
+                NewActiveCells[Key] = Cell
+            end
         end
     end
     
-    LoadNextBatch()
+    for Key, Cell in pairs(ActiveCells) do
+        if not NewActiveCells[Key] then
+            RecycleCell(Cell)
+        end
+    end
+    
+    ActiveCells = NewActiveCells
 end
 
-task.spawn(LoadIconsInBatches)
+UpdateFilteredIcons("")
+RenderVisibleIcons()
+
+local RenderConnection
+RenderConnection = RunService.Heartbeat:Connect(function()
+    if Lucide.Visible then
+        RenderVisibleIcons()
+    end
+end)
+
+IconScroll:GetPropertyChangedSignal("CanvasPosition"):Connect(RenderVisibleIcons)
 
 local LastQuery = ""
-local function UpdateSearch(Query)
-    if Query == LastQuery then return end
-    LastQuery = Query
-    
-    local IsEmpty = Query == ""
-    
-    if IsEmpty then
-        for I = 1, IconCount do
-            local Holder = IconHolders[I]
-            if Holder then
-                Holder.Holder.Visible = true
-            end
-        end
-    else
-        Query = Query:lower()
-        for I = 1, IconCount do
-            local V = IconHolders[I]
-            if V then
-                V.Holder.Visible = V.AssetID:find(Query, 1, true) ~= nil
-            end
-        end
-    end
-end
-
 local SearchDebounce
 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     if SearchDebounce then
         task.cancel(SearchDebounce)
     end
     SearchDebounce = task.delay(0.15, function()
-        UpdateSearch(SearchBox.Text)
+        local Query = SearchBox.Text
+        if Query ~= LastQuery then
+            LastQuery = Query
+            
+            for _, Cell in pairs(ActiveCells) do
+                RecycleCell(Cell)
+            end
+            ActiveCells = {}
+            
+            UpdateFilteredIcons(Query)
+            RenderVisibleIcons()
+        end
     end)
 end)
 
@@ -335,5 +385,8 @@ end
 Close.MouseButton1Click:Connect(CloseGUI)
 Open.MouseButton1Click:Connect(OpenGUI)
 RemoveBtn.MouseButton1Click:Connect(function()
+    if RenderConnection then
+        RenderConnection:Disconnect()
+    end
     ScreenGui:Destroy()
 end)
