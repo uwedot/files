@@ -29,7 +29,6 @@ local Color = {
 
 local Assets = {
     MenuIcon = "rbxassetid://86862177543059",
-    CloseIcon = "rbxassetid://7743878857",
     MaximizeIcon = "rbxassetid://10734886735",
     RestoreIcon = "rbxassetid://10734895698",
     DropdownArrow = "rbxassetid://10709790948"
@@ -123,12 +122,12 @@ end)
 
 local Library = {}
 
-function Library:Window(config)
-    assert(config.SubTitle, "SubTitle is required")
-    assert(config.Size, "Size is required")
-    assert(config.TabWidth, "TabWidth is required")
+function Library:Window(Title)
+    Title = Title or "DZ HUB"
     
-    local WindowConfig = { Size = config.Size, TabWidth = config.TabWidth }
+    local WindowSize = UDim2.new(0, 490, 0, 330)
+    local TabWidth = 130
+    
     local UiTab = {}
     local FirstTabCreated = false
     local CurrentPage = ""
@@ -152,7 +151,7 @@ function Library:Window(config)
     MainFrame.BackgroundColor3 = Color.Background
     MainFrame.Position = UDIM2(0.5, 0, 0.45, 0)
     MainFrame.Size = UDIM2(0, 0, 0, 0)
-    MainFrame:TweenSize(WindowConfig.Size, "Out", "Quad", 0.4, true)
+    MainFrame:TweenSize(WindowSize, "Out", "Quad", 0.4, true)
     CreateRounded(MainFrame, 12)
     
     local ResizeHandle = NEW("Frame")
@@ -182,8 +181,8 @@ function Library:Window(config)
     TitleLabel.Position = UDIM2(0, 15, 0.5, 0)
     TitleLabel.AnchorPoint = VEC2(0, 0.5)
     TitleLabel.Size = UDIM2(0, 1, 0, 25)
-    TitleLabel.Font = Enum.Font.GothamBold
-    TitleLabel.Text = "DZ HUB"
+    TitleLabel.Font = Enum.Font.Cartoon
+    TitleLabel.Text = Title
     TitleLabel.TextSize = 20
     TitleLabel.TextColor3 = Color.White
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -191,44 +190,12 @@ function Library:Window(config)
     local TitleSize = TextService:GetTextSize(TitleLabel.Text, TitleLabel.TextSize, TitleLabel.Font, VEC2(9999, 9999))
     TitleLabel.Size = UDIM2(0, TitleSize.X, 0, 25)
     
-    local SubTitleLabel = NEW("TextLabel")
-    SubTitleLabel.Name = "SubTitleLabel"
-    SubTitleLabel.Parent = TitleLabel
-    SubTitleLabel.BackgroundTransparency = 1
-    SubTitleLabel.Position = UDIM2(0, TitleSize.X + 8, 0.5, 0)
-    SubTitleLabel.Size = UDIM2(0, 1, 0, 20)
-    SubTitleLabel.Font = Enum.Font.Cartoon
-    SubTitleLabel.AnchorPoint = VEC2(0, 0.5)
-    SubTitleLabel.Text = config.SubTitle
-    SubTitleLabel.TextSize = 15
-    SubTitleLabel.TextColor3 = Color.DarkGray
-    
-    local SubtitleSize = TextService:GetTextSize(SubTitleLabel.Text, SubTitleLabel.TextSize, SubTitleLabel.Font, VEC2(9999, 9999))
-    SubTitleLabel.Size = UDIM2(0, SubtitleSize.X, 0, 25)
-    
-    local CloseBtn = NEW("ImageButton")
-    CloseBtn.Name = "CloseBtn"
-    CloseBtn.Parent = TopBar
-    CloseBtn.BackgroundTransparency = 1
-    CloseBtn.AnchorPoint = VEC2(1, 0.5)
-    CloseBtn.Position = UDIM2(1, -15, 0.5, 0)
-    CloseBtn.Size = UDIM2(0, 20, 0, 20)
-    CloseBtn.Image = Assets.CloseIcon
-    CloseBtn.ImageColor3 = Color.LightGray
-    CreateRounded(CloseBtn, 3)
-    
-    CloseBtn.MouseButton1Click:Connect(function()
-        for i = 1, #Connections do Connections[i]:Disconnect() end
-        if MainGui.Parent then MainGui:Destroy() end
-        if MenuButtonGui.Parent then MenuButtonGui:Destroy() end
-    end)
-    
     local MaximizeBtn = NEW("ImageButton")
     MaximizeBtn.Name = "MaximizeBtn"
     MaximizeBtn.Parent = TopBar
     MaximizeBtn.BackgroundTransparency = 1
     MaximizeBtn.AnchorPoint = VEC2(1, 0.5)
-    MaximizeBtn.Position = UDIM2(1, -50, 0.5, 0)
+    MaximizeBtn.Position = UDIM2(1, -15, 0.5, 0)
     MaximizeBtn.Size = UDIM2(0, 20, 0, 20)
     MaximizeBtn.Image = Assets.MaximizeIcon
     MaximizeBtn.ImageColor3 = Color.LightGray
@@ -239,7 +206,7 @@ function Library:Window(config)
     TabContainer.Parent = MainFrame
     TabContainer.BackgroundTransparency = 1
     TabContainer.Position = UDIM2(0, 8, 0, TopBar.Size.Y.Offset)
-    TabContainer.Size = UDIM2(0, WindowConfig.TabWidth, config.Size.Y.Scale, config.Size.Y.Offset - TopBar.Size.Y.Offset - 8)
+    TabContainer.Size = UDIM2(0, TabWidth, WindowSize.Y.Scale, WindowSize.Y.Offset - TopBar.Size.Y.Offset - 8)
     
     local TabScrollFrame = NEW("ScrollingFrame")
     TabScrollFrame.Name = "TabScrollFrame"
@@ -258,17 +225,14 @@ function Library:Window(config)
     TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     TabListLayout.Padding = UDIM(0, 2)
     
-    local TabPadding = NEW("UIPadding")
-    TabPadding.Parent = TabScrollFrame
-    
     local ContentPage = NEW("Frame")
     ContentPage.Name = "ContentPage"
     ContentPage.Parent = MainFrame
     ContentPage.BackgroundColor3 = Color.Dark
     ContentPage.Position = UDIM2(0, TabContainer.Size.X.Offset + 18, 0, TopBar.Size.Y.Offset)
     ContentPage.Size = UDIM2(
-        config.Size.X.Scale, config.Size.X.Offset - TabContainer.Size.X.Offset - 25,
-        config.Size.Y.Scale, config.Size.Y.Offset - TopBar.Size.Y.Offset - 8
+        WindowSize.X.Scale, WindowSize.X.Offset - TabContainer.Size.X.Offset - 25,
+        WindowSize.Y.Scale, WindowSize.Y.Offset - TopBar.Size.Y.Offset - 8
     )
     ContentPage.BackgroundTransparency = 1
     CreateRounded(ContentPage, 3)
@@ -298,17 +262,6 @@ function Library:Window(config)
     
     MakeDraggable(TopBar, MainFrame, Connections)
     
-    local KeybindDebounce = false
-    Connections[#Connections + 1] = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed or KeybindDebounce then return end
-        if input.KeyCode == Enum.KeyCode.LeftControl then
-            KeybindDebounce = true
-            local dzHub = CoreGui:FindFirstChild("DzHub")
-            if dzHub then dzHub.Enabled = not dzHub.Enabled end
-            task.delay(0.2, function() KeybindDebounce = false end)
-        end
-    end)
-    
     local Resizing = false
     
     Connections[#Connections + 1] = ResizeHandle.InputBegan:Connect(function(input)
@@ -329,12 +282,12 @@ function Library:Window(config)
             local maxWidth = viewport.X * 0.8
             local maxHeight = viewport.Y * 0.8
             
-            local newWidth = math.clamp(input.Position.X - MainFrame.AbsolutePosition.X, WindowConfig.Size.X.Offset, maxWidth)
-            local newHeight = math.clamp(input.Position.Y - MainFrame.AbsolutePosition.Y, WindowConfig.Size.Y.Offset, maxHeight)
+            local newWidth = math.clamp(input.Position.X - MainFrame.AbsolutePosition.X, WindowSize.X.Offset, maxWidth)
+            local newHeight = math.clamp(input.Position.Y - MainFrame.AbsolutePosition.Y, WindowSize.Y.Offset, maxHeight)
             
             MainFrame.Size = UDIM2(0, newWidth, 0, newHeight)
             ContentPage.Size = UDIM2(0, newWidth - TabContainer.Size.X.Offset - 25, 0, newHeight - TopBar.Size.Y.Offset - 10)
-            TabContainer.Size = UDIM2(0, WindowConfig.TabWidth, 0, newHeight - TopBar.Size.Y.Offset - 10)
+            TabContainer.Size = UDIM2(0, TabWidth, 0, newHeight - TopBar.Size.Y.Offset - 10)
         end
     end)
     
@@ -349,7 +302,7 @@ function Library:Window(config)
         TabBtn.Text = ""
         TabBtn.BackgroundTransparency = 1
         TabBtn.Size = UDIM2(1, 0, 0, 35)
-        TabBtn.Font = Enum.Font.Nunito
+        TabBtn.Font = Enum.Font.Cartoon
         TabBtn.TextColor3 = Color.White
         TabBtn.TextSize = 12
         TabBtn.TextTransparency = 0.9
@@ -369,7 +322,7 @@ function Library:Window(config)
         TabText.BackgroundTransparency = 1
         TabText.Position = UDIM2(0, 10, 0.5, 0)
         TabText.Size = UDIM2(0, 100, 0, 30)
-        TabText.Font = Enum.Font.Roboto
+        TabText.Font = Enum.Font.Cartoon
         TabText.Text = text
         TabText.AnchorPoint = VEC2(0, 0.5)
         TabText.TextColor3 = Color.White
@@ -388,9 +341,6 @@ function Library:Window(config)
         PageFrame.ScrollBarThickness = 0
         PageFrame.ScrollingDirection = Enum.ScrollingDirection.Y
         
-        local PagePadding = NEW("UIPadding")
-        PagePadding.Parent = PageFrame
-        
         local PageListLayout = NEW("UIListLayout")
         PageListLayout.Parent = PageFrame
         PageListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -400,7 +350,7 @@ function Library:Window(config)
             PageFrame.CanvasSize = UDIM2(0, 0, 0, PageListLayout.AbsoluteContentSize.Y)
         end)
         
-                    Connections[#Connections + 1] = TabBtn.MouseButton1Click:Connect(function()
+        Connections[#Connections + 1] = TabBtn.MouseButton1Click:Connect(function()
             local children = TabScrollFrame:GetChildren()
             for i = 1, #children do
                 local v = children[i]
@@ -443,17 +393,17 @@ function Library:Window(config)
                     local tabSize = TabContainer.AbsoluteSize
                     local topSize = TopBar.AbsoluteSize
                     ContentPage:TweenSize(UDIM2(0, mainSize.X - tabSize.X - 25, 0, mainSize.Y - topSize.Y - 10), "Out", "Quad", 0.4, true)
-                    TabContainer:TweenSize(UDIM2(0, WindowConfig.TabWidth, 0, mainSize.Y - topSize.Y - 10), "Out", "Quad", 0.4, true)
+                    TabContainer:TweenSize(UDIM2(0, TabWidth, 0, mainSize.Y - topSize.Y - 10), "Out", "Quad", 0.4, true)
                 end)
                 MaximizeBtn.Image = Assets.RestoreIcon
             else
                 DefaultSize = true
-                MainFrame:TweenSize(UDIM2(0, WindowConfig.Size.X.Offset, 0, WindowConfig.Size.Y.Offset), "Out", "Quad", 0.4, true, function()
+                MainFrame:TweenSize(WindowSize, "Out", "Quad", 0.4, true, function()
                     local mainSize = MainFrame.AbsoluteSize
                     local tabSize = TabContainer.AbsoluteSize
                     local topSize = TopBar.AbsoluteSize
                     ContentPage:TweenSize(UDIM2(0, mainSize.X - tabSize.X - 25, 0, mainSize.Y - topSize.Y - 10), "Out", "Quad", 0.4, true)
-                    TabContainer:TweenSize(UDIM2(0, WindowConfig.TabWidth, 0, mainSize.Y - topSize.Y - 10), "Out", "Quad", 0.4, true)
+                    TabContainer:TweenSize(UDIM2(0, TabWidth, 0, mainSize.Y - topSize.Y - 10), "Out", "Quad", 0.4, true)
                 end)
                 MaximizeBtn.Image = Assets.MaximizeIcon
             end
@@ -580,10 +530,8 @@ function Library:Window(config)
             return ToggleFunc
         end
         
-        function Page:Dropdown(text, options, defaultValue, callback, isMultiSelect)
-            local IsMulti = isMultiSelect == true
+        function Page:Dropdown(text, defaultValue, options, callback)
             local IsOpen = false
-            local SelectedItems = {}
             local ActiveItem = nil
             
             local DropdownFrame = NEW("Frame")
@@ -615,12 +563,12 @@ function Library:Window(config)
             SelectedLabel.Position = UDIM2(1, -5, 0, 5)
             SelectedLabel.Size = UDIM2(0, 100, 0, 30)
             SelectedLabel.AnchorPoint = VEC2(1, 0)
-            SelectedLabel.Font = Enum.Font.GothamMedium
+            SelectedLabel.Font = Enum.Font.Cartoon
             SelectedLabel.AutoButtonColor = false
-            SelectedLabel.TextSize = 9
+            SelectedLabel.TextSize = 12
             SelectedLabel.ZIndex = 1
             SelectedLabel.ClipsDescendants = true
-            SelectedLabel.Text = "   Select Items"
+            SelectedLabel.Text = "   Select"
             SelectedLabel.TextXAlignment = Enum.TextXAlignment.Left
             CreateRounded(SelectedLabel, 5)
             
@@ -655,11 +603,6 @@ function Library:Window(config)
             DropdownScroll.ZIndex = 3
             DropdownScroll.CanvasSize = UDIM2(0, 0, 0, 0)
             
-            local ScrollPadding = NEW("UIPadding")
-            ScrollPadding.PaddingLeft = UDIM(0, 10)
-            ScrollPadding.PaddingRight = UDIM(0, 10)
-            ScrollPadding.Parent = DropdownScroll
-            
             local DropdownLayout = NEW("UIListLayout")
             DropdownLayout.Parent = DropdownScroll
             DropdownLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -667,22 +610,7 @@ function Library:Window(config)
             
             local function UpdateSelectedText()
                 if not SelectedLabel.Parent then return end
-                if IsMulti then
-                    local count = 0
-                    for _ in pairs(SelectedItems) do count = count + 1 end
-                    if count == 0 then
-                        SelectedLabel.Text = "   Select Items"
-                    elseif count == 1 then
-                        for item in pairs(SelectedItems) do
-                            SelectedLabel.Text = "   " .. item
-                            break
-                        end
-                    else
-                        SelectedLabel.Text = "   " .. count .. " Selected"
-                    end
-                else
-                    SelectedLabel.Text = ActiveItem and ("   " .. ActiveItem) or "   Select Items"
-                end
+                SelectedLabel.Text = ActiveItem and ("   " .. ActiveItem) or "   Select"
             end
             
             local function UpdateItemsVisual()
@@ -690,7 +618,7 @@ function Library:Window(config)
                 for i = 1, #children do
                     local btn = children[i]
                     if btn:IsA("TextButton") then
-                        local IsSelected = IsMulti and SelectedItems[btn.Text] or ActiveItem == btn.Text
+                        local IsSelected = ActiveItem == btn.Text
                         btn.BackgroundTransparency = IsSelected and 0.5 or 1
                         btn.TextTransparency = IsSelected and 0 or 0.5
                     end
@@ -704,7 +632,7 @@ function Library:Window(config)
                 OptionBtn.BackgroundColor3 = Color.Primary
                 OptionBtn.BackgroundTransparency = 1
                 OptionBtn.Size = UDIM2(1, 0, 0, 30)
-                OptionBtn.Font = Enum.Font.Nunito
+                OptionBtn.Font = Enum.Font.Cartoon
                 OptionBtn.Text = tostring(optionText)
                 OptionBtn.TextColor3 = Color.White
                 OptionBtn.TextSize = 13
@@ -714,32 +642,17 @@ function Library:Window(config)
                 CreateRounded(OptionBtn, 5)
                 
                 Connections[#Connections + 1] = OptionBtn.MouseButton1Click:Connect(function()
-                    if IsMulti then
-                        SelectedItems[OptionBtn.Text] = not SelectedItems[OptionBtn.Text]
-                        local SelectedArray = {}
-                        for item in pairs(SelectedItems) do SelectedArray[#SelectedArray + 1] = item end
-                        pcall(callback, SelectedArray)
-                    else
-                        ActiveItem = (ActiveItem == OptionBtn.Text) and nil or OptionBtn.Text
-                        pcall(callback, ActiveItem)
-                    end
+                    ActiveItem = OptionBtn.Text
                     UpdateItemsVisual()
                     UpdateSelectedText()
+                    pcall(callback, ActiveItem)
                 end)
                 
                 return OptionBtn
             end
             
             if defaultValue then
-                if IsMulti then
-                    if type(defaultValue) == "table" then
-                        for i = 1, #defaultValue do SelectedItems[tostring(defaultValue[i])] = true end
-                    else
-                        SelectedItems[tostring(defaultValue)] = true
-                    end
-                else
-                    ActiveItem = tostring(defaultValue)
-                end
+                ActiveItem = tostring(defaultValue)
             end
             
             for i = 1, #options do CreateOption(tostring(options[i])) end
@@ -782,7 +695,7 @@ function Library:Window(config)
             end
             
             function DropFunc:Clear()
-                if IsMulti then SelectedItems = {} else ActiveItem = nil end
+                ActiveItem = nil
                 UpdateSelectedText()
                 IsOpen = false
                 DropdownScrollContainer.Visible = false
@@ -800,22 +713,11 @@ function Library:Window(config)
             end
             
             function DropFunc:Set(newValue)
-                if IsMulti then
-                    SelectedItems = {}
-                    if type(newValue) == "table" then
-                        for i = 1, #newValue do SelectedItems[tostring(newValue[i])] = true end
-                    elseif newValue then SelectedItems[tostring(newValue)] = true end
-                    local arr = {}
-                    for k in pairs(SelectedItems) do arr[#arr + 1] = k end
-                    DropFunc.Value = arr
-                    pcall(callback, arr)
-                else
-                    ActiveItem = newValue and tostring(newValue) or nil
-                    DropFunc.Value = ActiveItem
-                    pcall(callback, ActiveItem)
-                end
+                ActiveItem = newValue and tostring(newValue) or nil
+                DropFunc.Value = ActiveItem
                 UpdateItemsVisual()
                 UpdateSelectedText()
+                pcall(callback, ActiveItem)
             end
             
             return DropFunc
@@ -885,7 +787,7 @@ function Library:Window(config)
             ValueDisplay.BackgroundTransparency = 1
             ValueDisplay.Position = UDIM2(1, -170, 0.5, 0)
             ValueDisplay.Size = UDIM2(0, 50, 0, 30)
-            ValueDisplay.Font = Enum.Font.GothamMedium
+            ValueDisplay.Font = Enum.Font.Cartoon
             ValueDisplay.AnchorPoint = VEC2(1, 0.5)
             ValueDisplay.TextColor3 = Color.White
             ValueDisplay.TextSize = 13
@@ -962,7 +864,7 @@ function Library:Window(config)
             TextboxLabel.Position = UDIM2(0, 15, 0.5, 0)
             TextboxLabel.Text = text
             TextboxLabel.Size = UDIM2(0.6, 0, 0, 36)
-            TextboxLabel.Font = Enum.Font.Nunito
+            TextboxLabel.Font = Enum.Font.Cartoon
             TextboxLabel.AnchorPoint = VEC2(0, 0.5)
             TextboxLabel.TextColor3 = Color.White
             TextboxLabel.TextSize = 15
@@ -976,7 +878,7 @@ function Library:Window(config)
             InputBox.Position = UDIM2(1, -5, 0.5, 0)
             InputBox.AnchorPoint = VEC2(1, 0.5)
             InputBox.Size = UDIM2(0, 80, 0, 25)
-            InputBox.Font = Enum.Font.Gotham
+            InputBox.Font = Enum.Font.Cartoon
             InputBox.Text = ""
             InputBox.TextColor3 = Color.LightGray
             InputBox.TextSize = 11
@@ -1003,7 +905,7 @@ function Library:Window(config)
             LabelText.Parent = LabelFrame
             LabelText.BackgroundTransparency = 1
             LabelText.Size = UDIM2(1, -20, 1, 0)
-            LabelText.Font = Enum.Font.Nunito
+            LabelText.Font = Enum.Font.Cartoon
             LabelText.Position = UDIM2(0, 10, 0, 0)
             LabelText.TextColor3 = Color.LightGray
             LabelText.TextSize = TextSize
@@ -1020,7 +922,7 @@ function Library:Window(config)
                 local textBounds = TextService:GetTextSize(
                     newText, 
                     TextSize, 
-                    Enum.Font.Nunito, 
+                    Enum.Font.Cartoon, 
                     VEC2(LabelText.AbsoluteSize.X, math.huge)
                 )
                 
