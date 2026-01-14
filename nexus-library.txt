@@ -575,7 +575,6 @@ function Library:CreateWindow(title)
             if defaultValue ~= nil then
                 Selected = tostring(defaultValue)
                 UpdateText()
-                UpdateVisuals()  -- Added this line
             end
 
             if type(options) == 'table' then
@@ -588,6 +587,7 @@ function Library:CreateWindow(title)
             end
 
             NoOptions.Visible = #options == 0
+            UpdateText()  -- Make sure "Select" shows if no default
             UpdateVisuals()
 
             local function Toggle()
