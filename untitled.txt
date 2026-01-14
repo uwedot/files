@@ -701,136 +701,167 @@ function Library:CreateWindow(title)
         
         -- Slider
         function Tab:AddSlider(text, minValue, maxValue, defaultValue, increment, callback)
-            increment = tonumber(increment) or 1
-            minValue = tonumber(minValue) or 0
-            maxValue = tonumber(maxValue) or 100
-            defaultValue = math.clamp(tonumber(defaultValue) or minValue, minValue, maxValue)
-            
-            local function RoundValue(value)
-                return math.floor(value / increment + 0.5) * increment
-            end
-            
-            local SliderFrame = CreateElement('Frame', {
-                Name = 'Slider',
-                Parent = PageScroll,
-                BackgroundTransparency = 1,
-                Size = UDim2New(1, 0, 0, 40)
-            })
-            AddCorner(SliderFrame, 5)
-            
-            local SliderBg = CreateElement('Frame', {
-                Name = 'SliderBackground',
-                Parent = SliderFrame,
-                BackgroundColor3 = Colors.Primary,
-                BackgroundTransparency = 0.8,
-                Size = UDim2New(1, 0, 0, 40)
-            })
-            AddCorner(SliderBg, 5)
-            
-            CreateElement('TextLabel', {
-                Parent = SliderBg,
-                BackgroundTransparency = 1,
-                Position = UDim2New(0, 15, 0.5, 0),
-                Size = UDim2New(0.5, 0, 0, 30),
-                Font = Enum.Font.Cartoon,
-                Text = text,
-                AnchorPoint = Vec2(0, 0.5),
-                TextColor3 = Colors.White,
-                TextSize = 15,
-                TextXAlignment = Enum.TextXAlignment.Left
-            })
-            
-            local SliderBar = CreateElement('Frame', {
-                Name = 'SliderBar',
-                Parent = SliderBg,
-                BackgroundColor3 = Colors.MediumGray,
-                Size = UDim2New(0, 150, 0, 8),
-                Position = UDim2New(1, -10, 0.5, 0),
-                BackgroundTransparency = 0.8,
-                AnchorPoint = Vec2(1, 0.5)
-            })
-            AddCorner(SliderBar, 4)
-            
-            local SliderFill = CreateElement('Frame', {
-                Name = 'SliderFill',
-                Parent = SliderBar,
-                BackgroundColor3 = Colors.Accent
-            })
-            AddCorner(SliderFill, 4)
-            
-            local ValueLabel = CreateElement('TextLabel', {
-                Parent = SliderBg,
-                BackgroundTransparency = 1,
-                Position = UDim2New(1, -170, 0.5, 0),
-                Size = UDim2New(0, 50, 0, 30),
-                Font = Enum.Font.Cartoon,
-                AnchorPoint = Vec2(1, 0.5),
-                TextColor3 = Colors.White,
-                TextSize = 13,
-                TextXAlignment = Enum.TextXAlignment.Right
-            })
-            
-            local CurrentValue = RoundValue(defaultValue)
-            local InitialPercent = (CurrentValue - minValue) / (maxValue - minValue)
-            SliderFill.Size = UDim2New(0, InitialPercent * 150, 0, 8)
-            ValueLabel.Text = tostring(CurrentValue)
-            
-            local IsDragging = false
-            local PendingValue = CurrentValue
-            
-            local function UpdateSlider(input)
-                local barPos = SliderBar.AbsolutePosition.X
-                local barSize = SliderBar.AbsoluteSize.X
-                local mouseX = input.Position.X
-                local percent = math.clamp((mouseX - barPos) / barSize, 0, 1)
-                local rawValue = minValue + (maxValue - minValue) * percent
-                
-                PendingValue = RoundValue(rawValue)
-                ValueLabel.Text = tostring(PendingValue)
-                SliderFill.Size = UDim2New(0, percent * 150, 0, 8)
-            end
-            
-            Connections[#Connections + 1] = SliderBar.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    IsDragging = true
-                    UpdateSlider(input)
-                end
-            end)
-            
-            Connections[#Connections + 1] = InputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    if IsDragging then
-                        IsDragging = false
-                        CurrentValue = PendingValue
-                        pcall(callback, CurrentValue)
-                    end
-                end
-            end)
-            
-            Connections[#Connections + 1] = InputService.InputChanged:Connect(function(input)
-                if IsDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    UpdateSlider(input)
-                end
-            end)
-            
-            local Slider = {Value = CurrentValue}
-            
-            function Slider:SetValue(newValue)
-                local rawValue = tonumber(newValue) or CurrentValue
-                local clampedValue = math.clamp(rawValue, minValue, maxValue)
-                local roundedValue = RoundValue(clampedValue)
-                local percent = (roundedValue - minValue) / (maxValue - minValue)
-                
-                CurrentValue = roundedValue
-                PendingValue = roundedValue
-                self.Value = roundedValue
-                ValueLabel.Text = tostring(roundedValue)
-                SliderFill.Size = UDim2New(0, percent * 150, 0, 8)
-                pcall(callback, roundedValue)
-            end
-            
-            return Slider
+    increment = tonumber(increment) or 1
+    minValue = tonumber(minValue) or 0
+    maxValue = tonumber(maxValue) or 100
+    defaultValue = math.clamp(tonumber(defaultValue) or minValue, minValue, maxValue)
+
+    local function RoundValue(value)
+        return math.floor(value / increment + 0.5) * increment
+    end
+
+    local function FormatValue(value)
+        local rounded = RoundValue(value)
+        local decimals = 0
+        local test = increment
+
+        while math.abs(test - math.floor(test)) > 1e-10 and decimals < 10 do
+            test = test * 10
+            decimals = decimals + 1
         end
+
+        if decimals == 0 then
+            return tostring(math.floor(rounded + 0.5))
+        else
+            local formatted = string.format('%.' .. decimals .. 'f', rounded)
+
+            if formatted:find('%.') then
+                formatted = formatted:match('(.-)0*$')
+
+                if formatted:sub(-1) == '.' then
+                    formatted = formatted:sub(1, -2)
+                end
+            end
+
+            return formatted ~= '' and formatted ~= '-' and formatted or '0'
+        end
+    end
+
+    local SliderFrame = CreateElement('Frame', {
+        Name = 'Slider',
+        Parent = PageScroll,
+        BackgroundTransparency = 1,
+        Size = UDim2New(1, 0, 0, 40)
+    })
+    AddCorner(SliderFrame, 5)
+
+    local SliderBg = CreateElement('Frame', {
+        Name = 'SliderBackground',
+        Parent = SliderFrame,
+        BackgroundColor3 = Colors.Primary,
+        BackgroundTransparency = 0.8,
+        Size = UDim2New(1, 0, 0, 40)
+    })
+    AddCorner(SliderBg, 5)
+
+    local SliderLabel = CreateElement('TextLabel', {
+        Parent = SliderBg,
+        BackgroundTransparency = 1,
+        Position = UDim2New(0, 15, 0.5, 0),
+        Size = UDim2New(0.5, 0, 0, 30),
+        Font = Enum.Font.Cartoon,
+        Text = text,
+        AnchorPoint = Vec2(0, 0.5),
+        TextColor3 = Colors.White,
+        TextSize = 15,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+
+    local SliderBar = CreateElement('Frame', {
+        Name = 'SliderBar',
+        Parent = SliderBg,
+        BackgroundColor3 = Colors.MediumGray,
+        Size = UDim2New(0, 150, 0, 8),
+        Position = UDim2New(1, -10, 0.5, 0),
+        BackgroundTransparency = 0.8,
+        AnchorPoint = Vec2(1, 0.5)
+    })
+    AddCorner(SliderBar, 4)
+
+    local SliderFill = CreateElement('Frame', {
+        Name = 'SliderFill',
+        Parent = SliderBar,
+        BackgroundColor3 = Colors.Accent
+    })
+    AddCorner(SliderFill, 4)
+
+    local ValueLabel = CreateElement('TextLabel', {
+        Parent = SliderBg,
+        BackgroundTransparency = 1,
+        Position = UDim2New(1, -170, 0.5, 0),
+        Size = UDim2New(0, 50, 0, 30),
+        Font = Enum.Font.Cartoon,
+        AnchorPoint = Vec2(1, 0.5),
+        TextColor3 = Colors.White,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Right
+    })
+
+    local CurrentValue = RoundValue(defaultValue)
+    local InitialPercent = (CurrentValue - minValue) / (maxValue - minValue)
+    SliderFill.Size = UDim2New(0, InitialPercent * 150, 0, 8)
+    ValueLabel.Text = FormatValue(CurrentValue)
+
+    local IsDragging = false
+    local PendingValue = CurrentValue
+
+    local function UpdateSlider(input)
+        local barPos = SliderBar.AbsolutePosition.X
+        local barSize = SliderBar.AbsoluteSize.X
+        local mouseX = input.Position.X
+        local percent = math.clamp((mouseX - barPos) / barSize, 0, 1)
+        local rawValue = minValue + (maxValue - minValue) * percent
+
+        PendingValue = RoundValue(rawValue)
+        ValueLabel.Text = FormatValue(PendingValue)
+        SliderFill.Size = UDim2New(0, percent * 150, 0, 8)
+    end
+
+    -- FIXED: Mobile support added
+    Connections[#Connections + 1] = SliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then  -- Added Touch
+            IsDragging = true
+            UpdateSlider(input)
+        end
+    end)
+
+    Connections[#Connections + 1] = InputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then  -- Added Touch
+            if IsDragging then
+                IsDragging = false
+                CurrentValue = PendingValue
+                pcall(callback, CurrentValue)
+            end
+        end
+    end)
+
+    Connections[#Connections + 1] = InputService.InputChanged:Connect(function(input)
+        if IsDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+           input.UserInputType == Enum.UserInputType.Touch) then  -- Added Touch
+            UpdateSlider(input)
+        end
+    end)
+
+    local Slider = {Value = CurrentValue}
+
+    function Slider:SetValue(newValue)
+        local rawValue = tonumber(newValue) or CurrentValue
+        local clampedValue = math.clamp(rawValue, minValue, maxValue)
+        local roundedValue = RoundValue(clampedValue)
+        local percent = (roundedValue - minValue) / (maxValue - minValue)
+
+        CurrentValue = roundedValue
+        PendingValue = roundedValue
+        self.Value = roundedValue
+        ValueLabel.Text = FormatValue(roundedValue)
+        SliderFill.Size = UDim2New(0, percent * 150, 0, 8)
+        pcall(callback, roundedValue)
+    end
+
+    return Slider
+end
         
         -- Textbox
         function Tab:AddTextbox(text, placeholder, callback)
