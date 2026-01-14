@@ -1,0 +1,934 @@
+local GetRef = (type(cloneref) == 'function') and cloneref or function(x)
+    return x
+end
+
+local InputService = GetRef(game:GetService('UserInputService'))
+local Tween = GetRef(game:GetService('TweenService'))
+local TextService = GetRef(game:GetService('TextService'))
+
+local Create = Instance.new
+local UDim2New = UDim2.new
+local UDimNew = UDim.new
+local Vec2 = Vector2.new
+local RGB = Color3.fromRGB
+
+local FastTween = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local NormalTween = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local SlowTween = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local Colors = {
+    Primary = RGB(100, 100, 100),
+    Dark = RGB(22, 22, 26),
+    Accent = RGB(138, 43, 226),
+    White = RGB(255, 255, 255),
+    LightGray = RGB(245, 245, 245),
+    MediumGray = RGB(200, 200, 200),
+    DarkGray = RGB(150, 150, 150),
+    Background = RGB(24, 24, 26),
+    Outline = RGB(30, 30, 30),
+    Topbar = RGB(10, 10, 10),
+    Selection = RGB(138, 43, 226),
+}
+
+local Icons = {
+    Menu = 'rbxassetid://82682091622365',
+    Minimize = 'rbxassetid://101118075751604',
+    Arrow = 'rbxassetid://10709790948',
+}
+
+local ExistingHub = gethui():FindFirstChild('NexusLibrary')
+local ExistingMenu = gethui():FindFirstChild('NexusLibraryMenuButton')
+
+if ExistingHub then
+    ExistingHub:Destroy()
+end
+if ExistingMenu then
+    ExistingMenu:Destroy()
+end
+
+local function AddCorner(parent, radius)
+    local Corner = Create('UICorner')
+    Corner.CornerRadius = UDimNew(0, radius)
+    Corner.Parent = parent
+    return Corner
+end
+
+local function MakeDraggable(dragHandle, targetFrame, connections)
+    local Dragging, DragInput, DragStart, StartPos
+
+    local function UpdatePosition(input)
+        local Delta = input.Position - DragStart
+        targetFrame.Position = UDim2New(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
+    end
+
+    connections[#connections + 1] = dragHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            Dragging = true
+            DragStart = input.Position
+            StartPos = targetFrame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    Dragging = false
+                end
+            end)
+        end
+    end)
+    
+    connections[#connections + 1] = dragHandle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            DragInput = input
+        end
+    end)
+    
+    connections[#connections + 1] = InputService.InputChanged:Connect(function(input)
+        if input == DragInput and Dragging then
+            UpdatePosition(input)
+        end
+    end)
+end
+
+local MenuGui = Create('ScreenGui')
+MenuGui.Name = 'NexusLibraryMenuButton'
+MenuGui.Parent = gethui()
+MenuGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+MenuGui.ResetOnSpawn = false
+MenuGui.Enabled = false
+
+local MenuOutline = Create('Frame')
+MenuOutline.Name = 'OutlineButton'
+MenuOutline.Parent = MenuGui
+MenuOutline.BackgroundColor3 = Colors.Dark
+MenuOutline.Position = UDim2New(0, 10, 0, 10)
+MenuOutline.Size = UDim2New(0, 50, 0, 50)
+AddCorner(MenuOutline, 12)
+
+local MenuBtn = Create('ImageButton')
+MenuBtn.Parent = MenuOutline
+MenuBtn.Position = UDim2New(0.5, 0, 0.5, 0)
+MenuBtn.Size = UDim2New(0, 40, 0, 40)
+MenuBtn.AnchorPoint = Vec2(0.5, 0.5)
+MenuBtn.BackgroundColor3 = Colors.Dark
+MenuBtn.ImageColor3 = Colors.White
+MenuBtn.Image = Icons.Menu
+AddCorner(MenuBtn, 10)
+
+local MenuConnections = {}
+MakeDraggable(MenuBtn, MenuOutline, MenuConnections)
+
+local Library = {}
+
+function Library:CreateWindow(title)
+    title = title or 'NEXUS LIBRARY'
+
+    local WindowSize = UDim2New(0, 490, 0, 330)
+    local TabWidth = 130
+    local Window = {}
+    local FirstTab = false
+    local Connections = {}
+    local MainGui = Create('ScreenGui')
+
+    MainGui.Name = 'NexusLibrary'
+    MainGui.Parent = gethui()
+    MainGui.DisplayOrder = 999
+    MainGui.ResetOnSpawn = false
+    Window._TabScroll = nil
+    Window._MainGui = MainGui
+    Window._Connections = Connections
+
+    local MainFrame = Create('Frame')
+    MainFrame.Name = 'MainFrame'
+    MainFrame.Parent = MainGui
+    MainFrame.AnchorPoint = Vec2(0.5, 0.5)
+    MainFrame.BackgroundColor3 = Colors.Background
+    MainFrame.Position = UDim2New(0.5, 0, 0.45, 0)
+    MainFrame.Size = UDim2New(0, 0, 0, 0)
+    MainFrame:TweenSize(WindowSize, 'Out', 'Quad', 0.4, true)
+    AddCorner(MainFrame, 12)
+
+    local TopBar = Create('Frame')
+    TopBar.Name = 'TopBar'
+    TopBar.Parent = MainFrame
+    TopBar.BackgroundColor3 = Colors.Topbar
+    TopBar.BackgroundTransparency = 1
+    TopBar.Size = UDim2New(1, 0, 0, 40)
+    AddCorner(TopBar, 5)
+
+    local Title = Create('TextLabel')
+    Title.Name = 'TitleLabel'
+    Title.Parent = TopBar
+    Title.BackgroundTransparency = 1
+    Title.Position = UDim2New(0, 15, 0.5, 0)
+    Title.AnchorPoint = Vec2(0, 0.5)
+    Title.Size = UDim2New(0, 1, 0, 25)
+    Title.Font = Enum.Font.Cartoon
+    Title.Text = title
+    Title.TextSize = 20
+    Title.TextColor3 = Colors.White
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+
+    local TitleSize = TextService:GetTextSize(Title.Text, Title.TextSize, Title.Font, Vec2(9999, 9999))
+    Title.Size = UDim2New(0, TitleSize.X, 0, 25)
+
+    local MinBtn = Create('ImageButton')
+    MinBtn.Name = 'MinimizeBtn'
+    MinBtn.Parent = TopBar
+    MinBtn.BackgroundTransparency = 1
+    MinBtn.AnchorPoint = Vec2(1, 0.5)
+    MinBtn.Position = UDim2New(1, -15, 0.5, 0)
+    MinBtn.Size = UDim2New(0, 20, 0, 20)
+    MinBtn.Image = Icons.Minimize
+    MinBtn.ImageColor3 = Colors.LightGray
+    AddCorner(MinBtn, 3)
+
+    local TabContainer = Create('Frame')
+    TabContainer.Name = 'TabContainer'
+    TabContainer.Parent = MainFrame
+    TabContainer.BackgroundTransparency = 1
+    TabContainer.Position = UDim2New(0, 8, 0, TopBar.Size.Y.Offset)
+    TabContainer.Size = UDim2New(0, TabWidth, WindowSize.Y.Scale, WindowSize.Y.Offset - TopBar.Size.Y.Offset - 8)
+
+    local TabScroll = Create('ScrollingFrame')
+    TabScroll.Name = 'TabScrollFrame'
+    TabScroll.Parent = TabContainer
+    TabScroll.BackgroundTransparency = 1
+    TabScroll.Size = UDim2New(1, 0, 1, 0)
+    TabScroll.ScrollBarThickness = 0
+    AddCorner(TabContainer, 5)
+    Window._TabScroll = TabScroll
+
+    local TabList = Create('UIListLayout')
+    TabList.Parent = TabScroll
+    TabList.SortOrder = Enum.SortOrder.LayoutOrder
+    TabList.Padding = UDimNew(0, 2)
+
+    local ContentFrame = Create('Frame')
+    ContentFrame.Name = 'ContentPage'
+    ContentFrame.Parent = MainFrame
+    ContentFrame.BackgroundTransparency = 1
+    ContentFrame.Position = UDim2New(0, TabContainer.Size.X.Offset + 18, 0, TopBar.Size.Y.Offset)
+    ContentFrame.Size = UDim2New(WindowSize.X.Scale, WindowSize.X.Offset - TabContainer.Size.X.Offset - 25, WindowSize.Y.Scale, WindowSize.Y.Offset - TopBar.Size.Y.Offset - 8)
+    AddCorner(ContentFrame, 3)
+
+    local PageContainer = Create('Frame')
+    PageContainer.Name = 'PageContainer'
+    PageContainer.Parent = ContentFrame
+    PageContainer.BackgroundTransparency = 1
+    PageContainer.ClipsDescendants = true
+    PageContainer.Size = UDim2New(1, 0, 1, 0)
+
+    local PageFolder = Create('Folder')
+    PageFolder.Name = 'PageList'
+    PageFolder.Parent = PageContainer
+
+    local PageLayout = Create('UIPageLayout')
+    PageLayout.Parent = PageFolder
+    PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    PageLayout.EasingDirection = Enum.EasingDirection.InOut
+    PageLayout.EasingStyle = Enum.EasingStyle.Quad
+    PageLayout.Padding = UDimNew(0, 10)
+    PageLayout.TweenTime = 0
+
+    MakeDraggable(TopBar, MainFrame, Connections)
+
+    Connections[#Connections + 1] = MinBtn.MouseButton1Click:Connect(function()
+        MainGui.Enabled = false
+        MenuGui.Enabled = true
+    end)
+
+    MenuBtn.MouseButton1Click:Connect(function()
+        MainGui.Enabled = true
+        MenuGui.Enabled = false
+    end)
+
+    Connections[#Connections + 1] = TabList:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
+        TabScroll.CanvasSize = UDim2New(0, 0, 0, TabList.AbsoluteContentSize.Y)
+    end)
+
+    function Window:CreateTab(name)
+        local TabBtn = Create('TextButton')
+        TabBtn.Parent = TabScroll
+        TabBtn.Name = name .. 'Tab'
+        TabBtn.Text = ''
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.Size = UDim2New(1, 0, 0, 35)
+
+        local Indicator = Create('Frame')
+        Indicator.Name = 'SelectionIndicator'
+        Indicator.Parent = TabBtn
+        Indicator.BackgroundColor3 = Colors.Accent
+        Indicator.Size = UDim2New(0, 3, 0, 0)
+        Indicator.Position = UDim2New(0, 0, 0.5, 0)
+        Indicator.AnchorPoint = Vec2(0, 0.5)
+        AddCorner(Indicator, 100)
+
+        local TabLabel = Create('TextLabel')
+        TabLabel.Parent = TabBtn
+        TabLabel.Name = 'TabText'
+        TabLabel.BackgroundTransparency = 1
+        TabLabel.Position = UDim2New(0, 10, 0.5, 0)
+        TabLabel.Size = UDim2New(0, 100, 0, 30)
+        TabLabel.Font = Enum.Font.Cartoon
+        TabLabel.Text = name
+        TabLabel.AnchorPoint = Vec2(0, 0.5)
+        TabLabel.TextColor3 = Colors.White
+        TabLabel.TextTransparency = 0.4
+        TabLabel.TextSize = 14
+        TabLabel.TextXAlignment = Enum.TextXAlignment.Left
+        AddCorner(TabBtn, 6)
+
+        local PageScroll = Create('ScrollingFrame')
+        PageScroll.Name = name .. 'Page'
+        PageScroll.Parent = PageFolder
+        PageScroll.BackgroundTransparency = 1
+        PageScroll.Size = UDim2New(1, 0, 1, 0)
+        PageScroll.ScrollBarThickness = 0
+
+        local PageList = Create('UIListLayout')
+        PageList.Parent = PageScroll
+        PageList.SortOrder = Enum.SortOrder.LayoutOrder
+        PageList.Padding = UDimNew(0, 3)
+        
+        Connections[#Connections + 1] = PageList:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
+            PageScroll.CanvasSize = UDim2New(0, 0, 0, PageList.AbsoluteContentSize.Y + 5)
+        end)
+        
+        Connections[#Connections + 1] = TabBtn.MouseButton1Click:Connect(function()
+            for _, tab in ipairs(TabScroll:GetChildren()) do
+                if tab:IsA('TextButton') then
+                    Tween:Create(tab, NormalTween, {BackgroundTransparency = 1}):Play()
+
+                    local indicator = tab:FindFirstChild('SelectionIndicator')
+                    if indicator then
+                        Tween:Create(indicator, FastTween, {Size = UDim2New(0, 3, 0, 0)}):Play()
+                    end
+
+                    local label = tab:FindFirstChild('TabText')
+                    if label then
+                        Tween:Create(label, NormalTween, {TextTransparency = 0.4}):Play()
+                    end
+                end
+            end
+
+            Tween:Create(TabBtn, NormalTween, {BackgroundTransparency = 0.8}):Play()
+            Tween:Create(Indicator, NormalTween, {Size = UDim2New(0, 3, 0, 15)}):Play()
+            Tween:Create(TabLabel, NormalTween, {TextTransparency = 0}):Play()
+            PageLayout:JumpTo(PageScroll)
+        end)
+
+        if not FirstTab then
+            Tween:Create(TabBtn, NormalTween, {BackgroundTransparency = 0.8}):Play()
+            Tween:Create(Indicator, FastTween, {Size = UDim2New(0, 3, 0, 15)}):Play()
+            Tween:Create(TabLabel, NormalTween, {TextTransparency = 0}):Play()
+            PageLayout:JumpToIndex(1)
+            FirstTab = true
+        end
+
+        local Tab = {}
+
+        function Tab:AddButton(text, callback)
+            local Button = Create('TextButton')
+            Button.Name = 'Button'
+            Button.Parent = PageScroll
+            Button.BackgroundColor3 = Colors.Accent
+            Button.Size = UDim2New(1, 0, 0, 36)
+            Button.Text = ''
+            AddCorner(Button, 5)
+
+            local ButtonLabel = Create('TextLabel')
+            ButtonLabel.Name = 'ButtonText'
+            ButtonLabel.Parent = Button
+            ButtonLabel.BackgroundTransparency = 1
+            ButtonLabel.AnchorPoint = Vec2(0.5, 0.5)
+            ButtonLabel.Position = UDim2New(0.5, 0, 0.5, 0)
+            ButtonLabel.Size = UDim2New(1, -20, 1, 0)
+            ButtonLabel.Font = Enum.Font.Cartoon
+            ButtonLabel.Text = text
+            ButtonLabel.TextColor3 = Colors.White
+            ButtonLabel.TextSize = 15
+            
+            Connections[#Connections + 1] = Button.MouseButton1Click:Connect(function()
+                pcall(callback)
+            end)
+        end
+
+        function Tab:AddToggle(text, defaultValue, callback)
+            local IsToggled = defaultValue or false
+            local ToggleBtn = Create('TextButton')
+            ToggleBtn.Name = 'ToggleButton'
+            ToggleBtn.Parent = PageScroll
+            ToggleBtn.BackgroundColor3 = Colors.Primary
+            ToggleBtn.BackgroundTransparency = 0.8
+            ToggleBtn.Text = ''
+            ToggleBtn.Size = UDim2New(1, 0, 0, 36)
+            AddCorner(ToggleBtn, 5)
+
+            local ToggleLabel = Create('TextLabel')
+            ToggleLabel.Parent = ToggleBtn
+            ToggleLabel.BackgroundTransparency = 1
+            ToggleLabel.Size = UDim2New(1, 0, 0, 35)
+            ToggleLabel.Font = Enum.Font.Cartoon
+            ToggleLabel.Text = text
+            ToggleLabel.TextColor3 = Colors.White
+            ToggleLabel.TextSize = 15
+            ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            ToggleLabel.AnchorPoint = Vec2(0, 0.5)
+            ToggleLabel.Position = UDim2New(0, 15, 0.5, 0)
+
+            local ToggleFrame = Create('Frame')
+            ToggleFrame.Name = 'ToggleFrame'
+            ToggleFrame.Parent = ToggleBtn
+            ToggleFrame.BackgroundTransparency = 1
+            ToggleFrame.Position = UDim2New(1, -10, 0.5, 0)
+            ToggleFrame.Size = UDim2New(0, 35, 0, 20)
+            ToggleFrame.AnchorPoint = Vec2(1, 0.5)
+            AddCorner(ToggleFrame, 10)
+
+            local ToggleBg = Create('TextButton')
+            ToggleBg.Name = 'ToggleBackground'
+            ToggleBg.Parent = ToggleFrame
+            ToggleBg.BackgroundColor3 = Colors.MediumGray
+            ToggleBg.BackgroundTransparency = 0.8
+            ToggleBg.Size = UDim2New(1, 0, 1, 0)
+            ToggleBg.Text = ''
+            AddCorner(ToggleBg, 10)
+
+            local ToggleCircle = Create('Frame')
+            ToggleCircle.Name = 'ToggleCircle'
+            ToggleCircle.Parent = ToggleBg
+            ToggleCircle.BackgroundColor3 = Colors.White
+            ToggleCircle.Position = UDim2New(0, 3, 0.5, 0)
+            ToggleCircle.Size = UDim2New(0, 14, 0, 14)
+            ToggleCircle.AnchorPoint = Vec2(0, 0.5)
+            AddCorner(ToggleCircle, 10)
+
+            local function UpdateToggle(state)
+                if state then
+                    ToggleCircle:TweenPosition(UDim2New(0, 17, 0.5, 0), 'Out', 'Sine', 0.2, true)
+                    Tween:Create(ToggleBg, SlowTween, {
+                        BackgroundColor3 = Colors.Accent,
+                        BackgroundTransparency = 0,
+                    }):Play()
+                else
+                    ToggleCircle:TweenPosition(UDim2New(0, 4, 0.5, 0), 'Out', 'Sine', 0.2, true)
+                    Tween:Create(ToggleBg, SlowTween, {
+                        BackgroundColor3 = Colors.MediumGray,
+                        BackgroundTransparency = 0.8,
+                    }):Play()
+                end
+            end
+
+            Connections[#Connections + 1] = ToggleBg.MouseButton1Click:Connect(function()
+                IsToggled = not IsToggled
+                UpdateToggle(IsToggled)
+                pcall(callback, IsToggled)
+            end)
+
+            if defaultValue then
+                UpdateToggle(true)
+                pcall(callback, IsToggled)
+            end
+
+            local Toggle = {Value = IsToggled}
+
+            function Toggle:SetValue(newValue)
+                IsToggled = newValue
+                self.Value = IsToggled
+                UpdateToggle(IsToggled)
+                pcall(callback, IsToggled)
+            end
+
+            return Toggle
+        end
+
+        function Tab:AddDropdown(text, defaultValue, options, callback)
+            local IsOpen = false
+            local Selected = nil
+
+            if type(options) == 'function' then
+                callback = options
+                options = defaultValue
+                defaultValue = nil
+            end
+
+            local DropFrame = Create('Frame')
+            DropFrame.Name = 'Dropdown'
+            DropFrame.Parent = PageScroll
+            DropFrame.BackgroundColor3 = Colors.Primary
+            DropFrame.BackgroundTransparency = 0.8
+            DropFrame.Size = UDim2New(1, 0, 0, 36)
+            AddCorner(DropFrame, 5)
+
+            local DropLabel = Create('TextLabel')
+            DropLabel.Name = 'DropdownTitle'
+            DropLabel.Parent = DropFrame
+            DropLabel.BackgroundTransparency = 1
+            DropLabel.Position = UDim2New(0, 15, 0.5, 0)
+            DropLabel.Size = UDim2New(0.6, 0, 0, 36)
+            DropLabel.Font = Enum.Font.Cartoon
+            DropLabel.Text = text
+            DropLabel.AnchorPoint = Vec2(0, 0.5)
+            DropLabel.TextColor3 = Colors.White
+            DropLabel.TextSize = 15
+            DropLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+            local SelectedLabel = Create('TextLabel')
+            SelectedLabel.Name = 'SelectedLabel'
+            SelectedLabel.Parent = DropFrame
+            SelectedLabel.BackgroundTransparency = 1
+            SelectedLabel.Position = UDim2New(1, -35, 0.5, 0)
+            SelectedLabel.Size = UDim2New(0, 100, 0, 36)
+            SelectedLabel.AnchorPoint = Vec2(1, 0.5)
+            SelectedLabel.Font = Enum.Font.Cartoon
+            SelectedLabel.TextSize = 13
+            SelectedLabel.TextColor3 = Colors.White
+            SelectedLabel.TextTransparency = 0.6
+            SelectedLabel.Text = 'Select'
+            SelectedLabel.TextXAlignment = Enum.TextXAlignment.Right
+
+            local Arrow = Create('ImageLabel')
+            Arrow.Name = 'ArrowIcon'
+            Arrow.Parent = DropFrame
+            Arrow.BackgroundTransparency = 1
+            Arrow.AnchorPoint = Vec2(0, 0.5)
+            Arrow.Position = UDim2New(1, -25, 0.5, 0)
+            Arrow.Size = UDim2New(0, 20, 0, 20)
+            Arrow.Image = Icons.Arrow
+            Arrow.ImageColor3 = Colors.White
+
+            local DropContainer = Create('Frame')
+            DropContainer.Name = 'DropdownScrollContainer'
+            DropContainer.Parent = DropFrame
+            DropContainer.BackgroundColor3 = Colors.Background
+            DropContainer.Size = UDim2New(1, -10, 0, 0)
+            DropContainer.Position = UDim2New(0, 5, 0, 36)
+            DropContainer.Visible = false
+            AddCorner(DropContainer, 5)
+
+            local DropScroll = Create('ScrollingFrame')
+            DropScroll.Name = 'DropdownScroll'
+            DropScroll.Parent = DropContainer
+            DropScroll.BackgroundTransparency = 1
+            DropScroll.Position = UDim2New(0, 0, 0, 10)
+            DropScroll.Size = UDim2New(1, 0, 1, -15)
+            DropScroll.ScrollBarThickness = 0
+            DropScroll.ZIndex = 3
+            DropScroll.CanvasSize = UDim2New(0, 0, 0, 0)
+
+            local DropList = Create('UIListLayout')
+            DropList.Parent = DropScroll
+            DropList.SortOrder = Enum.SortOrder.LayoutOrder
+            DropList.Padding = UDimNew(0, 1)
+
+            local function UpdateText()
+                SelectedLabel.Text = Selected or 'Select'
+                SelectedLabel.TextTransparency = Selected and 0 or 0.6
+            end
+
+            local function UpdateVisuals()
+                for _, btn in ipairs(DropScroll:GetChildren()) do
+                    if btn:IsA('TextButton') then
+                        local isSelected = Selected == btn.Text
+                        btn.BackgroundTransparency = isSelected and 0.5 or 1
+                        btn.TextTransparency = isSelected and 0 or 0.5
+                    end
+                end
+            end
+
+            local function AddOption(optionText)
+                local OptionBtn = Create('TextButton')
+                OptionBtn.Name = 'Option'
+                OptionBtn.Parent = DropScroll
+                OptionBtn.BackgroundColor3 = Colors.Primary
+                OptionBtn.BackgroundTransparency = 1
+                OptionBtn.Size = UDim2New(1, 0, 0, 30)
+                OptionBtn.Font = Enum.Font.Cartoon
+                OptionBtn.Text = tostring(optionText)
+                OptionBtn.TextColor3 = Colors.White
+                OptionBtn.TextSize = 13
+                OptionBtn.TextTransparency = 0.5
+                OptionBtn.TextXAlignment = Enum.TextXAlignment.Center
+                OptionBtn.ZIndex = 4
+                AddCorner(OptionBtn, 5)
+
+                Connections[#Connections + 1] = OptionBtn.MouseButton1Click:Connect(function()
+                    Selected = OptionBtn.Text
+                    UpdateVisuals()
+                    UpdateText()
+                    pcall(callback, Selected)
+                end)
+            end
+
+            local NoOptions = Create('TextLabel')
+            NoOptions.Name = 'NoOptionsLabel'
+            NoOptions.Parent = DropScroll
+            NoOptions.BackgroundTransparency = 1
+            NoOptions.Size = UDim2New(1, 0, 0, 30)
+            NoOptions.Font = Enum.Font.Cartoon
+            NoOptions.Text = 'No options available'
+            NoOptions.TextColor3 = Colors.DarkGray
+            NoOptions.TextSize = 13
+            NoOptions.TextTransparency = 0.5
+            NoOptions.TextXAlignment = Enum.TextXAlignment.Center
+            NoOptions.ZIndex = 4
+            NoOptions.Visible = false
+
+            if defaultValue ~= nil then
+                Selected = tostring(defaultValue)
+                UpdateText()
+            end
+
+            if type(options) == 'table' then
+                for i = 1, #options do
+                    AddOption(tostring(options[i]))
+                end
+            else
+                warn('Dropdown: options parameter must be a table')
+                options = {}
+            end
+
+            NoOptions.Visible = #options == 0
+            UpdateText()
+            UpdateVisuals()
+
+            local function Toggle()
+                IsOpen = not IsOpen
+                local targetSize = IsOpen and UDim2New(1, 0, 0, 150) or UDim2New(1, 0, 0, 36)
+                local containerSize = IsOpen and UDim2New(1, -10, 0, 110) or UDim2New(1, -10, 0, 0)
+                local rotation = IsOpen and 180 or 0
+
+                Tween:Create(DropFrame, NormalTween, {Size = targetSize}):Play()
+                Tween:Create(DropContainer, NormalTween, {Size = containerSize}):Play()
+                Tween:Create(Arrow, NormalTween, {Rotation = rotation}):Play()
+                DropContainer.Visible = IsOpen
+            end
+
+            local ClickArea = Create('TextButton')
+            ClickArea.Name = 'DropdownClickArea'
+            ClickArea.Parent = DropFrame
+            ClickArea.BackgroundTransparency = 1
+            ClickArea.Size = UDim2New(1, 0, 0, 36)
+            ClickArea.Text = ''
+            ClickArea.ZIndex = 2
+            
+            Connections[#Connections + 1] = ClickArea.MouseButton1Click:Connect(Toggle)
+            Connections[#Connections + 1] = DropList:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
+                DropScroll.CanvasSize = UDim2New(0, 0, 0, DropList.AbsoluteContentSize.Y + 10)
+            end)
+
+            local Dropdown = {}
+
+            function Dropdown:Add(option)
+                AddOption(tostring(option))
+                UpdateVisuals()
+
+                local optionCount = 0
+                for _, child in ipairs(DropScroll:GetChildren()) do
+                    if child:IsA('TextButton') then
+                        optionCount = optionCount + 1
+                    end
+                end
+
+                NoOptions.Visible = optionCount == 0
+            end
+
+            function Dropdown:Clear()
+                Selected = nil
+                UpdateText()
+
+                for _, child in ipairs(DropScroll:GetChildren()) do
+                    if child:IsA('TextButton') then
+                        child:Destroy()
+                    end
+                end
+
+                NoOptions.Visible = true
+            end
+
+            function Dropdown:Refresh(newOptions)
+                if type(newOptions) == 'table' then
+                    local prevSelection = Selected
+                    self:Clear()
+
+                    if prevSelection then
+                        for _, option in ipairs(newOptions) do
+                            if tostring(option) == prevSelection then
+                                Selected = prevSelection
+                                break
+                            end
+                        end
+                    end
+
+                    for i = 1, #newOptions do
+                        self:Add(newOptions[i])
+                    end
+
+                    NoOptions.Visible = #newOptions == 0
+                    UpdateText()
+                    UpdateVisuals()
+                end
+            end
+
+            return Dropdown
+        end
+
+        function Tab:AddSlider(text, minValue, maxValue, defaultValue, increment, callback)
+            increment = tonumber(increment) or 1
+            minValue = tonumber(minValue) or 0
+            maxValue = tonumber(maxValue) or 100
+            defaultValue = math.clamp(tonumber(defaultValue) or minValue, minValue, maxValue)
+
+            local function RoundValue(value)
+                return math.floor(value / increment + 0.5) * increment
+            end
+
+            local function FormatValue(value)
+                local rounded = RoundValue(value)
+                local decimals = 0
+                local test = increment
+
+                while math.abs(test - math.floor(test)) > 1e-10 and decimals < 10 do
+                    test = test * 10
+                    decimals = decimals + 1
+                end
+
+                if decimals == 0 then
+                    return tostring(math.floor(rounded + 0.5))
+                else
+                    local formatted = string.format('%.' .. decimals .. 'f', rounded)
+
+                    if formatted:find('%.') then
+                        formatted = formatted:match('(.-)0*$')
+
+                        if formatted:sub(-1) == '.' then
+                            formatted = formatted:sub(1, -2)
+                        end
+                    end
+
+                    return formatted ~= '' and formatted ~= '-' and formatted or '0'
+                end
+            end
+
+            local SliderFrame = Create('Frame')
+            SliderFrame.Name = 'Slider'
+            SliderFrame.Parent = PageScroll
+            SliderFrame.BackgroundTransparency = 1
+            SliderFrame.Size = UDim2New(1, 0, 0, 40)
+            AddCorner(SliderFrame, 5)
+
+            local SliderBg = Create('Frame')
+            SliderBg.Name = 'SliderBackground'
+            SliderBg.Parent = SliderFrame
+            SliderBg.BackgroundColor3 = Colors.Primary
+            SliderBg.BackgroundTransparency = 0.8
+            SliderBg.Size = UDim2New(1, 0, 0, 40)
+            AddCorner(SliderBg, 5)
+
+            local SliderLabel = Create('TextLabel')
+            SliderLabel.Parent = SliderBg
+            SliderLabel.BackgroundTransparency = 1
+            SliderLabel.Position = UDim2New(0, 15, 0.5, 0)
+            SliderLabel.Size = UDim2New(0.5, 0, 0, 30)
+            SliderLabel.Font = Enum.Font.Cartoon
+            SliderLabel.Text = text
+            SliderLabel.AnchorPoint = Vec2(0, 0.5)
+            SliderLabel.TextColor3 = Colors.White
+            SliderLabel.TextSize = 15
+            SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+            local SliderBar = Create('Frame')
+            SliderBar.Name = 'SliderBar'
+            SliderBar.Parent = SliderBg
+            SliderBar.BackgroundColor3 = Colors.MediumGray
+            SliderBar.Size = UDim2New(0, 150, 0, 8)
+            SliderBar.Position = UDim2New(1, -10, 0.5, 0)
+            SliderBar.BackgroundTransparency = 0.8
+            SliderBar.AnchorPoint = Vec2(1, 0.5)
+            AddCorner(SliderBar, 4)
+
+            local SliderFill = Create('Frame')
+            SliderFill.Name = 'SliderFill'
+            SliderFill.Parent = SliderBar
+            SliderFill.BackgroundColor3 = Colors.Accent
+            AddCorner(SliderFill, 4)
+
+            local ValueLabel = Create('TextLabel')
+            ValueLabel.Parent = SliderBg
+            ValueLabel.BackgroundTransparency = 1
+            ValueLabel.Position = UDim2New(1, -170, 0.5, 0)
+            ValueLabel.Size = UDim2New(0, 50, 0, 30)
+            ValueLabel.Font = Enum.Font.Cartoon
+            ValueLabel.AnchorPoint = Vec2(1, 0.5)
+            ValueLabel.TextColor3 = Colors.White
+            ValueLabel.TextSize = 13
+            ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+
+            local CurrentValue = RoundValue(defaultValue)
+            local InitialPercent = (CurrentValue - minValue) / (maxValue - minValue)
+            SliderFill.Size = UDim2New(0, InitialPercent * 150, 0, 8)
+            ValueLabel.Text = FormatValue(CurrentValue)
+
+            local IsDragging = false
+            local PendingValue = CurrentValue
+
+            local function UpdateSlider(input)
+                local barPos = SliderBar.AbsolutePosition.X
+                local barSize = SliderBar.AbsoluteSize.X
+                local mouseX = input.Position.X
+                local percent = math.clamp((mouseX - barPos) / barSize, 0, 1)
+                local rawValue = minValue + (maxValue - minValue) * percent
+
+                PendingValue = RoundValue(rawValue)
+                ValueLabel.Text = FormatValue(PendingValue)
+                SliderFill.Size = UDim2New(0, percent * 150, 0, 8)
+            end
+
+            Connections[#Connections + 1] = SliderBar.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    IsDragging = true
+                    UpdateSlider(input)
+                end
+            end)
+
+            Connections[#Connections + 1] = InputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    if IsDragging then
+                        IsDragging = false
+                        CurrentValue = PendingValue
+                        pcall(callback, CurrentValue)
+                    end
+                end
+            end)
+
+            Connections[#Connections + 1] = InputService.InputChanged:Connect(function(input)
+                if IsDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    UpdateSlider(input)
+                end
+            end)
+
+            local Slider = {Value = CurrentValue}
+
+            function Slider:SetValue(newValue)
+                local rawValue = tonumber(newValue) or CurrentValue
+                local clampedValue = math.clamp(rawValue, minValue, maxValue)
+                local roundedValue = RoundValue(clampedValue)
+                local percent = (roundedValue - minValue) / (maxValue - minValue)
+
+                CurrentValue = roundedValue
+                PendingValue = roundedValue
+                self.Value = roundedValue
+                ValueLabel.Text = FormatValue(roundedValue)
+                SliderFill.Size = UDim2New(0, percent * 150, 0, 8)
+                pcall(callback, roundedValue)
+            end
+
+            return Slider
+        end
+
+        function Tab:AddTextbox(text, placeholder, callback)
+            placeholder = placeholder or 'Enter text...'
+            
+            local TextboxFrame = Create('Frame')
+            TextboxFrame.Name = 'Textbox'
+            TextboxFrame.Parent = PageScroll
+            TextboxFrame.BackgroundColor3 = Colors.Primary
+            TextboxFrame.BackgroundTransparency = 0.8
+            TextboxFrame.Size = UDim2New(1, 0, 0, 36)
+            AddCorner(TextboxFrame, 5)
+
+            local TextboxLabel = Create('TextLabel')
+            TextboxLabel.Name = 'TextboxLabel'
+            TextboxLabel.Parent = TextboxFrame
+            TextboxLabel.BackgroundTransparency = 1
+            TextboxLabel.Position = UDim2New(0, 15, 0.5, 0)
+            TextboxLabel.Text = text
+            TextboxLabel.Size = UDim2New(0.6, 0, 0, 36)
+            TextboxLabel.Font = Enum.Font.Cartoon
+            TextboxLabel.AnchorPoint = Vec2(0, 0.5)
+            TextboxLabel.TextColor3 = Colors.White
+            TextboxLabel.TextSize = 15
+            TextboxLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+            local InputBox = Create('TextBox')
+            InputBox.Name = 'InputBox'
+            InputBox.Parent = TextboxFrame
+            InputBox.BackgroundColor3 = Colors.Background
+            InputBox.BackgroundTransparency = 0
+            InputBox.Position = UDim2New(1, -5, 0.5, 0)
+            InputBox.AnchorPoint = Vec2(1, 0.5)
+            InputBox.Size = UDim2New(0, 80, 0, 25)
+            InputBox.Font = Enum.Font.Cartoon
+            InputBox.PlaceholderText = placeholder
+            InputBox.PlaceholderColor3 = Colors.DarkGray
+            InputBox.Text = ''
+            InputBox.TextColor3 = Colors.LightGray
+            InputBox.TextSize = 11
+            AddCorner(InputBox, 5)
+
+            Connections[#Connections + 1] = InputBox.Focused:Connect(function()
+                InputBox.BackgroundTransparency = 0.2
+            end)
+            
+            Connections[#Connections + 1] = InputBox.FocusLost:Connect(function()
+                InputBox.BackgroundTransparency = 0
+                pcall(callback, InputBox.Text)
+            end)
+        end
+
+        function Tab:AddLabel(text)
+            local LabelSize = 15
+            local MinHeight = 36
+            local LabelFrame = Create('Frame')
+            LabelFrame.Name = 'LabelFrame'
+            LabelFrame.Parent = PageScroll
+            LabelFrame.BackgroundColor3 = Colors.Primary
+            LabelFrame.BackgroundTransparency = 0.8
+            LabelFrame.Size = UDim2New(1, 0, 0, MinHeight)
+            AddCorner(LabelFrame, 5)
+
+            local LabelText = Create('TextLabel')
+            LabelText.Name = 'LabelText'
+            LabelText.Parent = LabelFrame
+            LabelText.BackgroundTransparency = 1
+            LabelText.Size = UDim2New(1, -20, 1, 0)
+            LabelText.Font = Enum.Font.Cartoon
+            LabelText.Position = UDim2New(0, 10, 0, 0)
+            LabelText.TextColor3 = Colors.LightGray
+            LabelText.TextSize = LabelSize
+            LabelText.Text = text
+            LabelText.TextWrapped = true
+
+            local function CalculateHeight()
+                local textBounds = TextService:GetTextSize(text, LabelSize, Enum.Font.Cartoon, Vec2(LabelText.AbsoluteSize.X, math.huge))
+                return textBounds.Y > MinHeight and (textBounds.Y + 10) or MinHeight
+            end
+
+            task.spawn(function()
+                task.wait(0.1)
+                local newHeight = CalculateHeight()
+                LabelFrame.Size = UDim2New(1, 0, 0, newHeight)
+                task.wait(0.05)
+                PageList:ApplyLayout()
+            end)
+
+            local Label = {}
+
+            function Label:SetText(newText)
+                LabelText.Text = newText
+                local textBounds = TextService:GetTextSize(newText, LabelSize, Enum.Font.Cartoon, Vec2(LabelText.AbsoluteSize.X, math.huge))
+                local newHeight = textBounds.Y > MinHeight and (textBounds.Y + 10) or MinHeight
+                LabelFrame.Size = UDim2New(1, 0, 0, newHeight)
+                task.wait(0.05)
+                PageList:ApplyLayout()
+            end
+
+            return Label
+        end
+
+        return Tab
+    end
+
+    return Window
+end
+
+return Library
