@@ -490,7 +490,7 @@ function Library:CreateWindow(title)
     SelectedLabel.TextSize = 15
     SelectedLabel.TextColor3 = Colors.White
     SelectedLabel.TextTransparency = 0.6
-    SelectedLabel.Text = 'Select'
+    SelectedLabel.Text = 'None'
     SelectedLabel.TextXAlignment = Enum.TextXAlignment.Left
 
     local Arrow = Create('ImageLabel')
@@ -539,7 +539,7 @@ function Library:CreateWindow(title)
             SelectedLabel.TextTransparency = 0
         else
             DropLabel.Text = text .. ' - '
-            SelectedLabel.Text = 'Select'
+            SelectedLabel.Text = 'None'
             SelectedLabel.TextTransparency = 0.6
             
             local titleText = text .. ' - '
