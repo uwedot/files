@@ -459,9 +459,16 @@ function Library:CreateWindow(title)
     DropFrame.Size = UDim2New(1, 0, 0, 36)
     AddCorner(DropFrame, 5)
 
+    local TopSection = Create('Frame')
+    TopSection.Name = 'TopSection'
+    TopSection.Parent = DropFrame
+    TopSection.BackgroundTransparency = 1
+    TopSection.Size = UDim2New(1, 0, 0, 36)
+    TopSection.ClipsDescendants = false
+
     local DropLabel = Create('TextLabel')
     DropLabel.Name = 'DropdownTitle'
-    DropLabel.Parent = DropFrame
+    DropLabel.Parent = TopSection
     DropLabel.BackgroundTransparency = 1
     DropLabel.Position = UDim2New(0, 15, 0.5, 0)
     DropLabel.Size = UDim2New(0, 150, 0, 36)
@@ -474,7 +481,7 @@ function Library:CreateWindow(title)
 
     local SelectedLabel = Create('TextLabel')
     SelectedLabel.Name = 'SelectedLabel'
-    SelectedLabel.Parent = DropFrame
+    SelectedLabel.Parent = TopSection
     SelectedLabel.BackgroundTransparency = 1
     SelectedLabel.Position = UDim2New(0, 15, 0.5, 0)
     SelectedLabel.Size = UDim2New(0.6, 0, 0, 36)
@@ -488,10 +495,10 @@ function Library:CreateWindow(title)
 
     local Arrow = Create('ImageLabel')
     Arrow.Name = 'ArrowIcon'
-    Arrow.Parent = DropFrame
+    Arrow.Parent = TopSection
     Arrow.BackgroundTransparency = 1
-    Arrow.AnchorPoint = Vec2(0, 0.5)
-    Arrow.Position = UDim2New(0, 0, 0.5, 0)
+    Arrow.AnchorPoint = Vec2(1, 0.5)
+    Arrow.Position = UDim2New(1, -10, 0.5, 0)
     Arrow.Size = UDim2New(0, 20, 0, 20)
     Arrow.Image = Icons.Arrow
     Arrow.ImageColor3 = Colors.White
@@ -540,14 +547,6 @@ function Library:CreateWindow(title)
             DropLabel.Size = UDim2New(0, titleSize.X, 0, 36)
             SelectedLabel.Position = UDim2New(0, 15 + titleSize.X, 0.5, 0)
         end
-        
-        -- Update arrow position
-        local selectedText = SelectedLabel.Text
-        local selectedSize = TextService:GetTextSize(selectedText, 15, Enum.Font.Cartoon, Vec2(9999, 9999))
-        local titleText = text .. ' - '
-        local titleSize = TextService:GetTextSize(titleText, 15, Enum.Font.Cartoon, Vec2(9999, 9999))
-        
-        Arrow.Position = UDim2New(0, 15 + titleSize.X + selectedSize.X + 5, 0.5, 0)
     end
 
     local function UpdateVisuals()
@@ -629,7 +628,7 @@ function Library:CreateWindow(title)
 
     local ClickArea = Create('TextButton')
     ClickArea.Name = 'DropdownClickArea'
-    ClickArea.Parent = DropFrame
+    ClickArea.Parent = TopSection
     ClickArea.BackgroundTransparency = 1
     ClickArea.Size = UDim2New(1, 0, 0, 36)
     ClickArea.Text = ''
