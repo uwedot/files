@@ -922,53 +922,54 @@ end
 end
         
         -- Textbox
-        function Tab:AddTextbox(text, placeholder, callback)
-            placeholder = placeholder or 'Enter text...'
-            
-            local TextboxFrame = CreateElement('Frame', {
-                Name = 'Textbox',
-                Parent = PageScroll,
-                BackgroundColor3 = Colors.Primary,
-                BackgroundTransparency = 0.8,
-                Size = UDim2New(1, 0, 0, 36)
-            })
-            AddCorner(TextboxFrame, 5)
-            
-            CreateElement('TextLabel', {
-                Name = 'TextboxLabel',
-                Parent = TextboxFrame,
-                BackgroundTransparency = 1,
-                Position = UDim2New(0, 15, 0.5, 0),
-                Text = text,
-                Size = UDim2New(0.6, 0, 0, 36),
-                Font = Enum.Font.Cartoon,
-                AnchorPoint = Vec2(0, 0.5),
-                TextColor3 = Colors.White,
-                TextSize = 15,
-                TextXAlignment = Enum.TextXAlignment.Left
-            })
-            
-            local InputBox = CreateElement('TextBox', {
-                Name = 'InputBox',
-                Parent = TextboxFrame,
-                BackgroundColor3 = Colors.Background,
-                BackgroundTransparency = 0,
-                Position = UDim2New(1, -5, 0.5, 0),
-                AnchorPoint = Vec2(1, 0.5),
-                Size = UDim2New(0, 80, 0, 25),
-                Font = Enum.Font.Cartoon,
-                PlaceholderText = placeholder,
-                PlaceholderColor3 = Colors.DarkGray,
-                Text = '',
-                TextColor3 = Colors.LightGray,
-                TextSize = 11
-            })
-            AddCorner(InputBox, 5)
-            
-            Connections[#Connections + 1] = InputBox.FocusLost:Connect(function()
-                pcall(callback, InputBox.Text)
-            end)
-        end
+        -- Textbox
+function Tab:AddTextbox(text, placeholder, callback)
+    placeholder = placeholder or 'Enter text...'
+    
+    local TextboxFrame = CreateElement('Frame', {
+        Name = 'Textbox',
+        Parent = PageScroll,
+        BackgroundColor3 = Colors.Primary,
+        BackgroundTransparency = 0.8,
+        Size = UDim2New(1, 0, 0, 36)
+    })
+    AddCorner(TextboxFrame, 5)
+    
+    CreateElement('TextLabel', {
+        Name = 'TextboxLabel',
+        Parent = TextboxFrame,
+        BackgroundTransparency = 1,
+        Position = UDim2New(0, 15, 0.5, 0),
+        Text = text,
+        Size = UDim2New(0.4, 0, 0, 36),  -- Reduced from 0.6 to 0.4 to make room
+        Font = Enum.Font.Cartoon,
+        AnchorPoint = Vec2(0, 0.5),
+        TextColor3 = Colors.White,
+        TextSize = 15,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local InputBox = CreateElement('TextBox', {
+        Name = 'InputBox',
+        Parent = TextboxFrame,
+        BackgroundColor3 = Colors.Background,
+        BackgroundTransparency = 0,
+        Position = UDim2New(1, -5, 0.5, 0),
+        AnchorPoint = Vec2(1, 0.5),
+        Size = UDim2New(0, 150, 0, 25),  -- Increased from 80 to 150
+        Font = Enum.Font.Cartoon,
+        PlaceholderText = placeholder,
+        PlaceholderColor3 = Colors.DarkGray,
+        Text = '',
+        TextColor3 = Colors.LightGray,
+        TextSize = 11
+    })
+    AddCorner(InputBox, 5)
+    
+    Connections[#Connections + 1] = InputBox.FocusLost:Connect(function()
+        pcall(callback, InputBox.Text)
+    end)
+end
         
         -- Label
         function Tab:AddLabel(text)
