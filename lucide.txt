@@ -7,7 +7,7 @@ if Existing then
     Existing:Destroy()
 end
 
-local LucideIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/iaineverseen/files/refs/heads/main/icons.txt"))()
+local LucideIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/uwedot/files/refs/heads/main/icons.txt"))()
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Lucide-Icon"
