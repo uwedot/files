@@ -161,8 +161,8 @@ function ErrorPrompt(Message, state)
 end
 
 local Highlight = (isfile and loadfile and isfile("Highlight.lua") and loadfile("Highlight.lua")())
-	or loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/refs/heads/main/SimpleSpyV3/highlight.lua"))()
-local LazyFix = loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/refs/heads/main/SimpleSpyV3/DataToCode.lua"))()
+	or loadstring(game:HttpGet("https://raw.githubusercontent.com/uwedot/files/refs/heads/main/SimpleSpy/highlight.lua"))()
+local LazyFix = loadstring(game:HttpGet("https://raw.githubusercontent.com/uwedot/files/refs/heads/main/SimpleSpy/DataToCode.lua"))()
 
 -- GUI
 local SimpleSpy3 = Create("ScreenGui", {ResetOnSpawn = false})
