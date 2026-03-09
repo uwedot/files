@@ -22,14 +22,18 @@ local hook = oth and oth.hook
 
 local lower = string.lower
 local byte = string.byte
-local round = math.round
+local sfmt = string.format
+local srep = string.rep
+local ssub = string.sub
 local running, resume, status, yield, create, close = coroutine.running, coroutine.resume, coroutine.status, coroutine.yield, coroutine.create, coroutine.close
 local OldDebugId = game.GetDebugId
 local info = debug.info
 local IsA = game.IsA
 local tostring, tonumber = tostring, tonumber
 local delay, spawn = task.delay, task.spawn
-local clear, clone = table.clear, table.clone
+local tinsert, tremove, tfind, tclear, tconcat = table.insert, table.remove, table.find, table.clear, table.concat
+local mclamp, mmax, mfloor, mhuge = math.clamp, math.max, math.floor, math.huge
+local clear = tclear
 
 local function blankfunction(...) return ... end
 
@@ -82,10 +86,10 @@ local function SafeGetService(service) return cloneref(game:GetService(service))
 local function IsCyclicTable(tbl)
 	local checked = {}
 	local function Search(t)
-		table.insert(checked, t)
+		checked[t] = true
 		for _, v in next, t do
 			if type(v) == "table" then
-				if table.find(checked, v) then return true end
+				if checked[v] then return true end
 				if Search(v) then return true end
 			end
 		end
@@ -161,8 +165,8 @@ function ErrorPrompt(Message, state)
 end
 
 local Highlight = (isfile and loadfile and isfile("Highlight.lua") and loadfile("Highlight.lua")())
-	or loadstring(game:HttpGet("https://raw.githubusercontent.com/uwedot/files/refs/heads/main/SimpleSpy/highlight.lua"))()
-local LazyFix = loadstring(game:HttpGet("https://raw.githubusercontent.com/uwedot/files/refs/heads/main/SimpleSpy/DataToCode.lua"))()
+	or loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/refs/heads/main/SimpleSpyV3/highlight.lua"))()
+local LazyFix = loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/refs/heads/main/SimpleSpyV3/DataToCode.lua"))()
 
 -- GUI
 local SimpleSpy3 = Create("ScreenGui", {ResetOnSpawn = false})
@@ -254,11 +258,11 @@ xpcall(function()
 	end
 end, function(err) ErrorPrompt(("An error has occured: (%s)"):format(err)) end)
 
-local function logthread(thread) table.insert(running_threads, thread) end
+local function logthread(thread) tinsert(running_threads, thread) end
 
 function clean()
 	local max = getgenv().SIMPLESPYCONFIG_MaxRemotes
-	if not typeof(max) == "number" or math.floor(max) ~= max then max = 500 end
+	if not typeof(max) == "number" or mfloor(max) ~= max then max = 500 end
 	if #remoteLogs > max then
 		for i = 100, #remoteLogs do
 			local v = remoteLogs[i]
@@ -276,7 +280,7 @@ local function ThreadIsNotDead(thread) return not status(thread) == "dead" end
 local function tween(obj, t, props) TweenService:Create(obj, TweenInfo.new(t), props):Play() end
 
 function scaleToolTip()
-	local size = TextService:GetTextSize(TextLabel.Text, TextLabel.TextSize, TextLabel.Font, Vector2.new(196, math.huge))
+	local size = TextService:GetTextSize(TextLabel.Text, TextLabel.TextSize, TextLabel.Font, Vector2.new(196, mhuge))
 	TextLabel.Size = UDim2.new(0, size.X, 0, size.Y)
 	ToolTip.Size = UDim2.new(0, size.X + 4, 0, size.Y + 4)
 end
@@ -307,8 +311,8 @@ function bringBackOnResize()
 	if sideClosed then minimizeSize() else maximizeSize() end
 	local pos = Background.AbsolutePosition
 	local vp = workspace.CurrentCamera.ViewportSize
-	local cx = math.clamp(pos.X, 0, vp.X - (sideClosed and 131 or Background.AbsoluteSize.X))
-	local cy = math.clamp(pos.Y, 0, vp.Y - (closed and 19 or Background.AbsoluteSize.Y) - GuiInset.Y)
+	local cx = mclamp(pos.X, 0, vp.X - (sideClosed and 131 or Background.AbsoluteSize.X))
+	local cy = mclamp(pos.Y, 0, vp.Y - (closed and 19 or Background.AbsoluteSize.Y) - GuiInset.Y)
 	TweenService.Create(TweenService, Background, TweenInfo.new(0.1), {Position = UDim2.new(0, cx, 0, cy)}):Play()
 end
 
@@ -322,14 +326,14 @@ function onBarInput(input)
 				local newPos = UserInputService:GetMouseLocation()
 				if newPos == lastPos then return end
 				local vp = workspace.CurrentCamera.ViewportSize
-				local cx = math.clamp((offset + newPos).X, 0, vp.X - (sideClosed and 131 or TopBar.AbsoluteSize.X))
-				local cy = math.clamp((offset + newPos).Y, 0, vp.Y - (closed and 19 or Background.AbsoluteSize.Y) - GuiInset.Y)
+				local cx = mclamp((offset + newPos).X, 0, vp.X - (sideClosed and 131 or TopBar.AbsoluteSize.X))
+				local cy = mclamp((offset + newPos).Y, 0, vp.Y - (closed and 19 or Background.AbsoluteSize.Y) - GuiInset.Y)
 				currentPos = Vector2.new(cx, cy)
 				lastPos = newPos
 				TweenService.Create(TweenService, Background, TweenInfo.new(0.1), {Position = UDim2.new(0, cx, 0, cy)}):Play()
 			end)
 		end
-		table.insert(connections, UserInputService.InputEnded:Connect(function(inputE)
+		tinsert(connections, UserInputService.InputEnded:Connect(function(inputE)
 			if input == inputE and connections["drag"] then
 				connections["drag"]:Disconnect()
 				connections["drag"] = nil
@@ -553,8 +557,8 @@ function validateSize()
 	local x, y = Background.AbsoluteSize.X, Background.AbsoluteSize.Y
 	local scr = workspace.CurrentCamera.ViewportSize
 	local bpos = Background.AbsolutePosition
-	if x + bpos.X > scr.X then x = math.max(scr.X - bpos.X, 450) end
-	if y + bpos.Y > scr.Y then y = math.max(scr.Y - bpos.Y, 268) end
+	if x + bpos.X > scr.X then x = mmax(scr.X - bpos.X, 450) end
+	if y + bpos.Y > scr.Y then y = mmax(scr.Y - bpos.Y, 268) end
 	Background.Size = UDim2.fromOffset(x, y)
 end
 
@@ -569,8 +573,8 @@ function backgroundUserInput(input)
 				local newPos = UserInputService:GetMouseLocation()
 				if newPos == lastPos then return end
 				local cp = newPos + offset
-				local cx = math.max(cp.X, 450)
-				local cy = math.max(cp.Y, 268)
+				local cx = mmax(cp.X, 450)
+				local cy = mmax(cp.Y, 268)
 				Background.Size = UDim2.fromOffset(
 					(not sideClosed and not closed and (rtype == "X" or rtype == "B")) and cx or Background.AbsoluteSize.X,
 					(not closed and (rtype == "Y" or rtype == "B")) and cy or Background.AbsoluteSize.Y
@@ -580,7 +584,7 @@ function backgroundUserInput(input)
 				lastPos = newPos
 			end)
 		end
-		table.insert(connections, UserInputService.InputEnded:Connect(function(inputE)
+		tinsert(connections, UserInputService.InputEnded:Connect(function(inputE)
 			if input == inputE and connections["SIMPLESPY_RESIZE"] then
 				connections["SIMPLESPY_RESIZE"]:Disconnect()
 				connections["SIMPLESPY_RESIZE"] = nil
@@ -634,8 +638,8 @@ function makeToolTip(enable, text)
 			local tl = mp + Vector2.new(20, -15)
 			local br = tl + ToolTip.AbsoluteSize
 			tl = Vector2.new(
-				math.clamp(tl.X, 0, vp.X - ToolTip.AbsoluteSize.X),
-				math.clamp(tl.Y, 0, vp.Y - ToolTip.AbsoluteSize.Y - 35)
+				mclamp(tl.X, 0, vp.X - ToolTip.AbsoluteSize.X),
+				mclamp(tl.Y, 0, vp.Y - ToolTip.AbsoluteSize.Y - 35)
 			)
 			if tl.X <= mp.X and tl.Y <= mp.Y then
 				tl = mp - ToolTip.AbsoluteSize - Vector2.new(2, 2)
@@ -697,7 +701,7 @@ function newRemote(rtype, data)
 		if selected == log and RemoteTemplate then eventSelect(RemoteTemplate) end
 	end)
 	layoutOrderNum -= 1
-	table.insert(remoteLogs, 1, {connect, RemoteTemplate})
+	tinsert(remoteLogs, 1, {connect, RemoteTemplate})
 	clean()
 	updateRemoteCanvas()
 end
@@ -722,11 +726,11 @@ function genScript(remote, args)
 					local itype, vtype = type(i), type(v)
 					if itype ~= "Instance" and itype ~= "userdata" then gen ..= "\n    [object] = "
 					elseif itype == "string" then gen ..= '\n    ["' .. i .. '"] = '
-					elseif typeof(i) ~= "Instance" then gen ..= "\n    [" .. string.format("nil --[[%s]]", typeof(v)) .. "] = "
+					elseif typeof(i) ~= "Instance" then gen ..= "\n    [" .. sfmt("nil --[[%s]]", typeof(v)) .. "] = "
 					else gen ..= "\n    [game." .. i:GetFullName() .. "] = " end
 					if vtype ~= "Instance" and vtype ~= "userdata" then gen ..= "object"
 					elseif vtype == "string" then gen ..= '"' .. v .. '"'
-					elseif typeof(v) ~= "Instance" then gen ..= string.format("nil --[[%s]]", typeof(v))
+					elseif typeof(v) ~= "Instance" then gen ..= sfmt("nil --[[%s]]", typeof(v))
 					else gen ..= "game." .. v:GetFullName() end
 				end
 				gen ..= "\n}\n\n"
@@ -774,14 +778,14 @@ ufunctions = {
 		for _, pair in ipairs({{"Top","Top"},{"Bottom","Bottom"},{"Left","Left"},{"Right","Right"},{"Back","Back"},{"Front","Front"}}) do
 			if u[pair[1]] then f[#f+1] = "Enum.NormalId." .. pair[2] end
 		end
-		return "Faces.new(" .. table.concat(f, ", ") .. ")"
+		return "Faces.new(" .. tconcat(f, ", ") .. ")"
 	end,
 	EnumItem = function(u) return tostring(u) end,
 	Enums = function() return "Enum" end,
 	Enum = function(u) return "Enum." .. tostring(u) end,
 	Vector3 = function(u) return CustomGeneration.Vector3[u] or ("Vector3.new(%s)"):format(tostring(u)) end,
 	Vector2 = function(u) return CustomGeneration.Vector2[u] or ("Vector2.new(%s)"):format(tostring(u)) end,
-	CFrame = function(u) return CustomGeneration.CFrame[u] or ("CFrame.new(%s)"):format(table.concat({u:GetComponents()}, ", ")) end,
+	CFrame = function(u) return CustomGeneration.CFrame[u] or ("CFrame.new(%s)"):format(tconcat({u:GetComponents()}, ", ")) end,
 	PathWaypoint = function(u) return ('PathWaypoint.new(%s, %s, "%s")'):format(ufunctions.Vector3(u.Position), tostring(u.Action), u.Label) end,
 	UDim = function(u) return ("UDim.new(%s)"):format(tostring(u)) end,
 	UDim2 = function(u) return ("UDim2.new(%s)"):format(tostring(u)) end,
@@ -849,7 +853,7 @@ end
 function tabletostring(tbl, format) end
 
 function t2s(t, l, p, n, vtv, i, pt, path, tables, tI)
-	local globalIndex = table.find(getgenv(), t)
+	local globalIndex = tfind(getgenv(), t)
 	if type(globalIndex) == "string" then return globalIndex end
 	tI = tI or {0}
 	path = path or ""
@@ -861,14 +865,14 @@ function t2s(t, l, p, n, vtv, i, pt, path, tables, tI)
 			return "{} --[[DUPLICATE]]"
 		end
 	end
-	table.insert(tables, t)
+	tinsert(tables, t)
 	local s = "{"
 	local size = 0
 	l += indent
 	for k, v in next, t do
 		size += 1
 		if size > (getgenv().SimpleSpyMaxTableSize or 1000) then
-			s ..= "\n" .. string.rep(" ", l) .. "-- MAXIMUM TABLE SIZE REACHED, CHANGE 'getgenv().SimpleSpyMaxTableSize' TO ADJUST"
+			s ..= "\n" .. srep(" ", l) .. "-- MAXIMUM TABLE SIZE REACHED, CHANGE 'getgenv().SimpleSpyMaxTableSize' TO ADJUST"
 			break
 		end
 		if rawequal(k, t) then
@@ -878,10 +882,10 @@ function t2s(t, l, p, n, vtv, i, pt, path, tables, tI)
 		end
 		local currentPath = type(k) == "string" and k:match("^[%a_]+[%w_]*$") and "." .. k or "[" .. v2s(k,l,p,n,vtv,k,t,path,tables,tI) .. "]"
 		if size % 100 == 0 then scheduleWait() end
-		s ..= "\n" .. string.rep(" ", l) .. "[" .. v2s(k,l,p,n,vtv,k,t,path..currentPath,tables,tI) .. "] = " .. v2s(v,l,p,n,vtv,k,t,path..currentPath,tables,tI) .. ","
+		s ..= "\n" .. srep(" ", l) .. "[" .. v2s(k,l,p,n,vtv,k,t,path..currentPath,tables,tI) .. "] = " .. v2s(v,l,p,n,vtv,k,t,path..currentPath,tables,tI) .. ","
 	end
 	if #s > 1 then s = s:sub(1, #s - 1) end
-	if size > 0 then s ..= "\n" .. string.rep(" ", l - indent) end
+	if size > 0 then s ..= "\n" .. srep(" ", l - indent) end
 	return s .. "}"
 end
 
@@ -964,7 +968,7 @@ function v2p(x, t, path, prev)
 			local dup = false
 			for _, y in next, prev do if rawequal(y, v) then dup = true; break end end
 			if not dup then
-				table.insert(prev, t)
+				tinsert(prev, t)
 				local found, p2 = v2p(x, v, path, prev)
 				if found then
 					return true, (type(i) == "string" and i:match("^[%a_]+[%w_]*$") and "." .. i or "[" .. v2s(i) .. "]") .. p2
@@ -1003,7 +1007,7 @@ function handlespecials(s, indentation)
 		if byte(char) then
 			timeout += 1
 			local c = create(coroutineFunc)
-			table.insert(coroutines, c)
+			tinsert(coroutines, c)
 			local sf = specialstrings[char]
 			if sf then
 				sf(c, i); i += 1
@@ -1012,7 +1016,7 @@ function handlespecials(s, indentation)
 				i += #rawtostring(byte(char))
 			end
 			if i >= n * 100 then
-				local extra = string.format('" ..\n%s"', string.rep(" ", indentation + indent))
+				local extra = sfmt('" ..\n%s"', srep(" ", indentation + indent))
 				s = s:sub(0, i) .. extra .. s:sub(i+1, -1)
 				i += #extra; n += 1
 			end
@@ -1021,7 +1025,7 @@ function handlespecials(s, indentation)
 	while not isFinished(coroutines) do RunService.Heartbeat:Wait() end
 	clear(coroutines)
 	if i > (getgenv().SimpleSpyMaxStringSize or 10000) then
-		return string.sub(s, 0, getgenv().SimpleSpyMaxStringSize or 10000), true
+		return ssub(s, 0, getgenv().SimpleSpyMaxStringSize or 10000), true
 	end
 	return s, false
 end
@@ -1064,7 +1068,7 @@ function getScriptFromSrc(src)
 	return realPath
 end
 
-function schedule(f, ...) table.insert(scheduled, {f, ...}) end
+function schedule(f, ...) tinsert(scheduled, {f, ...}) end
 
 function scheduleWait()
 	local thread = running()
@@ -1074,9 +1078,9 @@ end
 
 local function taskscheduler()
 	if not toggle then scheduled = {}; return end
-	if #scheduled > SIMPLESPYCONFIG_MaxRemotes + 100 then table.remove(scheduled, #scheduled) end
+	if #scheduled > SIMPLESPYCONFIG_MaxRemotes + 100 then tremove(scheduled, #scheduled) end
 	if #scheduled > 0 then
-		local f = table.remove(scheduled, 1)
+		local f = tremove(scheduled, 1)
 		if type(f) == "table" and type(f[1]) == "function" then pcall(unpack(f)) end
 	end
 end
@@ -1257,7 +1261,7 @@ if not getgenv().SimpleSpyExecuted then
 		Simple.MouseEnter:Connect(onToggleButtonHover)
 		Simple.MouseLeave:Connect(onToggleButtonUnhover)
 		CloseButton.MouseButton1Click:Connect(shutdown)
-		table.insert(connections, UserInputService.InputBegan:Connect(backgroundUserInput))
+		tinsert(connections, UserInputService.InputBegan:Connect(backgroundUserInput))
 		connectResize()
 		SimpleSpy3.Enabled = true
 		logthread(spawn(function() delay(1, onToggleButtonUnhover) end))
@@ -1459,7 +1463,7 @@ end, function()
 end)
 
 
-if table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) then
+if tfind({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) then
 	Background.Draggable = true
 	local QuickCapture = Instance.new("TextButton")
 	local UICorner = Instance.new("UICorner")

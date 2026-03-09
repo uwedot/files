@@ -2,6 +2,11 @@ local cloneref = cloneref or function(...) return ... end
 local TextService = cloneref(game:GetService("TextService"))
 local RunService = cloneref(game:GetService("RunService"))
 
+local tinsert, tconcat = table.insert, table.concat
+local sfmt, srep, ssub = string.format, string.rep, string.sub
+local mhuge = math.huge
+local newInst = Instance.new
+
 local Highlight = {}
 
 local parentFrame, scrollingFrame, textFrame, lineNumbersFrame
@@ -59,7 +64,7 @@ end
 local function getRaw()
 	local t = {}
 	for _, c in next, tableContents do t[#t+1] = c.Char end
-	return table.concat(t)
+	return tconcat(t)
 end
 
 local function renderComments()
@@ -70,7 +75,7 @@ local function renderComments()
 			if step % 1000 == 0 then RunService.Heartbeat:Wait() end
 			step += 1
 			if not isOffLimits(cs) then
-				table.insert(offLimits, {cs, ce})
+				tinsert(offLimits, {cs, ce})
 				for i = cs, ce do
 					if tableContents[i] then tableContents[i].Color = commentColor end
 				end
@@ -101,7 +106,7 @@ local function renderStrings()
 					char.Color = stringColor
 					stringStart = i
 					offLimitsIndex = #offLimits + 1
-					offLimits[offLimitsIndex] = {stringStart, math.huge}
+					offLimits[offLimitsIndex] = {stringStart, mhuge}
 				end
 			end
 		end
@@ -164,8 +169,8 @@ local function render()
 		if i == #tableContents + 1 or char.Char == "\n" then
 			lineStr = lineStr .. (lastColor and "</font>" or "")
 
-			local lineText = Instance.new("TextLabel")
-			local x = TextService:GetTextSize(rawStr, textSize, font, Vector2.new(math.huge, math.huge)).X + 60
+			local lineText = newInst("TextLabel")
+			local x = TextService:GetTextSize(rawStr, textSize, font, Vector2.new(mhuge, mhuge)).X + 60
 			if x > largestX then largestX = x end
 
 			lineText.TextXAlignment = Enum.TextXAlignment.Left
@@ -180,7 +185,7 @@ local function render()
 			lineText.Parent = textFrame
 
 			if i ~= #tableContents + 1 then
-				local lineNumber = Instance.new("TextLabel")
+				local lineNumber = newInst("TextLabel")
 				lineNumber.Text = line
 				lineNumber.Font = font
 				lineNumber.TextSize = textSize
@@ -201,13 +206,13 @@ local function render()
 			lineStr = lineStr .. " "
 			rawStr = rawStr .. " "
 		elseif char.Char == "\t" then
-			lineStr = lineStr .. string.rep(" ", 4)
+			lineStr = lineStr .. srep(" ", 4)
 			rawStr = rawStr .. "\t"
 		else
 			if char.Color == lastColor then
 				lineStr = lineStr .. autoEscape(char.Char)
 			else
-				lineStr = lineStr .. (lastColor and "</font>" or "") .. string.format('<font color="rgb(%d,%d,%d)">', char.Color.R * 255, char.Color.G * 255, char.Color.B * 255) .. autoEscape(char.Char)
+				lineStr = lineStr .. (lastColor and "</font>" or "") .. sfmt('<font color="rgb(%d,%d,%d)">', char.Color.R * 255, char.Color.G * 255, char.Color.B * 255) .. autoEscape(char.Char)
 				lastColor = char.Color
 			end
 			rawStr = rawStr .. char.Char
@@ -221,9 +226,9 @@ function Highlight:init(frame)
 	if typeof(frame) == "Instance" and frame:IsA("Frame") then
 		frame:ClearAllChildren()
 		parentFrame = frame
-		scrollingFrame = Instance.new("ScrollingFrame")
-		textFrame = Instance.new("Frame")
-		lineNumbersFrame = Instance.new("Frame")
+		scrollingFrame = newInst("ScrollingFrame")
+		textFrame = newInst("Frame")
+		lineNumbersFrame = newInst("Frame")
 
 		local sz = frame.AbsoluteSize
 		scrollingFrame.Size = UDim2.new(0, sz.X, 0, sz.Y)
@@ -268,7 +273,7 @@ function Highlight:getRaw() return getRaw() end
 function Highlight:getString()
 	local t = {}
 	for _, c in next, tableContents do t[#t+1] = c.Char:sub(1, 1) end
-	return table.concat(t)
+	return tconcat(t)
 end
 
 function Highlight:getTable() return tableContents end
