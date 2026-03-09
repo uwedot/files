@@ -165,8 +165,8 @@ function ErrorPrompt(Message, state)
 end
 
 local Highlight = (isfile and loadfile and isfile("Highlight.lua") and loadfile("Highlight.lua")())
-	or loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/refs/heads/main/SimpleSpyV3/highlight.lua"))()
-local LazyFix = loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/refs/heads/main/SimpleSpyV3/DataToCode.lua"))()
+	or loadstring(game:HttpGet("https://raw.githubusercontent.com/uwedot/files/refs/heads/main/SimpleSpy/highlight.lua"))()
+local LazyFix = loadstring(game:HttpGet("https://raw.githubusercontent.com/uwedot/files/refs/heads/main/SimpleSpy/DataToCode.lua"))()
 
 -- GUI
 local SimpleSpy3 = Create("ScreenGui", {ResetOnSpawn = false})
@@ -196,9 +196,8 @@ local mainClosing, closed = false, false
 local sideClosing, sideClosed = false, false
 local maximized = false
 local logs, selected = {}, nil
+local logMap = {} -- frame → log entry for O(1) eventSelect lookup
 local blacklist, blocklist = {}, {}
-local getNil = false
-local connectedRemotes = {}
 local toggle = false
 local prevTables = {}
 local remoteLogs = {}
@@ -262,7 +261,7 @@ local function logthread(thread) tinsert(running_threads, thread) end
 
 function clean()
 	local max = getgenv().SIMPLESPYCONFIG_MaxRemotes
-	if not typeof(max) == "number" or mfloor(max) ~= max then max = 500 end
+	if typeof(max) ~= "number" or mfloor(max) ~= max then max = 500 end
 	if #remoteLogs > max then
 		for i = 100, #remoteLogs do
 			local v = remoteLogs[i]
@@ -275,7 +274,7 @@ function clean()
 	end
 end
 
-local function ThreadIsNotDead(thread) return not status(thread) == "dead" end
+local function ThreadIsNotDead(thread) return status(thread) ~= "dead" end
 
 local function tween(obj, t, props) TweenService:Create(obj, TweenInfo.new(t), props):Play() end
 
@@ -595,20 +594,13 @@ function backgroundUserInput(input)
 	end
 end
 
-function getPlayerFromInstance(instance)
-	for _, v in next, Players:GetPlayers() do
-		if v.Character and (instance:IsDescendantOf(v.Character) or instance == v.Character) then return v end
-	end
-end
 
 function eventSelect(frame)
 	if selected and selected.Log then
 		if selected.Button then spawn(function() tween(selected.Button, 0.5, {BackgroundColor3 = Color3.fromRGB(0,0,0)}) end) end
 		selected = nil
 	end
-	for _, v in next, logs do
-		if frame == v.Log then selected = v; break end
-	end
+	selected = logMap[frame]
 	if selected and selected.Log then
 		spawn(function() tween(frame.Button, 0.5, {BackgroundColor3 = Color3.fromRGB(92,126,229)}) end)
 		codebox:setRaw(selected.GenScript)
@@ -674,7 +666,7 @@ function newRemote(rtype, data)
 	local remote = data.remote
 	local RemoteTemplate = Create("Frame", {LayoutOrder=layoutOrderNum,Name="RemoteTemplate",Parent=LogList,BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Size=UDim2.new(0,117,0,27)})
 	Create("Frame", {Name="ColorBar",Parent=RemoteTemplate,BackgroundColor3=(rtype=="event" and Color3.fromRGB(255,242,0) or Color3.fromRGB(99,86,245)),BorderSizePixel=0,Position=UDim2.new(0,0,0,1),Size=UDim2.new(0,7,0,18),ZIndex=2})
-	Create("TextLabel", {TextTruncate=Enum.TextTruncate.AtEnd,Name="Text",Parent=RemoteTemplate,BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Position=UDim2.new(0,12,0,1),Size=UDim2.new(0,105,0,18),ZIndex=2,Font=Enum.Font.SourceSans,Text=remote.Name,TextColor3=Color3.new(1,1,1),TextSize=14,TextXAlignment=Enum.TextXAlignment.Left})
+	Create("TextLabel", {TextTruncate=Enum.TextTruncate.AtEnd,Name="Text",Parent=RemoteTemplate,BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Position=UDim2.new(0,12,0,1),Size=UDim2.new(0,105,0,18),ZIndex=2,Font=Enum.Font.SourceSans,Text=(remote.Name ~= "" and remote.Name or "(unnamed)"),TextColor3=Color3.new(1,1,1),TextSize=14,TextXAlignment=Enum.TextXAlignment.Left})
 	local Button = Create("TextButton", {Name="Button",Parent=RemoteTemplate,BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=0.75,BorderColor3=Color3.new(1,1,1),Position=UDim2.new(0,0,0,1),Size=UDim2.new(0,117,0,18),AutoButtonColor=false,Font=Enum.Font.SourceSans,Text="",TextColor3=Color3.new(0,0,0),TextSize=14})
 
 	local log = {
@@ -692,6 +684,7 @@ function newRemote(rtype, data)
 		GenScript = "-- Generating, please wait...\n-- (If this message persists, the remote args are likely extremely long)"
 	}
 	logs[#logs + 1] = log
+	logMap[RemoteTemplate] = log
 
 	local connect = Button.MouseButton1Click:Connect(function()
 		logthread(running())
@@ -850,7 +843,6 @@ function v2v(t)
 	return ret
 end
 
-function tabletostring(tbl, format) end
 
 function t2s(t, l, p, n, vtv, i, pt, path, tables, tI)
 	local globalIndex = tfind(getgenv(), t)
@@ -859,13 +851,12 @@ function t2s(t, l, p, n, vtv, i, pt, path, tables, tI)
 	path = path or ""
 	if not l then l = 0; tables = {} end
 	p = p or t
-	for _, v in next, tables do
-		if n and rawequal(v, t) then
-			bottomstr ..= "\n" .. rawtostring(n) .. rawtostring(path) .. " = " .. rawtostring(n) .. rawtostring(({v2p(v, p)})[2])
-			return "{} --[[DUPLICATE]]"
-		end
+	if n and tables[t] then
+		local _, p2 = v2p(t, p)
+		bottomstr ..= "\n" .. rawtostring(n) .. rawtostring(path) .. " = " .. rawtostring(n) .. rawtostring(p2)
+		return "{} --[[DUPLICATE]]"
 	end
-	tinsert(tables, t)
+	tables[t] = true
 	local s = "{"
 	local size = 0
 	l += indent
@@ -884,6 +875,7 @@ function t2s(t, l, p, n, vtv, i, pt, path, tables, tI)
 		if size % 100 == 0 then scheduleWait() end
 		s ..= "\n" .. srep(" ", l) .. "[" .. v2s(k,l,p,n,vtv,k,t,path..currentPath,tables,tI) .. "] = " .. v2s(v,l,p,n,vtv,k,t,path..currentPath,tables,tI) .. ","
 	end
+	tables[t] = nil
 	if #s > 1 then s = s:sub(1, #s - 1) end
 	if size > 0 then s ..= "\n" .. srep(" ", l - indent) end
 	return s .. "}"
@@ -909,6 +901,7 @@ end
 
 function i2p(i, customgen)
 	if customgen then return customgen end
+	local function isIdent(s) return s ~= "" and s:match("^[%a_][%w_]*$") ~= nil end
 	local player = getplayer(i)
 	local parent, out = i, ""
 	if parent == nil then return "nil" end
@@ -921,7 +914,7 @@ function i2p(i, customgen)
 					return i2p(player) .. ".Character" .. out
 				end
 			else
-				out = (parent.Name:match("[%a_]+[%w+]*") ~= parent.Name and ':FindFirstChild(' .. formatstr(parent.Name) .. ')' or "." .. parent.Name) .. out
+				out = (isIdent(parent.Name) and "." .. parent.Name or ':FindFirstChild(' .. formatstr(parent.Name) .. ')') .. out
 			end
 			task.wait()
 			parent = parent.Parent
@@ -932,13 +925,13 @@ function i2p(i, customgen)
 				if SafeGetService(parent.ClassName) then
 					return (lower(parent.ClassName) == "workspace" and "workspace" or 'game:GetService("' .. parent.ClassName .. '")') .. out
 				else
-					return (parent.Name:match("[%a_]+[%w_]*") and "game." .. parent.Name or 'game:FindFirstChild(' .. formatstr(parent.Name) .. ')') .. out
+					return (isIdent(parent.Name) and "game." .. parent.Name or 'game:FindFirstChild(' .. formatstr(parent.Name) .. ')') .. out
 				end
 			elseif not parent.Parent then
 				getnilrequired = true
 				return 'getNil(' .. formatstr(parent.Name) .. ', "' .. parent.ClassName .. '")' .. out
 			else
-				out = (parent.Name:match("[%a_]+[%w_]*") ~= parent.Name and ':WaitForChild(' .. formatstr(parent.Name) .. ')' or ':WaitForChild("' .. parent.Name .. '")') .. out
+				out = (isIdent(parent.Name) and ':WaitForChild("' .. parent.Name .. '")' or ':WaitForChild(' .. formatstr(parent.Name) .. ')') .. out
 			end
 			if i:IsDescendantOf(Players.LocalPlayer) then
 				return 'game:GetService("Players").LocalPlayer' .. out
@@ -964,15 +957,11 @@ function v2p(x, t, path, prev)
 		if rawequal(v, x) then
 			return true, path .. (type(i) == "string" and i:match("^[%a_]+[%w_]*$") and "." .. i or "[" .. v2s(i) .. "]")
 		end
-		if type(v) == "table" then
-			local dup = false
-			for _, y in next, prev do if rawequal(y, v) then dup = true; break end end
-			if not dup then
-				tinsert(prev, t)
-				local found, p2 = v2p(x, v, path, prev)
-				if found then
-					return true, (type(i) == "string" and i:match("^[%a_]+[%w_]*$") and "." .. i or "[" .. v2s(i) .. "]") .. p2
-				end
+		if type(v) == "table" and not prev[v] then
+			prev[t] = true
+			local found, p2 = v2p(x, v, path, prev)
+			if found then
+				return true, (type(i) == "string" and i:match("^[%a_]+[%w_]*$") and "." .. i or "[" .. v2s(i) .. "]") .. p2
 			end
 		end
 	end
@@ -985,49 +974,49 @@ function formatstr(s, indentation)
 	return '"' .. handled .. '"' .. (reachedMax and " --[[ MAXIMUM STRING SIZE REACHED ]]" or "")
 end
 
-local function isFinished(coroutines)
-	for _, v in next, coroutines do if status(v) == "running" then return false end end
-	return true
-end
-
 local specialstrings = {
-	["\n"] = function(t, i) resume(t, i, "\\n") end,
-	["\t"] = function(t, i) resume(t, i, "\\t") end,
-	["\\"] = function(t, i) resume(t, i, "\\\\") end,
-	['"'] = function(t, i) resume(t, i, '\\"') end,
+	["\n"] = "\\n",
+	["\t"] = "\\t",
+	["\\"] = "\\\\",
+	['"'] = '\\"',
 }
 
 function handlespecials(s, indentation)
-	local i, n, coroutines, timeout = 0, 1, {}, 0
-	local coroutineFunc = function(idx, r) s = s:sub(0, idx-1) .. r .. s:sub(idx+1, -1) end
-	repeat
-		i += 1
-		if timeout >= 10 then task.wait(); timeout = 0 end
-		local char = s:sub(i, i)
-		if byte(char) then
-			timeout += 1
-			local c = create(coroutineFunc)
-			tinsert(coroutines, c)
-			local sf = specialstrings[char]
-			if sf then
-				sf(c, i); i += 1
-			elseif byte(char) > 126 or byte(char) < 32 then
-				resume(c, i, "\\" .. byte(char))
-				i += #rawtostring(byte(char))
-			end
-			if i >= n * 100 then
-				local extra = sfmt('" ..\n%s"', srep(" ", indentation + indent))
-				s = s:sub(0, i) .. extra .. s:sub(i+1, -1)
-				i += #extra; n += 1
-			end
-		end
-	until char == "" or i > (getgenv().SimpleSpyMaxStringSize or 10000)
-	while not isFinished(coroutines) do RunService.Heartbeat:Wait() end
-	clear(coroutines)
-	if i > (getgenv().SimpleSpyMaxStringSize or 10000) then
-		return ssub(s, 0, getgenv().SimpleSpyMaxStringSize or 10000), true
+	local maxSize = getgenv().SimpleSpyMaxStringSize or 10000
+	if #s > maxSize then
+		s = ssub(s, 1, maxSize)
+		-- escape and return truncated
 	end
-	return s, false
+	local result = {}
+	local lineLen = 0
+	local n = 1
+	local breakStr = sfmt('" ..\n%s"', srep(" ", indentation + indent))
+	local breakLen = #breakStr
+	for i = 1, #s do
+		local char = ssub(s, i, i)
+		local b = byte(char)
+		local escaped
+		if specialstrings[char] then
+			escaped = specialstrings[char]
+		elseif b < 32 or b > 126 then
+			escaped = "\\" .. tostring(b)
+		else
+			escaped = char
+		end
+		lineLen += #escaped
+		result[n] = escaped
+		n += 1
+		if lineLen >= 100 then
+			result[n] = breakStr
+			n += 1
+			lineLen = 0
+		end
+	end
+	local out = tconcat(result)
+	if #s >= maxSize then
+		return out, true
+	end
+	return out, false
 end
 
 function getScriptFromSrc(src)
@@ -1094,14 +1083,14 @@ function remoteHandler(data)
 		local id = data.id
 		if excluding[id] then return end
 		if not history[id] then history[id] = {badOccurances = 0, lastCall = tick()} end
-		if tick() - history[id].lastCall < 1 then
-			history[id].badOccurances += 1
+		local h = history[id]
+		if tick() - h.lastCall < 1 then
+			h.badOccurances += 1
+			if h.badOccurances > 3 then excluding[id] = true end
 			return
-		else
-			history[id].badOccurances = 0
 		end
-		if history[id].badOccurances > 3 then excluding[id] = true; return end
-		history[id].lastCall = tick()
+		h.badOccurances = 0
+		h.lastCall = tick()
 	end
 	local m = lower(data.method)
 	if (data.remote:IsA("RemoteEvent") or data.remote:IsA("UnreliableRemoteEvent")) and m == "fireserver" then
@@ -1223,7 +1212,7 @@ local function shutdown()
 	if schedulerconnect then schedulerconnect:Disconnect() end
 	for _, connection in next, connections do connection:Disconnect() end
 	for _, v in next, running_threads do if ThreadIsNotDead(v) then close(v) end end
-	clear(running_threads); clear(connections); clear(logs); clear(remoteLogs)
+	clear(running_threads); clear(connections); clear(logs); clear(logMap); clear(remoteLogs)
 	disablehooks()
 	SimpleSpy3:Destroy()
 	Storage:Destroy()
@@ -1378,7 +1367,7 @@ end)
 
 newButton("Clr Logs", function() return "Click to clear logs" end, function()
 	TextLabel.Text = "Clearing..."
-	clear(logs)
+	clear(logs); clear(logMap)
 	for _, v in next, LogList:GetChildren() do if not v:IsA("UIListLayout") then v:Destroy() end end
 	codebox:setRaw("")
 	selected = nil
