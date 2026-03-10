@@ -35,6 +35,8 @@ local tinsert, tremove, tfind, tclear, tconcat = table.insert, table.remove, tab
 local mclamp, mmax, mfloor, mhuge = math.clamp, math.max, math.floor, math.huge
 local clear = tclear
 
+local function isIdent(s) return s ~= "" and s:match("^[%a_][%w_]*$") ~= nil end
+
 local function blankfunction(...) return ... end
 
 local get_thread_identity = (syn and syn.get_thread_identity) or getidentity or getthreadidentity
@@ -197,6 +199,7 @@ local sideClosing, sideClosed = false, false
 local maximized = false
 local logs, selected = {}, nil
 local logMap = {} -- frame → log entry for O(1) eventSelect lookup
+local remoteCallCounts = {} -- debugId → {count, labelRef} for live frequency display
 local blacklist, blocklist = {}, {}
 local toggle = false
 local prevTables = {}
@@ -266,7 +269,11 @@ function clean()
 		for i = 100, #remoteLogs do
 			local v = remoteLogs[i]
 			if typeof(v[1]) == "RBXScriptConnection" then v[1]:Disconnect() end
-			if typeof(v[2]) == "Instance" then v[2]:Destroy() end
+			if typeof(v[2]) == "Instance" then
+				logMap[v[2]] = nil
+				v[2]:Destroy()
+			end
+			if v[3] then remoteCallCounts[v[3]] = nil end
 		end
 		local newLogs = {}
 		for i = 1, 100 do newLogs[i] = remoteLogs[i] end
@@ -664,16 +671,39 @@ end
 function newRemote(rtype, data)
 	if layoutOrderNum < 1 then layoutOrderNum = 999999999 end
 	local remote = data.remote
+	local id = data.id
+	local displayName = remote.Name ~= "" and remote.Name or "(unnamed)"
+
+	-- Deduplicate: if this remote already has a log entry, just update it in place
+	if remoteCallCounts[id] then
+		local entry = remoteCallCounts[id]
+		entry.count += 1
+		local label = entry.label
+		if label and label.Parent then
+			label.Text = displayName .. " (x" .. entry.count .. ")"
+		end
+		if entry.log then
+			entry.log.args = data.args
+			entry.log.Function = data.infofunc or entry.log.Function
+			entry.log.Source = data.callingscript or entry.log.Source
+		end
+		return
+	end
+
+	local colorBar = rtype == "event" and Color3.fromRGB(255,242,0)
+		or rtype == "unreliable" and Color3.fromRGB(255,140,0)
+		or Color3.fromRGB(99,86,245)
+
 	local RemoteTemplate = Create("Frame", {LayoutOrder=layoutOrderNum,Name="RemoteTemplate",Parent=LogList,BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Size=UDim2.new(0,117,0,27)})
-	Create("Frame", {Name="ColorBar",Parent=RemoteTemplate,BackgroundColor3=(rtype=="event" and Color3.fromRGB(255,242,0) or Color3.fromRGB(99,86,245)),BorderSizePixel=0,Position=UDim2.new(0,0,0,1),Size=UDim2.new(0,7,0,18),ZIndex=2})
-	Create("TextLabel", {TextTruncate=Enum.TextTruncate.AtEnd,Name="Text",Parent=RemoteTemplate,BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Position=UDim2.new(0,12,0,1),Size=UDim2.new(0,105,0,18),ZIndex=2,Font=Enum.Font.SourceSans,Text=(remote.Name ~= "" and remote.Name or "(unnamed)"),TextColor3=Color3.new(1,1,1),TextSize=14,TextXAlignment=Enum.TextXAlignment.Left})
+	Create("Frame", {Name="ColorBar",Parent=RemoteTemplate,BackgroundColor3=colorBar,BorderSizePixel=0,Position=UDim2.new(0,0,0,1),Size=UDim2.new(0,7,0,18),ZIndex=2})
+	local NameLabel = Create("TextLabel", {TextTruncate=Enum.TextTruncate.AtEnd,Name="Text",Parent=RemoteTemplate,BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Position=UDim2.new(0,12,0,1),Size=UDim2.new(0,105,0,18),ZIndex=2,Font=Enum.Font.SourceSans,Text=displayName,TextColor3=Color3.new(1,1,1),TextSize=14,TextXAlignment=Enum.TextXAlignment.Left})
 	local Button = Create("TextButton", {Name="Button",Parent=RemoteTemplate,BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=0.75,BorderColor3=Color3.new(1,1,1),Position=UDim2.new(0,0,0,1),Size=UDim2.new(0,117,0,18),AutoButtonColor=false,Font=Enum.Font.SourceSans,Text="",TextColor3=Color3.new(0,0,0),TextSize=14})
 
 	local log = {
 		Name = remote.Name,
 		Function = data.infofunc or "--Function Info is disabled",
 		Remote = remote,
-		DebugId = data.id,
+		DebugId = id,
 		metamethod = data.metamethod,
 		args = data.args,
 		Log = RemoteTemplate,
@@ -685,29 +715,26 @@ function newRemote(rtype, data)
 	}
 	logs[#logs + 1] = log
 	logMap[RemoteTemplate] = log
+	remoteCallCounts[id] = {count = 1, label = NameLabel, log = log}
 
 	local connect = Button.MouseButton1Click:Connect(function()
 		logthread(running())
 		eventSelect(RemoteTemplate)
-		log.GenScript = genScript(log.Remote, log.args)
+		log.GenScript = genScript(log.Remote, log.args, log.returnvalue)
 		if log.Blocked then log.GenScript = "-- THIS REMOTE WAS PREVENTED FROM FIRING TO THE SERVER BY SIMPLESPY\n\n" .. log.GenScript end
 		if selected == log and RemoteTemplate then eventSelect(RemoteTemplate) end
 	end)
 	layoutOrderNum -= 1
-	tinsert(remoteLogs, 1, {connect, RemoteTemplate})
+	tinsert(remoteLogs, 1, {connect, RemoteTemplate, id})
 	clean()
 	updateRemoteCanvas()
 end
 
-function genScript(remote, args)
+function genScript(remote, args, returnvalue)
 	prevTables = {}
 	local gen = ""
-	local suffix
-	if remote:IsA("RemoteEvent") or remote:IsA("UnreliableRemoteEvent") then
-		suffix = ":FireServer("
-	else
-		suffix = ":InvokeServer("
-	end
+	local isFunc = remote:IsA("RemoteFunction")
+	local suffix = (remote:IsA("RemoteEvent") or remote:IsA("UnreliableRemoteEvent")) and ":FireServer(" or ":InvokeServer("
 
 	if #args > 0 then
 		xpcall(function()
@@ -736,6 +763,19 @@ function genScript(remote, args)
 	else
 		gen ..= LazyFix.ConvertKnown("Instance", remote) .. suffix .. ")"
 	end
+
+	-- Append captured return value for RemoteFunctions
+	if isFunc and returnvalue and #returnvalue > 0 then
+		local ok, rv = pcall(function()
+			local parts = {}
+			for _, v in next, returnvalue do parts[#parts+1] = v2s(v) end
+			return tconcat(parts, ", ")
+		end)
+		if ok and rv then
+			gen ..= "\n-- Return value: " .. rv
+		end
+	end
+
 	prevTables = {}
 	return gen
 end
@@ -901,7 +941,6 @@ end
 
 function i2p(i, customgen)
 	if customgen then return customgen end
-	local function isIdent(s) return s ~= "" and s:match("^[%a_][%w_]*$") ~= nil end
 	local player = getplayer(i)
 	local parent, out = i, ""
 	if parent == nil then return "nil" end
@@ -1057,7 +1096,7 @@ function getScriptFromSrc(src)
 	return realPath
 end
 
-function schedule(f, ...) tinsert(scheduled, {f, ...}) end
+function schedule(f, ...) tinsert(scheduled, {f=f, a={...}}) end
 
 function scheduleWait()
 	local thread = running()
@@ -1070,7 +1109,7 @@ local function taskscheduler()
 	if #scheduled > SIMPLESPYCONFIG_MaxRemotes + 100 then tremove(scheduled, #scheduled) end
 	if #scheduled > 0 then
 		local f = tremove(scheduled, 1)
-		if type(f) == "table" and type(f[1]) == "function" then pcall(unpack(f)) end
+		if type(f) == "table" and type(f.f) == "function" then pcall(f.f, unpack(f.a)) end
 	end
 end
 
@@ -1093,8 +1132,10 @@ function remoteHandler(data)
 		h.lastCall = tick()
 	end
 	local m = lower(data.method)
-	if (data.remote:IsA("RemoteEvent") or data.remote:IsA("UnreliableRemoteEvent")) and m == "fireserver" then
+	if data.remote:IsA("RemoteEvent") and m == "fireserver" then
 		newRemote("event", data)
+	elseif data.remote:IsA("UnreliableRemoteEvent") and m == "fireserver" then
+		newRemote("unreliable", data)
 	elseif data.remote:IsA("RemoteFunction") and m == "invokeserver" then
 		newRemote("function", data)
 	end
@@ -1112,7 +1153,7 @@ local function handleRemoteCall(method, originalfunction, ...)
 				local data = {
 					method = method, remote = remote, args = deepclone(args),
 					infofunc = nil, callingscript = nil,
-					metamethod = "__index", blockcheck = blockcheck,
+					metamethod = "__namecall", blockcheck = blockcheck,
 					id = id, returnvalue = {}
 				}
 				args = nil
@@ -1129,9 +1170,11 @@ local function handleRemoteCall(method, originalfunction, ...)
 	return originalfunction(...)
 end
 
+local validMethods = {FireServer=true, fireServer=true, InvokeServer=true, invokeServer=true}
+
 local newnamecall = newcclosure(function(...)
 	local method = getnamecallmethod()
-	if method and (method == "FireServer" or method == "fireServer" or method == "InvokeServer" or method == "invokeServer") then
+	if method and validMethods[method] then
 		if typeof(...) == "Instance" then
 			local remote = cloneref(...)
 			if IsA(remote, "RemoteEvent") or IsA(remote, "RemoteFunction") or IsA(remote, "UnreliableRemoteEvent") then
@@ -1165,7 +1208,19 @@ end)
 
 local newFireServer = newcclosure(function(...) return handleRemoteCall("FireServer", originalEvent, ...) end)
 local newUnreliableFireServer = newcclosure(function(...) return handleRemoteCall("FireServer", originalUnreliableEvent, ...) end)
-local newInvokeServer = newcclosure(function(...) return handleRemoteCall("InvokeServer", originalFunction, ...) end)
+local newInvokeServer = newcclosure(function(...)
+	local remote = typeof(...) == "Instance" and cloneref(...)
+	local ret = {handleRemoteCall("InvokeServer", originalFunction, ...)}
+	-- Patch the return value into the most recent log entry for this remote
+	if remote then
+		local id = ThreadGetDebugId(remote)
+		local entry = remoteCallCounts[id]
+		if entry and entry.log then
+			entry.log.returnvalue = ret
+		end
+	end
+	return unpack(ret)
+end)
 
 local function disablehooks()
 	if synv3 then
@@ -1212,7 +1267,7 @@ local function shutdown()
 	if schedulerconnect then schedulerconnect:Disconnect() end
 	for _, connection in next, connections do connection:Disconnect() end
 	for _, v in next, running_threads do if ThreadIsNotDead(v) then close(v) end end
-	clear(running_threads); clear(connections); clear(logs); clear(logMap); clear(remoteLogs)
+	clear(running_threads); clear(connections); clear(logs); clear(logMap); clear(remoteCallCounts); clear(remoteLogs)
 	disablehooks()
 	SimpleSpy3:Destroy()
 	Storage:Destroy()
@@ -1367,7 +1422,7 @@ end)
 
 newButton("Clr Logs", function() return "Click to clear logs" end, function()
 	TextLabel.Text = "Clearing..."
-	clear(logs); clear(logMap)
+	clear(logs); clear(logMap); clear(remoteCallCounts)
 	for _, v in next, LogList:GetChildren() do if not v:IsA("UIListLayout") then v:Destroy() end end
 	codebox:setRaw("")
 	selected = nil
